@@ -1,0 +1,41 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
+# The set of languages for which implicit dependencies are needed:
+set(CMAKE_DEPENDS_LANGUAGES
+  )
+
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_Font.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_Font.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_Font.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_TFT18.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_TFT18.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_TFT18.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_TFT18_dri.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_TFT18_dri.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/Display/LQ_TFT18_dri.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_I2C_ICM42605.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_I2C_ICM42605.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_I2C_ICM42605.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_I2C_MPU6050.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_I2C_MPU6050.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_I2C_MPU6050.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_SOFT_I2C_Gyro.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_SOFT_I2C_Gyro.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/IMU/LQ_SOFT_I2C_Gyro.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/LQ_I2C_VL53.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/LQ_I2C_VL53.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/APP/LQ_I2C_VL53.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_ATIM_PWM.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_ATIM_PWM.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_ATIM_PWM.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_GTIM_PWM.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_GTIM_PWM.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_GTIM_PWM.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_ADC.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_ADC.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_ADC.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_GPIO.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_GPIO.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_GPIO.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_PWM.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_PWM.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_PWM.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_SPI.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_SPI.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_HW_SPI.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_I2C_DEV.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_I2C_DEV.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_I2C_DEV.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_MAP_ADDR.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_MAP_ADDR.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_MAP_ADDR.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_PWM_ENCODER.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_PWM_ENCODER.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_PWM_ENCODER.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_SOFT_I2C.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_SOFT_I2C.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_SOFT_I2C.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_TCP_Client.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_TCP_Client.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_TCP_Client.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_UDP_Client.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_UDP_Client.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_UDP_Client.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_Uart.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_Uart.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_Uart.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_YOLO.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_YOLO.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_YOLO.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_module_loader.cpp" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_module_loader.cpp.o" "gcc" "CMakeFiles/main.dir/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Libraries/Driver/LQ_module_loader.cpp.o.d"
+  "/home/lq/Desktop/Project/Loongson_2k301_LIB/LQ_ls2k301_LIB_V1.1/Main/main.cpp" "CMakeFiles/main.dir/main.cpp.o" "gcc" "CMakeFiles/main.dir/main.cpp.o.d"
+  )
+
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
+  )
+
+# Fortran module output directory.
+set(CMAKE_Fortran_TARGET_MODULE_DIR "")
