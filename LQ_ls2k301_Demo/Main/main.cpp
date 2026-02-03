@@ -13,6 +13,8 @@
 @修改日期：2025-02-26
 @修改内容：
 @注意事项：注意查看路径的修改
+@注意事项：TFT程序优先推荐使用硬件SPI部分, 也就是LQ_TFT18_dri部分, 使用前需加载对应驱动模块,
+         双龙mini派中已提前添加, 未添加也可自行编译.
 QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ*/
 
 #include "main.hpp"
@@ -39,7 +41,7 @@ int main()
         // GtimPwmDemo();
 
         // // 高级定时器PWM功能演示
-        AtimPwmDemo();
+        // AtimPwmDemo();
 
         // // 编码器功能演示
         // EncoderDemo();
