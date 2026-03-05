@@ -98,10 +98,15 @@ std::string LQ_NCNN::Infer(const cv::Mat& bgr_image)
     cv::Mat resized;
     cv::resize(bgr_image, resized, cv::Size(m_input_width, m_input_height));
 
+    // 转换色彩空间: BGR -> RGB
+    // 训练时使用RGB格式(OpenCV读取默认是BGR，需要转换)
+    cv::Mat rgb;
+    cv::cvtColor(resized, rgb, cv::COLOR_BGR2RGB);
+
     // 转换为NCNN格式
     ncnn::Mat input = ncnn::Mat::from_pixels(
-        resized.data,
-        ncnn::Mat::PIXEL_BGR,
+        rgb.data,
+        ncnn::Mat::PIXEL_RGB,
         m_input_width,
         m_input_height
     );

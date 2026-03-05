@@ -1,16 +1,17 @@
 #include "lq_all_demo.hpp"
 #include <opencv2/opencv.hpp>
+#include <ncnn/net.h>
 
 // 获取当前时间戳字符串
-static string GetTimestamp()
+static std::string GetTimestamp()
 {
-    auto now = chrono::system_clock::now();
-    auto ms = chrono::duration_cast<chrono::milliseconds>(now.time_since_epoch()) % 1000;
-    time_t t = chrono::system_clock::to_time_t(now);
+    auto now = std::chrono::system_clock::now();
+    auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    time_t t = std::chrono::system_clock::to_time_t(now);
     tm* tm = localtime(&t);
 
-    stringstream ss;
-    ss << put_time(tm, "%Y-%m-%d %H:%M:%S") << "." << setfill('0') << setw(3) << ms.count();
+    std::stringstream ss;
+    ss << std::put_time(tm, "%Y-%m-%d %H:%M:%S") << "." << std::setfill('0') << std::setw(3) << ms.count();
     return ss.str();
 }
 
@@ -77,16 +78,16 @@ void lq_ncnn_photo_demo(void)
 
     // ==================== 配置区域 ====================
     // 测试图片路径（修改为你的图片路径）
-    string test_image_path = "test.jpg";
+    std::string test_image_path = "test.jpg";
     
     // 模型配置
-    string model_param = "tiny_classifier_fp32.ncnn.param";
-    string model_bin   = "tiny_classifier_fp32.ncnn.bin";
+    std::string model_param = "tiny_classifier_fp32.ncnn.param";
+    std::string model_bin   = "tiny_classifier_fp32.ncnn.bin";
     int input_width    = 96;
     int input_height   = 96;
     
     // 类别标签（顺序必须与训练时一致）
-    vector<string> labels = {"supplies", "vehicle", "weapon"};
+    std::vector<std::string> labels = {"supplies", "vehicle", "weapon"};
     
     // 归一化参数（ImageNet标准）
     float mean_vals[3] = {123.675f, 116.28f, 103.53f};
@@ -111,7 +112,7 @@ void lq_ncnn_photo_demo(void)
     // 读取测试图片
     printf("[%s] 读取图片: %s\n", GetTimestamp().c_str(), test_image_path.c_str());
     cv::Mat image = cv::imread(test_image_path);
-    
+
     if (image.empty()) {
         printf("无法读取图片: %s\n", test_image_path.c_str());
         printf("请确保图片文件存在\n");
@@ -119,12 +120,15 @@ void lq_ncnn_photo_demo(void)
     }
     printf("[%s] 图片尺寸: %d x %d\n\n", GetTimestamp().c_str(), image.cols, image.rows);
 
+    // 注意: OpenCV读取的是BGR格式，但在推理时会自动转换为RGB格式以匹配训练时的输入
+    // 训练使用PIL读取的RGB格式，因此需要色彩空间转换
+
     // 推理
     printf("[%s] 开始推理...\n", GetTimestamp().c_str());
-    auto start = chrono::high_resolution_clock::now();
-    string result = ncnn.Infer(image);
-    auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    auto start = std::chrono::high_resolution_clock::now();
+    std::string result = ncnn.Infer(image);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     // 输出结果
     printf("\n========================================\n");
