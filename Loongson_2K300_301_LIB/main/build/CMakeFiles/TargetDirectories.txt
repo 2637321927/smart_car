@@ -1,3 +1,0 @@
-/home/lq/Desktop/Project/NEW_LIB/Loongson_2K300_301_LIB/main/build/CMakeFiles/main.dir
-/home/lq/Desktop/Project/NEW_LIB/Loongson_2K300_301_LIB/main/build/CMakeFiles/edit_cache.dir
-/home/lq/Desktop/Project/NEW_LIB/Loongson_2K300_301_LIB/main/build/CMakeFiles/rebuild_cache.dir
