@@ -5,7 +5,6 @@
 #include "lq_canfd.hpp"
 #include "lq_map_addr.hpp"
 #include "lq_module_load.hpp"
-#include "lq_ncnn.hpp"
 #include "lq_reg_adc.hpp"
 #include "lq_reg_atim_pwm.hpp"
 #include "lq_reg_gpio.hpp"
