@@ -2,9 +2,11 @@
 #define __LQ_DRV_INC_HPP
 
 #include "lq_camera.hpp"
+#include "lq_camera_ex.hpp"
 #include "lq_canfd.hpp"
 #include "lq_map_addr.hpp"
 #include "lq_module_load.hpp"
+#include "lq_ncnn.hpp"
 #include "lq_reg_adc.hpp"
 #include "lq_reg_atim_pwm.hpp"
 #include "lq_reg_gpio.hpp"

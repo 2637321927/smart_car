@@ -58,6 +58,11 @@ void lq_tft18_drv_p16x16_cstr(uint8_t x, uint8_t y, const char *s_dat, lq_displa
 void lq_tft18_drv_road   (uint8_t wide_start, uint8_t high_start, uint8_t high, uint8_t wide, uint8_t *Pixle); // 显示灰度图
 void lq_tft18_drv_binroad(uint8_t wide_start, uint8_t high_start, uint8_t high, uint8_t wide, uint8_t *Pixle); // 显示二值图
 
+#ifdef LQ_HAVE_OPENCV
+#include <opencv2/opencv.hpp>
+void lq_tft18_drv_road_color(uint8_t wide_start, uint8_t high_start, const cv::Mat &Pixle);  // 绘制彩色图像
+#endif
+
 void lq_tft18_drv_flush();  // 刷新屏幕
 
 #endif

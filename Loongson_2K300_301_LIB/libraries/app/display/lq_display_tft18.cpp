@@ -509,6 +509,40 @@ void lq_tft18_drv_binroad(uint8_t wide_start, uint8_t high_start, uint8_t high, 
     lq_tft18_drv_flush();
 }
 
+#ifdef LQ_HAVE_OPENCV
+/********************************************************************************
+ * @brief    TFT18屏彩色数据显示
+ * @param    high_start ： 显示图像开始位置
+ * @param    wide_start ： 显示图像开始位置
+ * @param    img        ： 显示图像的Mat对象
+ * @return   无
+ * @note     注意 屏幕左上为 （0，0）
+ ********************************************************************************/
+void lq_tft18_drv_road_color(uint8_t wide_start, uint8_t high_start, const cv::Mat &img)
+{
+    if (img.empty() || img.type() != CV_8UC3) {
+        lq_log_error("图像数据为空或格式不是彩色图像\n");
+        return;
+    }
+    uint16_t img_high = img.rows;
+    uint16_t img_wide = img.cols;
+    uint16_t x, y;
+    uint16_t color;
+
+    for (y = 0; y < img_high; y++) {
+        const uint8_t *row_ptr = img.ptr<uint8_t>(y);
+        for (x = 0; x < img_wide; x++) {
+            uint8_t r = row_ptr[x * 3 + 2]; // OpenCV默认BGR格式
+            uint8_t g = row_ptr[x * 3 + 1];
+            uint8_t b = row_ptr[x * 3 + 0];
+            color = (((r >> 3) & 0x1F) << 11) | (((g >> 2) & 0x3F) << 5) | ((b >> 3) & 0x1F);
+            lq_tft18_drv_data_mod(wide_start + x, high_start + y, (lq_display_color_t)color);
+        }
+    }
+    ioctl(tft18_spi.fd, IOCTL_TFT18_FLUSH);
+}
+#endif
+
 /********************************************************************************
  * @brief    TFT18屏 刷新屏幕
  * @param    无

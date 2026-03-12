@@ -66,6 +66,7 @@ target_include_directories(main PRIVATE
 target_link_libraries(main PUBLIC
     pthread
     lqncnn
+    lq_camera_ex
     ${NCNN_LDFLAGS}
     ${OPENCV_LDFLAGS}
     # ${FFMPEG_LDFLAGS}

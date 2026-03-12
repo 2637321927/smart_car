@@ -59,6 +59,11 @@ void lq_ips20_drv_p16x16_cstr(uint16_t x, uint16_t y, const char *s_dat, lq_disp
 void lq_ips20_drv_road   (uint16_t wide_start, uint16_t high_start, uint16_t high, uint16_t wide, uint8_t *Pixle);  // 绘制灰度图像
 void lq_ips20_drv_binRoad(uint16_t wide_start, uint16_t high_start, uint16_t high, uint16_t wide, uint8_t *Pixle);  // 绘制二值图像
 
+#ifdef LQ_HAVE_OPENCV
+#include <opencv2/opencv.hpp>
+void lq_ips20_drv_road_color(uint16_t wide_start, uint16_t high_start, const cv::Mat &Pixle);  // 绘制彩色图像
+#endif
+
 void lq_ips20_drv_flush();  // 刷新屏幕
 
 #endif
