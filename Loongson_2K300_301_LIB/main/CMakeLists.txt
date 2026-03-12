@@ -49,7 +49,7 @@ endif()
 # pkg_check_modules(FFMPEG REQUIRED libavformat libavcodec libavdevice libavutil)
 
 link_directories(
-    ${PROJECT_SOURCE_DIR}/../libraries/drv/src/  # liblqncnn.a 的存放路径
+    ${PROJECT_SOURCE_DIR}/../libraries/drv/src/  # 静态库的存放路径
 )
 
 # 由源文件生成一个可执行程序

@@ -1,3 +1,24 @@
+/************************************************************************************************************************
+ * @file      : lq_camera_ex
+ * @brief     : 龙芯2K0300/2K301 板卡外设驱动 - 摄像头模块（增强版）
+ * @author    : 龙邱科技
+ * @email     : chiusir@163.com
+ * @compiler  : Linux 环境、VSCode_1.93 及以上版本、Cmake_3.16 及以上版本
+ * @platform  : 龙芯2K0300久久派子母板和北京龙邱智能科技龙邱2K301双龙mini派子母板
+ * @version   : 版权所有，单位使用请先联系授权
+ * @reference : 相关信息参考下列地址
+ *              公司官网链接：http://www.lqist.cn
+ *              淘宝店铺链接：http://longqiu.taobao.com
+ *              程序配套视频：https://space.bilibili.com/95313236
+ * @reference : 参考项目链接：
+ *              1. https://gitee.com/Wuwu129/SmartCar_99Pai_OpenSource
+ * @license   : 本项目参考 Wuwu 开源库实现，遵循 GNU 通用公共许可证第3版（GPL-3.0）或其后续版本
+ *              1. 可自由使用、修改、分发本代码，分发时需随附本许可声明及 GPL-3.0 完整许可证副本
+ *              2. 本软件按“原样”提供，不做任何明示/暗示保证，使用风险自负
+ *              3. 第三方组件版权与许可依其自身 LICENSE 文件为准
+ *              许可证原文：https://www.gnu.org/licenses/gpl-3.0.html
+ * @update    : 2025-03-12
+ ************************************************************************************************************************/
 #ifndef __LQ_CAMERA_EX_HPP
 #define __LQ_CAMERA_EX_HPP
 
@@ -11,12 +32,7 @@
 #include <sys/ioctl.h>
 #include <memory>
 
-#ifdef LQ_HAVE_OPENCV
-    #include <opencv2/opencv.hpp>
-    #define LQ_OPENCV_AVAILABLE 1
-#else
-    #define LQ_OPENCV_AVAILABLE 0
-#endif
+#include <opencv2/opencv.hpp>
 
 /****************************************************************************************************
  * @brief   宏定义
