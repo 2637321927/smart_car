@@ -293,7 +293,7 @@ function scp_to_board() {
     fi
     # 执行SCP传输
     log_info "🔧 开始传输可执行程序到开发板 ${board_ip}:${BOARD_TARGET_PATH}"
-    if scp -o ConnectTimeout=10 "${local_exec_path}" "${BOARD_USER}@${board_ip}:${BOARD_TARGET_PATH}"; then
+    if scp -O -o ConnectTimeout=10 "${local_exec_path}" "${BOARD_USER}@${board_ip}:${BOARD_TARGET_PATH}"; then
         log_info "✅ 传输成功！开发板路径：${BOARD_USER}@${board_ip}:${BOARD_TARGET_PATH}/${EXECUTABLE_NAME}"
         # 传输后自动添加执行权限
         ssh -o ConnectTimeout=10 "${BOARD_USER}@${board_ip}" "chmod +x ${REMOTE_EXEC_CMD}" >/dev/null 2>&1
