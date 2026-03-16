@@ -8,8 +8,8 @@
 # 注意事项：尽量避免修改原有的文件夹结构和名称, 以免脚本无法正常运行
 # 使用说明：
 #       1. 仅编译：./build.sh
-#       2. 编译 + 传输到开发板：./build.sh 192.168.1.100(写入开发板IP)
-#       3. 编译 + 传输到开发板 + 运行：./build.sh 192.168.1.100 -r
+#       2. 编译 + 传输到开发板：./build.sh 192.168.43.9(写入开发板IP)
+#       3. 编译 + 传输到开发板 + 运行：./build.sh 192.168.43.9 -r
 ##############################################################################
 
 # ====================================================================================================================================================== #
@@ -18,7 +18,7 @@
 # 交叉编译工具链配置
 TOOLCHAIN_DIR_NAME="loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6"          # 工具链目录名
 TOOLCHAIN_TAR_NAME="loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6.tar.xz"   # 工具链压缩包名
-TOOLCHAIN_CMAKE_MACRO_FILE="./toolchain_path.cmake"                                         # 生成的 CMake 宏文件（main目录下）
+TOOLCHAIN_CMAKE_MACRO_FILE="./toolchaibun_path.cmake"                                         # 生成的 CMake 宏文件（main目录下）
 
 # 依赖库配置
 TARGET_DIR="LQ_Dep_libs"            # 目标依赖库根目录名称

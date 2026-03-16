@@ -10,14 +10,21 @@
 void lq_gpio_output_demo(void)
 {
     // 初始化 GPIO 引脚 74 为输出模式
-    ls_gpio gpio(PIN_74, GPIO_MODE_OUT);
-
+    ls_gpio gpio(PIN_81, GPIO_MODE_OUT);
+    int count=0;
     while (1)
     {
+        
+        std::cout << "GPIO output demo: setting GPIO 74 HIGH" << std::endl;
         gpio.gpio_level_set(GPIO_HIGH);
-        usleep(5000);
+        usleep(2);
         gpio.gpio_level_set(GPIO_LOW);
-        usleep(5000);
+        usleep(20);
+        count++;
+         if(count==10000)
+        {
+            break;
+        }
     }
 }
 
@@ -31,7 +38,7 @@ void lq_gpio_output_demo(void)
 void lq_gpio_input_demo(void)
 {
     // 初始化 GPIO 引脚 74 为输入模式
-    ls_gpio gpio(PIN_74, GPIO_MODE_IN);
+    ls_gpio gpio(PIN_81, GPIO_MODE_IN);
 
     while (1)
     {

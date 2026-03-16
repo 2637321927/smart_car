@@ -1,7 +1,7 @@
 #include "lq_all_demo.hpp"
 
 /********************************************************************************
- * @brief   LSM6DSR 设备驱动测试.
+ * @brief   LSM6DSR 设备驱动测试.3D加速度计和3D陀螺仪
  * @param   none.
  * @return  none.
  * @note    LSM6DSR 设备驱动测试.
