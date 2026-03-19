@@ -318,7 +318,7 @@ void img_test(void)
         // ===================== 获取并发送图像 =====================
         // 获取原始图像
         cv::Mat gray_frame = cam.get_gray_frame();
-        cv::flip(gray_frame, gray_frame, 0); 
+        cv::flip(gray_frame, gray_frame, -1); //颠倒上下左右
       //  cv::Mat frame = cam.get_binary_frame();
         if (gray_frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
