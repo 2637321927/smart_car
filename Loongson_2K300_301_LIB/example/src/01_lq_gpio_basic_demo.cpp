@@ -4,18 +4,18 @@
  * @brief   GPIO 输出模式测试.
  * @param   none.
  * @return  none.
- * @note    GPIO 输出测试, 使用引脚 74 作为输出引脚, 交替输出高电平和低电平.
+ * @note    GPIO 输出测试, 使用引脚 81 作为输出引脚, 交替输出高电平和低电平.
             该引脚位于母板编码器 3 所用引脚上.
  ********************************************************************************/
 void lq_gpio_output_demo(void)
 {
-    // 初始化 GPIO 引脚 74 为输出模式
+    // 初始化 GPIO 引脚 81 为输出模式
     ls_gpio gpio(PIN_81, GPIO_MODE_OUT);
     int count=0;
     while (1)
     {
         
-        std::cout << "GPIO output demo: setting GPIO 74 HIGH" << std::endl;
+        std::cout << "GPIO output demo: setting GPIO 81 HIGH" << std::endl;
         gpio.gpio_level_set(GPIO_HIGH);
         usleep(2);
         gpio.gpio_level_set(GPIO_LOW);
