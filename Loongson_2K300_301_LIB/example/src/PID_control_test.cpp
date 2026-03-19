@@ -7,26 +7,33 @@
  * @note    GPIO 输出测试, 使用引脚 81/82 作为输出引脚, 交替输出高电平和低电平.
             
  ********************************************************************************/
+int calculate_diffrential(float error)//给我误差值，给你差分输入值
+        {        
+        float Diffrential=0;//diffrencial 差分输入，即输出轮胎的转速差
+       float P = 1; // 比例系数
+       float D= 0.1; // 差分系数
+       volatile static float error_current,error_last;// 当前误差和上一次误差
+       error_current=error;//当前误差
+       
+       Diffrential=error_current*P+ (error_current-error_last)*D;//PD控制算法
+       error_last=error_current;//更新一下误差
+         return Diffrential;//返回差分输入
+        }
 void PID_control_test(void)
 {
-    // 初始化 GPIO 引脚 81 为输出模式
-    ls_gpio motor_1(PIN_81, GPIO_MODE_OUT);
-    ls_gpio motor_2(PIN_82, GPIO_MODE_OUT);
-    int count=0;
-    while (1)
-    {
-        
-        std::cout << "GPIO output demo: setting GPIO 81 and 82HIGH" << std::endl;
-        motor_1.gpio_level_set(GPIO_HIGH);
-        motor_2.gpio_level_set(GPIO_HIGH);
-        usleep(2);
-        motor_1.gpio_level_set(GPIO_LOW);
-        motor_2.gpio_level_set(GPIO_LOW);
-        usleep(200);
-        count++;
-         if(count==5000)
-        {
-            break;
-        }
-    }
+    // 默认极性的构造方式
+    ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
+    ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0);
+    /*自定义极性的构造方式
+    ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 2000, ATIM_PWM_POL_NORMAL);
+    // 拷贝构造使用方法, 调用 pwm3 与调用 pwm1 同效
+    ls_atim_pwm pwm3(pwm1);
+    // 拷贝赋值使用方法, 调用 pwm4 与调用 pwm2 同效
+    ls_atim_pwm pwm4 = pwm2;*/
+     int diffrential = calculate_diffrential(0);
+      ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 1000+diffrential);
+    ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 1000-diffrential);//从1000开始，差分输入增加pwm1的占空比，减少pwm2的占空比
+
+pwm1.atim_pwm_set_duty(0);
+pwm2.atim_pwm_set_duty(0);//全部失能
 }
