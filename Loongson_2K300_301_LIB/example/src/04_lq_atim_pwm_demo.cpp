@@ -31,7 +31,7 @@ void lq_atim_pwm_demo(void)
         sleep(1);
         pwm1.atim_pwm_set_duty(0);
         pwm2.atim_pwm_set_duty(0);
-        pwm1.atim_pwm_disable();
+       pwm1.atim_pwm_disable();
         pwm2.atim_pwm_disable();
         break;
     }

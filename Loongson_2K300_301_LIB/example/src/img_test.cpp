@@ -335,7 +335,7 @@ void img_test(void)
     cv::Mat big_mat;
     cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
         // 发送JPEG压缩图像
-        ssize_t sent = udp_client.udp_send_image(gray_frame, JPEG_QUALITY);
+        ssize_t sent = udp_client.udp_send_image(big_mat, JPEG_QUALITY);
         if (sent < 0) {
             printf("ERROR: Failed to send image\r\n");
         }
