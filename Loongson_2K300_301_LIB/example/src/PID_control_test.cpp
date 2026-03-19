@@ -22,9 +22,9 @@ void PID_control_test(void)
         usleep(2);
         motor_1.gpio_level_set(GPIO_LOW);
         motor_2.gpio_level_set(GPIO_LOW);
-        usleep(20);
+        usleep(200);
         count++;
-         if(count==1000)
+         if(count==5000)
         {
             break;
         }

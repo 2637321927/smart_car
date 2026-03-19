@@ -22,4 +22,5 @@ void lq_udp_img_trans_demo(void);   // UDP 图像传输测试
 void lq_udp_wavefrom_demo(void);    // UDP 波形传输测试
 void lq_icm42688_demo(void);        // ICM42688 测试
 void img_test(void);
+void PID_control_test(void);
 #endif
