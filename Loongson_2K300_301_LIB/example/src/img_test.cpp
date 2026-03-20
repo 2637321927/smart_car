@@ -1,4 +1,5 @@
 #include "lq_all_demo.hpp"
+typedef signed short       sint16;  // 16位 有符号  <-- 你要的
 #define LCDH    60   // 图像高度（行）
 #define LCDW    80   // 图像宽度（列）
 // =====================================================
@@ -6,6 +7,34 @@
 // =====================================================
 // 目标IP地址（UDP接收端）
 uint8_t otsuThreshold(uint8_t *image, uint16_t col, uint16_t row);
+
+typedef signed short sint16;
+
+// 巡线全局变量
+extern sint16 Longest_White_Column_Left[2];
+extern sint16 Longest_White_Column_Right[2];
+extern sint16 Longest_White_Column_Left1[2];
+extern sint16 Longest_White_Column_Right1[2];
+// 巡线边界、中线、丢线标记数组
+sint16 Left_Line[LCDH];    // 每行左边界
+sint16 Right_Line[LCDH];   // 每行右边界
+sint16 Mid_Line[LCDH];     // 每行中心线（最终输出）
+sint16 Left_Lost_Flag[LCDH];  // 左边界丢线标记
+sint16 Right_Lost_Flag[LCDH]; // 右边界丢线标记
+sint16 Road_Wide[LCDH];    // 赛道宽度（你代码也用到了）
+// ======================
+// 丢线计数、起始行
+// ======================
+sint16 Right_Lost_Time;
+sint16 Left_Lost_Time;
+sint16 Both_Lost_Time;
+sint16 Boundry_Start_Left;
+sint16 Boundry_Start_Right;
+sint16 Search_Stop_Line;
+// ====================
+// 每列白色像素统计
+// ====================
+sint16 White_Column[LCDW]; 
 const std::string TARGET_IP    = "192.168.43.213";
 // UDP目标端口
 const uint16_t    TARGET_PORT  = 8080;
@@ -274,6 +303,255 @@ uint8_t otsuThreshold(uint8_t *image, uint16_t col, uint16_t row)
         }
     }
     return Threshold;
+}
+/*---------------------------------------------------------------
+ 【函    数】Bin_Image_Filter
+ 【功    能】过滤噪点
+ 【参    数】无
+ 【返 回 值】无
+ 【注意事项】
+ ----------------------------------------------------------------*/
+void Bin_Image_Filter (uint8_t(*image)[LCDW])
+{
+    sint16 nr; //行
+    sint16 nc; //列
+
+    for (nr = 1; nr < LCDH - 1; nr++)
+    {
+        for (nc = 1; nc < LCDW - 1; nc = nc + 1)
+        {
+            if ((image[nr][nc] == 0)
+                    && (image[nr - 1][nc] + image[nr + 1][nc] + image[nr][nc + 1] + image[nr][nc - 1] > 510))
+            {
+                image[nr][nc] = 255;
+            }
+            else if ((image[nr][nc] == 255)
+                    && (image[nr - 1][nc] + image[nr + 1][nc] + image[nr][nc + 1] + image[nr][nc - 1] < 510))
+            {
+                image[nr][nc] = 0;
+            }
+        }
+    }
+}
+//利用阈值把灰度图像转化为二值化
+void get_erzhiimage(void)
+{
+
+  uint8_t Threshold =  otsuThreshold (Image_Use[0], LCDW, LCDH);      //这里是一个函数调用，通过该函数可以计算出一个效果很不错的二值化阈值。
+  /* if(car_status.stop=='T'){
+          Threshold=250;
+      }*/
+  uint8_t i, j = 0;
+  for (i = 0; i < LCDH; i++)                                //遍历二维数组的每一行
+  {
+    for (j = 0; j < LCDW; j++)                              //遍历二维数组的每一列
+    {
+      if (Image_Use[i][j] > Threshold)                      //如果这个点的灰度值大于阈值Threshold
+          Image_Use1[i][j] = 255;                                  //那么这个像素点就记为白点
+      else                                                  //如果这个点的灰度值小于阈值Threshold
+          Image_Use1[i][j] = 0;                                  //那么这个像素点就记为黑点
+    }
+  }
+}
+void Longest_White_Column(void)//最长白列巡线
+{
+
+    //compressimage(gray_frame);      //图像压缩，把原始的80*170的图像压缩成60*80的,因为不需要那么多的信息，60*80能处理好的话已经足够
+     Ostu();
+    //get_erzhiimage();
+     Bin_Image_Filter(Image_Use1);
+    int i, j;
+    int start_column=10;//最长白列的搜索区间
+    int end_column=LCDW-10;
+    int left_border = 0, right_border = 0;//临时存储赛道位置
+    float k;
+    float b;
+    Longest_White_Column_Left[0] = 0;//最长白列,[0]是最长白列的长度，[1】是第某列
+    Longest_White_Column_Left[1] = 0;//最长白列,[0]是最长白列的长度，[1】是第某列
+    Longest_White_Column_Right[0] = 0;//最长白列,[0]是最长白列的长度，[1】是第某列
+    Longest_White_Column_Right[1] = 0;//最长白列,[0]是最长白列的长度，[1】是第某列
+    Right_Lost_Time = 0;    //边界丢线数
+    Left_Lost_Time  = 0;
+    Boundry_Start_Left  = 0;//第一个非丢线点,常规边界起始点
+    Boundry_Start_Right = 0;
+    Both_Lost_Time = 0;//两边同时丢线数
+
+    for (i = 0; i <=LCDH-1; i++)//数据清零
+    {
+        Right_Lost_Flag[i] = 0;
+        Left_Lost_Flag[i] = 0;
+        Left_Line[i] = 0;
+        Right_Line[i] = 79;
+        Mid_Line[i]=40;
+    }
+
+      for(i=0;i<=LCDW-1;i++)
+      {
+          White_Column[i] = 0;
+      }
+
+//环岛需要对最长白列范围进行限定
+    //环岛3状态需要改变最长白列寻找范围
+
+
+
+    //从左到右，从下往上，遍历全图记录范围内的每一列白点数量
+    for (j =0; j<=79; j++)
+    {
+        for (i = LCDH-1; i >= 0; i--)
+              {
+                  if(Image_Use1[i][j] == 0)
+
+                      break;
+
+                  else
+                      White_Column[j]=59-i;
+
+
+              }
+    }
+
+    //从左到右找左边最长白列
+    Longest_White_Column_Left[0] =0;
+    for(i=start_column;i<=end_column;i++)
+    {
+        if (Longest_White_Column_Left[0] < White_Column[i])//找最长的那一列
+        {
+            Longest_White_Column_Left[0] = White_Column[i];//【0】是白列长度
+            Longest_White_Column_Left[1] = i;              //【1】是下标，第j列
+        }
+    }
+    //从右到左找右左边最长白列
+    Longest_White_Column_Right[0] = 0;//【0】是白列长度
+    for(i=end_column;i>=start_column;i--)//从右往左，注意条件，找到左边最长白列位置就可以停了
+    {
+        if (Longest_White_Column_Right[0] < White_Column[i])//找最长的那一列
+        {
+            Longest_White_Column_Right[0] = White_Column[i];//【0】是白列长度
+            Longest_White_Column_Right[1] = i;              //【1】是下标，第j列
+        }
+    }
+
+
+    Longest_White_Column_Left1[0] =0;
+    for(i=0;i<=79;i++)
+    {
+        if (Longest_White_Column_Left1[0] < White_Column[i])//找最长的那一列
+        {
+            Longest_White_Column_Left1[0] = White_Column[i];//【0】是白列长度
+            Longest_White_Column_Left1[1] = i;              //【1】是下标，第j列
+        }
+    }
+    //从右到左找右左边最长白列
+    Longest_White_Column_Right1[0] = 0;//【0】是白列长度
+    for(i=79;i>=0;i--)//从右往左，注意条件，找到左边最长白列位置就可以停了
+    {
+        if (Longest_White_Column_Right1[0] < White_Column[i])//找最长的那一列
+        {
+            Longest_White_Column_Right1[0] = White_Column[i];//【0】是白列长度
+            Longest_White_Column_Right1[1] = i;              //【1】是下标，第j列
+        }
+    }
+
+
+    Search_Stop_Line = Longest_White_Column_Left[0];//搜索截止行选取左或者右区别不大，他们两个理论上是一样的
+
+
+    for (i = LCDH - 1; i >=LCDH-Search_Stop_Line-1; i--)//常规巡线
+    {
+        for (j = Longest_White_Column_Right[1]; j <= LCDW - 1 - 2; j++)
+                {
+                    if (Image_Use1[i][j] ==255 && Image_Use1[i][j + 1] == 0 && Image_Use1[i][j + 2] == 0)//白黑黑，找到右边界
+                    {
+                        right_border = j+1;
+                        Right_Lost_Flag[i] = 1; //右丢线数组，丢线置1，不丢线置0
+                        break;
+                    }
+                    else if(j>=LCDW-1-2)//没找到右边界，把屏幕最右赋值给右边界
+                    {
+                        right_border = 79;
+                        Right_Lost_Flag[i] = 2; //右丢线数组，丢线置1，不丢线置0
+                        break;
+                    }
+
+
+        }
+
+        for (j = Longest_White_Column_Left[1]; j >= 0 + 2; j--)
+        {
+        if (Image_Use1[i][j] ==255 && Image_Use1[i][j - 1] == 0 && Image_Use1[i][j - 2] == 0)//黑黑白认为到达左边界
+              {
+                  left_border = j-1;
+                  Left_Lost_Flag[i] = 1; //左丢线数组，丢线置1，不丢线置0
+                  break;
+              }
+              else if(j<=0+2)
+              {
+                  left_border = 0;//找到头都没找到边，就把屏幕最左右当做边界
+                  Left_Lost_Flag[i] = 2; //左丢线数组，丢线置1，不丢线置0
+                  break;
+              }
+        }
+
+        Left_Line  [i] = left_border;       //左边线线数组
+        Right_Line [i] = right_border;      //右边线线数组
+    }
+
+    /*for (i = LCDH-Search_Stop_Line; i <=0; i--)
+    {
+        l_border  [i]=2;
+        r_border  [i]=77;
+        center_line[i]=39;
+    }*/
+
+    for (i = LCDH - 1; i >=0; i--)//赛道数据初步分析
+       {
+           if (Left_Lost_Flag[i]  == 2)//单边丢线数
+               Left_Lost_Time++;
+           if (Right_Lost_Flag[i] == 2)
+               Right_Lost_Time++;
+           if (Left_Lost_Flag[i] == 2 && Right_Lost_Flag[i] == 2)//双边丢线数
+               Both_Lost_Time++;
+           if (Boundry_Start_Left ==  0 && Left_Lost_Flag[i]  != 2)//记录第一个非丢线点，边界起始点
+               Boundry_Start_Left = i;
+           if (Boundry_Start_Right == 0 && Right_Lost_Flag[i] != 2)
+               Boundry_Start_Right = i;
+           /*if(Right_Lost_Flag[i]==0)
+           {
+               Right_Line[i]=Right_Line[LCDH-Search_Stop_Line];
+           }
+           if(Left_Lost_Flag[i]==0)
+                      {
+                          Left_Line[i]=Left_Line[LCDH-Search_Stop_Line];
+                      }*/
+}
+
+
+    for (i = LCDH-Search_Stop_Line; i <= LCDH-1; i++)//赛道数据初步分析
+           {
+     Road_Wide[i]=Right_Line[i]-Left_Line[i];
+
+     /*if(Left_Lost_Flag[i]==1&&Right_Lost_Flag[i]==1)
+          Mid_Line[i] = (Left_Line[i] + Right_Line[i]) >> 1;
+     if(Left_Lost_Flag[i]==2&&Right_Lost_Flag[i]==1)
+             Mid_Line[i] = Right_Line[i] -zhidao[i]/2;
+     if(Left_Lost_Flag[i]==1&&Right_Lost_Flag[i]==2)
+             Mid_Line[i] = Left_Line[i] + zhidao[i]/2;
+     if(Left_Lost_Flag[i]==2&&Right_Lost_Flag[i]==2)
+             Mid_Line[i] = (Left_Line[i] + Right_Line[i]) >> 1;*/
+
+    /* if((Left_Line[25] + Right_Line[25]) >> 1>40)
+        {
+         Mid_Line[i] = Left_Line[i] + zhidao[i]/2;
+        }
+     if((Left_Line[25] + Right_Line[25]) >> 1<=40)
+            {
+         Mid_Line[i] = Right_Line[i] -zhidao[i]/2;
+            }
+     if(Left_Lost_Flag[i]==1&&Right_Lost_Flag[i]==1)*/
+                  Mid_Line[i] = (Left_Line[i] + Right_Line[i]) >> 1;
+
+           }
 }
 /********************************************************************************
  * @brief   UDP 图像传输测试.
