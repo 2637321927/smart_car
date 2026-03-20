@@ -11,10 +11,10 @@ uint8_t otsuThreshold(uint8_t *image, uint16_t col, uint16_t row);
 typedef signed short sint16;
 
 // 巡线全局变量
-extern sint16 Longest_White_Column_Left[2];
-extern sint16 Longest_White_Column_Right[2];
-extern sint16 Longest_White_Column_Left1[2];
-extern sint16 Longest_White_Column_Right1[2];
+sint16 Longest_White_Column_Left[2];
+sint16 Longest_White_Column_Right[2];
+sint16 Longest_White_Column_Left1[2];
+sint16 Longest_White_Column_Right1[2];
 // 巡线边界、中线、丢线标记数组
 sint16 Left_Line[LCDH];    // 每行左边界
 sint16 Right_Line[LCDH];   // 每行右边界
@@ -357,7 +357,7 @@ void Longest_White_Column(void)//最长白列巡线
 {
 
     //compressimage(gray_frame);      //图像压缩，把原始的80*170的图像压缩成60*80的,因为不需要那么多的信息，60*80能处理好的话已经足够
-     Ostu();
+    // Ostu();
     //get_erzhiimage();
      Bin_Image_Filter(Image_Use1);
     int i, j;
@@ -607,9 +607,14 @@ void img_test(void)
        // cv::cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
         compressimage(gray_frame);  // 压缩
         Ostu();      
+        Longest_White_Column();
+        printf("【全行列中线】\n");
+for(int i=0; i<LCDH; i++){
+    printf("行%2d: %d\n", i, Mid_Line[i]);
+}
            cv::Mat binary_mat(LCDH, LCDW, CV_8UC1, Image_Use1);
 
-    // 放大一下，不然60x80太小了，看不见
+    // 放大一下，不然60x80太小了A，看不见
     cv::Mat big_mat;
     cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
         // 发送JPEG压缩图像
