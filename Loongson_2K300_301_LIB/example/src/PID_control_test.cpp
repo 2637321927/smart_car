@@ -19,7 +19,7 @@ int calculate_diffrential(float error)//给我误差值，给你差分输入值
        error_last=error_current;//更新一下误差
          return Diffrential;//返回差分输入
         }
-void PID_control_test(void)
+void PID_control_test(float error)
 {
     // 默认极性的构造方式
     ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
@@ -30,7 +30,7 @@ void PID_control_test(void)
     ls_atim_pwm pwm3(pwm1);
     // 拷贝赋值使用方法, 调用 pwm4 与调用 pwm2 同效
     ls_atim_pwm pwm4 = pwm2;*/
-     int diffrential = calculate_diffrential(0);
+     int diffrential = calculate_diffrential(error);
      int pwm1_duty1 = (1000 + diffrential < 5000) ? (1000 + diffrential) : 5000;//从1000开始，差分输入增加pwm1的占空比,并且做了限幅（不得大于5000）
       int pwm2_duty1 = (1000 - diffrential > 0) ? (1000 - diffrential) : 0;//从1000开始，差分输入减少pwm2的占空比，并且做了限幅（不得小于0）
     ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, pwm1_duty1);
