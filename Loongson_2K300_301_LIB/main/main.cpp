@@ -6,6 +6,7 @@ int main()
 //lq_udp_img_trans_demo();
 //PID_control_test();
 //lq_atim_pwm_demo();
+/*
     uint16_t dis;
 
     lq_i2c_vl53l0x vl53l0x;
@@ -24,5 +25,8 @@ ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0);
         }
         usleep(100*100);
     }
+        */
+img_test();
+
     return 0;
 }
