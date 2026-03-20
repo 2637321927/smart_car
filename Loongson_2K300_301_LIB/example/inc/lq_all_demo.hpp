@@ -4,7 +4,6 @@
 #include "lq_drv_inc.hpp"
 #include "lq_app_inc.hpp"
 #include "lq_common.hpp"
-
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试
 void lq_gpio_input_demo(void);      // GPIO 输入模式测试
 void lq_pwm_demo(void);             // PWM 输出模式测试
@@ -22,6 +21,6 @@ void lq_udp_img_trans_demo(void);   // UDP 图像传输测试
 void lq_udp_wavefrom_demo(void);    // UDP 波形传输测试
 void lq_icm42688_demo(void);        // ICM42688 测试
 void img_test(void);
-void PID_control_test(float error);
+void PID_control_test(ls_atim_pwm& pwm1,ls_atim_pwm& pwm2,float error);
 int calculate_diffrential(float error);
 #endif
