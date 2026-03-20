@@ -10,10 +10,10 @@ const std::string TARGET_IP    = "192.168.43.213";
 // UDP目标端口
 const uint16_t    TARGET_PORT  = 8080;
 // 摄像头参数
-const uint16_t    CAM_WIDTH    = 160;     // 宽
-const uint16_t    CAM_HEIGHT   = 120;     // 高
+const uint16_t    CAM_WIDTH    = 320;     // 宽
+const uint16_t    CAM_HEIGHT   = 240;     // 高
 const uint16_t    CAM_FPS      = 120;     // 帧率
-const uint8_t     JPEG_QUALITY = 30;
+const uint8_t     JPEG_QUALITY = 100;
 // 全局数组：存储压缩后的 60x80 灰度图
 // 注意：LCDH 和 LCDW 必须定义为 60 和 80
 uint8_t Image_Use[60][80]; 
