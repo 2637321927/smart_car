@@ -7,7 +7,8 @@ typedef signed short       sint16;  // 16位 有符号  <-- 你要的
 // =====================================================
 // 目标IP地址（UDP接收端）
 uint8_t otsuThreshold(uint8_t *image, uint16_t col, uint16_t row);
-
+ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
+ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0); 
 typedef signed short sint16;
 
 // 巡线全局变量
@@ -562,6 +563,9 @@ void Longest_White_Column(void)//最长白列巡线
  ********************************************************************************/
 void img_test(void)
 {
+      pwm1.atim_pwm_disable();
+pwm2.atim_pwm_disable();
+return;
     printf("=========================================\r\n");
     printf("  UDP Camera + Encoder Stream\r\n");
     printf("=========================================\r\n");
@@ -608,15 +612,37 @@ void img_test(void)
         compressimage(gray_frame);  // 压缩
         Ostu();      
         Longest_White_Column();
+        PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
         printf("【全行列中线】\n");
-for(int i=0; i<LCDH; i++){
-    printf("行%2d: %d\n", i, Mid_Line[i]);
-}
+//for(int i=0; i<LCDH; i++){
+    printf("行%2d: %d\n", 40, Mid_Line[i]);
+//}
            cv::Mat binary_mat(LCDH, LCDW, CV_8UC1, Image_Use1);
 
+cv::Mat color_mat;
+cv::cvtColor(cv::Mat(LCDH, LCDW, CV_8UC1, Image_Use1), color_mat, cv::COLOR_GRAY2BGR);
+
+// 2. 在每一行画红色中线 (BGR格式：0,0,255 = 红色)
+for (int i = 0; i < LCDH; i++) {
+    int mx = Mid_Line[i];
+    if (mx >= 1 && mx < LCDW - 1) {
+        // 画三个连续红点，更明显
+        if(i!=40){
+        color_mat.at<cv::Vec3b>(i, mx-1) = cv::Vec3b(0, 0, 255);
+        color_mat.at<cv::Vec3b>(i, mx  ) = cv::Vec3b(0, 0, 255);
+        color_mat.at<cv::Vec3b>(i, mx+1) = cv::Vec3b(0, 0, 255);
+        }
+        else{
+               color_mat.at<cv::Vec3b>(i, mx-1) = cv::Vec3b(255, 0, 0);
+        color_mat.at<cv::Vec3b>(i, mx  ) = cv::Vec3b(255, 0, 0);
+        color_mat.at<cv::Vec3b>(i, mx+1) = cv::Vec3b(255, 0, 0);
+        }
+    }
+}
     // 放大一下，不然60x80太小了A，看不见
     cv::Mat big_mat;
-    cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
+   // cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
+    cv::resize(color_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
         // 发送JPEG压缩图像
         ssize_t sent = udp_client.udp_send_image(big_mat, JPEG_QUALITY);
         if (sent < 0) {
@@ -636,4 +662,55 @@ for(int i=0; i<LCDH; i++){
             start_time = now;
         }
     }
+}
+float img_return(void)
+{
+
+    // 初始化UDP客户端
+    lq_udp_client udp_client;
+    udp_client.udp_client_init(TARGET_IP, TARGET_PORT);
+    printf("UDP client initialized\r\n");
+
+    // 初始化摄像头
+    lq_camera cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
+    if (!cam.is_opened()) {
+        printf("ERROR: Failed to open camera!\r\n");
+        return -1;
+    }
+
+    // 发送帧计数
+    uint32_t frame_count = 0;
+    uint32_t encoder_count = 0;
+    // 记录开始时间
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+
+        // ===================== 获取并发送图像 =====================
+        // 获取原始图像
+        cv::Mat gray_frame = cam.get_gray_frame();
+        cv::flip(gray_frame, gray_frame, -1); //颠倒上下左右
+      //  cv::Mat frame = cam.get_binary_frame();
+        if (gray_frame.empty()) {
+            printf("ERROR: Failed to read frame\r\n");
+           return -1;
+        }
+        //cv::Mat gray_frame;
+
+       // cv::cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
+        compressimage(gray_frame);  // 压缩
+        Ostu();      
+        Longest_White_Column();
+      cv::Mat binary_mat(LCDH, LCDW, CV_8UC1, Image_Use1);
+
+    // 放大一下，不然60x80太小了A，看不见
+    cv::Mat big_mat;
+    cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
+        // 发送JPEG压缩图像
+        ssize_t sent = udp_client.udp_send_image(big_mat, JPEG_QUALITY);
+        if (sent < 0) {
+            printf("ERROR: Failed to send image\r\n");
+        }
+printf("%d\n",Mid_Line[20]);
+return Mid_Line[20];
+    
 }

@@ -23,4 +23,6 @@ void lq_icm42688_demo(void);        // ICM42688 测试
 void img_test(void);
 void PID_control_test(ls_atim_pwm& pwm1,ls_atim_pwm& pwm2,float error);
 int calculate_diffrential(float error);
+float img_return(void);
+
 #endif
