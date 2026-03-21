@@ -27,6 +27,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o.d"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o.d"
+  "CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.o"
+  "CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.o.d"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o.d"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/img_test.cpp.o"

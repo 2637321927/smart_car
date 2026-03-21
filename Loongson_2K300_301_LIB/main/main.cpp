@@ -26,7 +26,7 @@ ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0);
         usleep(100*100);
     }
         */
-img_test();
-
+//img_test();
+lq_encoder_pwm_demo();
     return 0;
 }

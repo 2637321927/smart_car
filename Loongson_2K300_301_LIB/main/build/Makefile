@@ -465,6 +465,30 @@ home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/ex
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.s
 .PHONY : home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.s
 
+home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.o: home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.o
+.PHONY : home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.o
+
+# target to build an object file
+home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.o
+.PHONY : home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.o
+
+home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.i: home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.i
+.PHONY : home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.i
+
+# target to preprocess a source file
+home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.i
+.PHONY : home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.i
+
+home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.s: home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.s
+.PHONY : home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.s
+
+# target to generate assembly for a file
+home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.s
+.PHONY : home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.cpp.s
+
 home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_test.o: home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o
 .PHONY : home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_test.o
 
@@ -1212,6 +1236,9 @@ help:
 	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.o"
 	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.i"
 	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.s"
+	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.o"
+	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.i"
+	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_demo.s"
 	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_test.o"
 	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_test.i"
 	@echo "... home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/example/src/PID_control_test.s"
