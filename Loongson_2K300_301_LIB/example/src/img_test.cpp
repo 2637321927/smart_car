@@ -14,7 +14,7 @@ typedef signed short sint16;
 // 巡线全局变量
 sint16 Longest_White_Column_Left[2];
 sint16 Longest_White_Column_Right[2];
-sint16 Longest_White_Column_Left1[2];
+sint16 Longest_White_Column_Left1[2]; 
 sint16 Longest_White_Column_Right1[2];
 // 巡线边界、中线、丢线标记数组
 sint16 Left_Line[LCDH];    // 每行左边界
@@ -50,6 +50,21 @@ uint8_t Image_Use[60][80];
 
 // 输入：gray_frame - 此时是 160x120 的灰度图 (CV_8UC1)
 // 输出：Image_Use - 压缩成 60x80 的灰度图
+// 获取当前时间戳字符串
+static std::string GetTimestamp()
+{
+    auto now = std::chrono::system_clock::now();
+    auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    time_t t = std::chrono::system_clock::to_time_t(now);
+    tm* tm = localtime(&t);
+
+    std::stringstream ss;
+    ss << std::put_time(tm, "%Y-%m-%d %H:%M:%S") << "." << std::setfill('0') << std::setw(3) << ms.count();
+    return ss.str();
+}
+
+
+
 void compressimage(const cv::Mat& gray_frame)
 {
     int i, j;
@@ -354,6 +369,63 @@ void get_erzhiimage(void)
     }
   }
 }
+void lq_ncnn_photo_demo(cv::Mat& image,std::string& a)
+{
+    
+    // 模型配置
+    std::string model_param = "tiny_classifier_fp32.ncnn.param";
+    std::string model_bin   = "tiny_classifier_fp32.ncnn.bin";
+    int input_width    = 60;
+    int input_height   = 60;
+    
+    // 类别标签（顺序必须与训练时一致）
+    std::vector<std::string> labels = {"supplies", "vehicle", "weapon"};
+    
+    // 归一化参数（ImageNet标准）
+    float mean_vals[3] = {123.675f, 116.28f, 103.53f};
+    float norm_vals[3] = {0.01712475f, 0.017507f, 0.01742919f};
+    // =================================================
+
+    // 创建NCNN对象并配置
+    LQ_NCNN ncnn;
+    ncnn.SetModelPath(model_param, model_bin);
+    ncnn.SetInputSize(input_width, input_height);
+    ncnn.SetLabels(labels);
+    ncnn.SetNormalize(mean_vals, norm_vals);
+
+    // 初始化模型
+    
+   // printf("[%s] 正在加载模型...\n", GetTimestamp().c_str());
+    if (!ncnn.Init()) {
+        printf("[%s] 模型加载失败!\n", GetTimestamp().c_str());
+        return ;
+    }
+   // printf("[%s] 模型加载成功!\n\n", GetTimestamp().c_str());
+
+    //printf("[%s] 图片尺寸: %d x %d\n\n", GetTimestamp().c_str(), image.cols, image.rows);
+    
+    // 注意: OpenCV读取的是BGR格式，但在推理时会自动转换为RGB格式以匹配训练时的输入
+    // 训练使用PIL读取的RGB格式，因此需要色彩空间转换
+
+    // 推理
+  //  printf("[%s] 开始推理...\n", GetTimestamp().c_str());
+    auto start = std::chrono::high_resolution_clock::now();
+    std::string result = ncnn.Infer(image);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+        a=result.c_str();
+    // 输出结果
+    /*
+    printf("\n========================================\n");
+    printf("推理结果: %s\n", result.c_str());
+    printf("推理耗时: %ld ms\n", duration.count());
+    printf("========================================\n");
+    */
+    return ;
+}
+
+
 void Longest_White_Column(void)//最长白列巡线
 {
 
@@ -563,9 +635,8 @@ void Longest_White_Column(void)//最长白列巡线
  ********************************************************************************/
 void img_test(void)
 {
-      pwm1.atim_pwm_disable();
-pwm2.atim_pwm_disable();
-return;
+      //pwm1.atim_pwm_disable();
+//pwm2.atim_pwm_disable();
     printf("=========================================\r\n");
     printf("  UDP Camera + Encoder Stream\r\n");
     printf("=========================================\r\n");
@@ -599,23 +670,59 @@ return;
     while (true) {
         // ===================== 获取并发送图像 =====================
         // 获取原始图像
-        cv::Mat gray_frame = cam.get_gray_frame();
-        cv::flip(gray_frame, gray_frame, -1); //颠倒上下左右
+       // cv::Mat gray_frame = cam.get_gray_frame();
+       cv::Mat frame = cam.get_raw_frame();
+               cv::flip(frame, frame, -1); //颠倒上下左右
+       // 原图 img
+int cut_border = 120; // 裁掉边缘的宽度
+
+
+// 裁剪规则：左、上、右 裁剪，底部不裁剪
+//图像识别部分
+/*
+cv::Mat crop_img = frame(
+    cv::Rect(
+        cut_border+50,    // 左边裁掉 cut_border 像素
+        cut_border,    // 上边裁掉 cut_border 像素
+        frame.cols - 2 * cut_border,  // 宽度 = 总宽 - 左 - 右
+        frame.rows - cut_border       // 高度 = 总高 - 上边（底部不动）
+    )
+);
+// 裁剪后的图
+        cv::Mat image;
+           cv::resize(crop_img, image, cv::Size(60, 60), 0, 0, cv::INTER_NEAREST);
+           std::string a;
+            lq_ncnn_photo_demo(image,a);
+            int rows = crop_img.rows;
+        int cols = image.cols;
+        int x1 = (cols - 20) / 2;
+        int y1 = (rows - 20) / 2;
+        std::cout<<2<<a<<1<<std::endl;
+        if(a=="vehicle"){
+        cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scalar(0, 255, 0), 2);//green
+        }
+        else if(a=="weapon"){
+cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scalar(0, 0, 255), 2);//red
+        }
+        else{
+cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scalar(255, 0, 0), 2);//blue
+        }
+*/
       //  cv::Mat frame = cam.get_binary_frame();
-        if (gray_frame.empty()) {
+        if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
             continue;
         }
-        //cv::Mat gray_frame;
+        cv::Mat gray_frame;
 
-       // cv::cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
+       cv::cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
         compressimage(gray_frame);  // 压缩
         Ostu();      
         Longest_White_Column();
-        PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
-        printf("【全行列中线】\n");
+      //  PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
+      //  printf("【全行列中线】\n");
 //for(int i=0; i<LCDH; i++){
-    printf("行%2d: %d\n", 40, Mid_Line[i]);
+ //   printf("行%2d: %d\n", 40, Mid_Line[i]);
 //}
            cv::Mat binary_mat(LCDH, LCDW, CV_8UC1, Image_Use1);
 
@@ -656,7 +763,7 @@ for (int i = 0; i < LCDH; i++) {
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time).count();
         if (elapsed >= 1) {
             float fps = (float)frame_count / (float)elapsed;
-            printf("FPS: %.2f\r\n", fps);
+           // printf("FPS: %.2f\r\n", fps);
             frame_count = 0;
             encoder_count = 0;
             start_time = now;
@@ -710,7 +817,7 @@ float img_return(void)
         if (sent < 0) {
             printf("ERROR: Failed to send image\r\n");
         }
-printf("%d\n",Mid_Line[20]);
-return Mid_Line[20];
+    printf("%d\n",Mid_Line[20]);
+    return Mid_Line[20];
     
 }
