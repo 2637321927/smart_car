@@ -24,5 +24,5 @@ void img_test(void);
 void PID_control_test(ls_atim_pwm& pwm1,ls_atim_pwm& pwm2,float error);
 int calculate_diffrential(float error);
 float img_return(void);
-
+void lq_ncnn_photo_demo(cv::Mat& image,std::string& a);
 #endif
