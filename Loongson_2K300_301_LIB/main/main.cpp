@@ -22,20 +22,24 @@ void handle_exit(int sig)
     // 标记需要退出
     need_exit = true;
 }
+// 全局变量，保存原来的终端模式
 int main()
 {
-   img_test();
+//lq_atim_pwm_demo();
+//lq_ips20_demo();
+
+  img_test();
 //lq_udp_img_trans_demo();
 //PID_control_test();
 //lq_atim_pwm_demo();
  //signal(SIGINT, handle_exit);  // 绑定 Ctrl+C
     uint16_t dis;
 
-    lq_i2c_vl53l0x vl53l0x;
+  //  lq_i2c_vl53l0x vl53l0x;
 
 //img_test();
 //lq_encoder_pwm_demo();
-
+//lq_encoder_pwm_demo();
 
 //below is the test demo of camera_PD control
 

@@ -1,3 +1,3 @@
-/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/main/build/CMakeFiles/main.dir
-/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/main/build/CMakeFiles/edit_cache.dir
-/home/suncongsun/Desktop/cnm/Loongson_2k300_301_Library/Loongson_2K300_301_LIB/main/build/CMakeFiles/rebuild_cache.dir
+/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles/main.dir
+/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles/edit_cache.dir
+/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles/rebuild_cache.dir

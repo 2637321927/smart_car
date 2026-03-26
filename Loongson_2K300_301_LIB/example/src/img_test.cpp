@@ -47,7 +47,36 @@ const uint8_t     JPEG_QUALITY = 100;
 // 全局数组：存储压缩后的 60x80 灰度图
 // 注意：LCDH 和 LCDW 必须定义为 60 和 80
 uint8_t Image_Use[60][80]; 
+static struct termios old_tio;
 
+// 开启 非阻塞输入
+void set_terminal_nonblock() {
+    struct termios new_tio;
+    tcgetattr(STDIN_FILENO, &old_tio);
+    new_tio = old_tio;
+
+    // 关闭 行缓冲 + 关闭回显
+    new_tio.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+}
+
+// 恢复终端（非常重要！）
+void reset_terminal() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
+}
+
+// 判断：有没有按键输入？
+bool has_input() {
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(STDIN_FILENO, &fds);
+
+    // 超时 0 → 不等待，直接返回
+    struct timeval tv = {0, 0};
+    select(STDIN_FILENO + 1, &fds, nullptr, nullptr, &tv);
+
+    return FD_ISSET(STDIN_FILENO, &fds);
+}
 // 输入：gray_frame - 此时是 160x120 的灰度图 (CV_8UC1)
 // 输出：Image_Use - 压缩成 60x80 的灰度图
 // 获取当前时间戳字符串
@@ -65,12 +94,12 @@ static std::string GetTimestamp()
 
 
 
-void compressimage(const cv::Mat& gray_frame)
+void compressimage(const cv::Mat& gray_frame )
 {
     int i, j;
     // 计算缩放比例，这里 Mh/Mw 是原图尺寸，Lh/Lw 是目标尺寸
-    const float div_h = (float)CAM_HEIGHT / LCDH;
-    const float div_w = (float)CAM_WIDTH / LCDW;
+    const float div_h = (float)gray_frame.rows / LCDH;
+    const float div_w = (float)gray_frame.cols / LCDW;
 
     for (i = 0; i < LCDH; i++)
     {
@@ -633,6 +662,10 @@ void Longest_White_Column(void)//最长白列巡线
  * @note    测试内容为 UDP 图像传输，使用OpenCV 读取摄像头图像，并使用 UDP 发送图像数据.
  * @note    使用时需搭配对应上位机 LoongHost.exe.
  ********************************************************************************/
+void cut(void){
+          pwm1.atim_pwm_disable();
+pwm2.atim_pwm_disable();
+}
 void img_test(void)
 {
       //pwm1.atim_pwm_disable();
@@ -668,18 +701,27 @@ void img_test(void)
     printf("Start streaming... Press Ctrl+C to stop\r\n");
 
     while (true) {
+        if (has_input()) {
+            char c = getchar();
+            if (c == 'q') {
+                std::cout<<"caonima"<<std::endl;
+                cut();
+                 while (getchar() != EOF); 
+                break;
+            } 
+        }
         // ===================== 获取并发送图像 =====================
         // 获取原始图像
        // cv::Mat gray_frame = cam.get_gray_frame();
        cv::Mat frame = cam.get_raw_frame();
                cv::flip(frame, frame, -1); //颠倒上下左右
        // 原图 img
-int cut_border = 120; // 裁掉边缘的宽度
+int cut_border = 50; // 裁掉边缘的宽度
 
 
 // 裁剪规则：左、上、右 裁剪，底部不裁剪
 //图像识别部分
-/*
+
 cv::Mat crop_img = frame(
     cv::Rect(
         cut_border+50,    // 左边裁掉 cut_border 像素
@@ -688,6 +730,7 @@ cv::Mat crop_img = frame(
         frame.rows - cut_border       // 高度 = 总高 - 上边（底部不动）
     )
 );
+/*
 // 裁剪后的图
         cv::Mat image;
            cv::resize(crop_img, image, cv::Size(60, 60), 0, 0, cv::INTER_NEAREST);
@@ -715,11 +758,12 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
         }
         cv::Mat gray_frame;
 
-       cv::cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
+       cv::cvtColor(crop_img, gray_frame, cv::COLOR_BGR2GRAY);
         compressimage(gray_frame);  // 压缩
         Ostu();      
         Longest_White_Column();
-      //  PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
+        std::cout<<Mid_Line[40]- 40<<std::endl;
+      // PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
       //  printf("【全行列中线】\n");
 //for(int i=0; i<LCDH; i++){
  //   printf("行%2d: %d\n", 40, Mid_Line[i]);
@@ -747,6 +791,7 @@ for (int i = 0; i < LCDH; i++) {
     }
 }
     // 放大一下，不然60x80太小了A，看不见
+    std::cout<<color_mat.cols<<std::endl;
     cv::Mat big_mat;
    // cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
     cv::resize(color_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
@@ -769,6 +814,9 @@ for (int i = 0; i < LCDH; i++) {
             start_time = now;
         }
     }
+    std::cout<<"caonissma"<<std::endl;
+     reset_terminal(); // 必须恢复终端！
+     std::cout<<"caonimssa"<<std::endl;
 }
 float img_return(void)
 {

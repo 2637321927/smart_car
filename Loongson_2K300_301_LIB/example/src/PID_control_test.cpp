@@ -35,6 +35,7 @@ void PID_control_test(ls_atim_pwm& pwm1,ls_atim_pwm& pwm2,float error)
      int diffrential = calculate_diffrential(error);
      int pwm1_duty1 = (500 + diffrential < 1000) ? (500+ diffrential) : 1000;//从1000开始，差分输入增加pwm1的占空比,并且做了限幅（不得大于5000）
       int pwm2_duty1 = (500 - diffrential > 0) ? (500 - diffrential) : 0;//从1000开始，差分输入减少pwm2的占空比，并且做了限幅（不得小于0）
+      std::cout<<pwm1_duty1<<"       "<<pwm2_duty1<<std::endl;
       pwm1.atim_pwm_set_duty(pwm1_duty1);
       pwm2.atim_pwm_set_duty(pwm2_duty1);
 }
