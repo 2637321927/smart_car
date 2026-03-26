@@ -1,29 +1,84 @@
-include "lq_all_demo.hpp"
+#include "lq_all_demo.hpp"
 
 /********************************************************************************
- * @brief   test for colse circle control 
- * @param   none.
- * @return  none.
- * @note    input target speed (max 10000),adjust the speed of motor and control it with PI
-            
+ * @brief   电机转速PD闭环控制
+ * @param   目标转速RPS，当前测速值RPS
+ * @return  PWM调整量
+ * @note    PD算法，带抗噪微分，固定周期调用
  ********************************************************************************/
- int calculate_diffrential(float error)//给我误差值，给你差分输入值
-        {        
-        float Diffrential=0;//diffrencial 差分输入，即输出轮胎的转速差
-       float P = 50; // 比例系数
-       float D= 0.1; // 差分系数
-       volatile static float error_current,error_last;// 当前误差和上一次误差
-       error_current=error;//当前误差
-       
-       Diffrential=error_current*P+ (error_current-error_last)*D;//PD控制算法
-       error_last=error_current;//更新一下误差
-         return Diffrential;//返回差分输入
-        }
-void close_circle_control (ls_atim_pwm& pwm1,ls_atim_pwm& pwm2,&float speed_of_motor1,&float speed_of_motor2,int target_speed_of_motor1_RPS,int target_speed_of_motor2_RPS)
+
+void calculate_differential_for_motor(
+    const float& speed_of_motor1, const float& speed_of_motor2,
+    const int target_speed_of_motor1_RPS, const int target_speed_of_motor2_RPS,
+    int& pwm1_plusduty, int& pwm2_plusduty)
 {
-     int diffrential = calculate_diffrential(error);
-     int pwm1_duty1 = (500 + diffrential < 1000) ? (500+ diffrential) : 1000;//从1000开始，差分输入增加pwm1的占空比,并且做了限幅（不得大于5000）
-      int pwm2_duty1 = (500 - diffrential > 0) ? (500 - diffrential) : 0;//从1000开始，差分输入减少pwm2的占空比，并且做了限幅（不得小于0）
-      pwm1.atim_pwm_set_duty(pwm1_duty1);
-      pwm2.atim_pwm_set_duty(pwm2_duty1);
+    // PD参数
+    const float P = 1.0f;
+    const float D = 0.1f;
+
+    // 静态变量：保存上一次误差（函数内持久化）
+    static float error_last1 = 0.0f;
+    static float error_last2 = 0.0f;
+
+    // 计算当前误差（目标转速 - 当前转速，单位必须统一：RPS）
+    const float error_current1 = target_speed_of_motor1_RPS - speed_of_motor1;
+    const float error_current2 = target_speed_of_motor2_RPS - speed_of_motor2;
+
+    // PD控制算法
+    pwm1_plusduty = error_current1 * P + (error_current1 - error_last1) * D;
+    pwm2_plusduty = error_current2 * P + (error_current2 - error_last2) * D;
+
+    // 更新上一次误差
+    error_last1 = error_current1;
+    error_last2 = error_current2;
+
+    printf("speed of motor1:%fspeed of motor2 %f",speed_of_motor1,speed_of_motor2);
+}
+
+/********************************************************************************
+ * @brief   闭环控制主函数
+ * @param   pwm1/pwm2: PWM驱动对象
+ *          speed_of_motor1/2: 当前电机转速（输入）
+ *          target_speed1/2: 目标转速（输入）
+ ********************************************************************************/
+
+void close_circle_control(
+    ls_atim_pwm& pwm1,
+    ls_atim_pwm& pwm2,
+    float& speed_of_motor1,
+    float& speed_of_motor2,
+    int target_speed_of_motor1_RPS,
+    int target_speed_of_motor2_RPS)
+{
+    // ===================== 核心修改 =====================
+    // 静态变量：保存当前PWM占空比（闭环控制的核心！）
+    static int current_pwm1 = 0;
+    static int current_pwm2 = 0;
+
+    // PWM调整量（全变量初始化）
+    int pwm1_plusduty = 0;
+    int pwm2_plusduty = 0;
+
+    // 计算PD调整量
+    calculate_differential_for_motor(
+        speed_of_motor1, speed_of_motor2,
+        target_speed_of_motor1_RPS, target_speed_of_motor2_RPS,
+        pwm1_plusduty, pwm2_plusduty);
+
+    // PD调整量 叠加到 当前PWM占空比
+    current_pwm1 += pwm1_plusduty;
+    current_pwm2 += pwm2_plusduty;
+
+    // ===================== 安全保护 =====================
+    // PWM限幅
+    const int MAX_PWM = 10000;
+    const int MIN_PWM = 0;
+    if (current_pwm1 > MAX_PWM) current_pwm1 = MAX_PWM;
+    if (current_pwm1 < MIN_PWM) current_pwm1 = MIN_PWM;
+    if (current_pwm2 > MAX_PWM) current_pwm2 = MAX_PWM;
+    if (current_pwm2 < MIN_PWM) current_pwm2 = MIN_PWM;
+
+    // ===================== 输出PWM =====================
+    pwm1.atim_pwm_set_duty(current_pwm1);
+    pwm2.atim_pwm_set_duty(current_pwm2);
 }
