@@ -26,4 +26,11 @@ int calculate_diffrential(float error);
 float img_return(void);
 void lq_ncnn_photo_demo(cv::Mat& image,std::string& a);
 void cut(void);
+void close_circle_control(
+    ls_atim_pwm& pwm1,
+    ls_atim_pwm& pwm2,
+    float& speed_of_motor1,
+    float& speed_of_motor2,
+    int target_speed_of_motor1_RPS,
+    int target_speed_of_motor2_RPS);
 #endif

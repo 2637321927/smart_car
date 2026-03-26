@@ -715,7 +715,8 @@ int expected_speed_of_motor1_rps = 0;
 int expected_speed_of_motor2_rps = 0;
 const int MAX_SPEED = 300;
 const int MIN_SPEED = 0;
-
+    pwm1.atim_pwm_set_duty(0);
+    pwm2.atim_pwm_set_duty(0);
 printf("请输入电机1、电机2目标转速(rps，空格分隔)：");
 // 读取两个int型数据
 int res = scanf("%d %d", &expected_speed_of_motor1_rps, &expected_speed_of_motor2_rps);
@@ -816,7 +817,7 @@ close_circle_control(
    speed_of_motor1,speed_of_motor2,
     expected_speed_of_motor1_rps,
     expected_speed_of_motor2_rps
-    )
+    );
     
 
 

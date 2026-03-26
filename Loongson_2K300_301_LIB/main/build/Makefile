@@ -489,30 +489,6 @@ home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.s
 .PHONY : home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.s
 
-home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.o: home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.o
-.PHONY : home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.o
-
-# target to build an object file
-home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.o
-.PHONY : home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.o
-
-home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.i: home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.i
-.PHONY : home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.i
-
-# target to preprocess a source file
-home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.i
-.PHONY : home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.i
-
-home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.s: home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.s
-.PHONY : home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.s
-
-# target to generate assembly for a file
-home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.s
-.PHONY : home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.cpp.s
-
 home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.o: home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o
 .PHONY : home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.o
 
@@ -1263,9 +1239,6 @@ help:
 	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.o"
 	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.i"
 	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.s"
-	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.o"
-	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.i"
-	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle.s"
 	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.o"
 	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.i"
 	@echo "... home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.s"
