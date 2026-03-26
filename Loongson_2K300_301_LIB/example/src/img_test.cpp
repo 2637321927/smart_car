@@ -11,6 +11,11 @@ ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
 ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0); 
 typedef signed short sint16;
 
+
+//encoder
+ls_encoder_pwm enc1(ENC_PWM0_PIN64, PIN_72);
+ls_encoder_pwm enc2(ENC_PWM1_PIN65, PIN_73);
+
 // 巡线全局变量
 sint16 Longest_White_Column_Left[2];
 sint16 Longest_White_Column_Right[2];
@@ -700,6 +705,42 @@ void img_test(void)
 
     printf("Start streaming... Press Ctrl+C to stop\r\n");
 
+
+//轮胎pd调速测试：输入你想的转速
+
+// 轮胎PD调速：输入目标转速（纯输入板块）
+int expected_speed_of_motor1_rps = 0;
+int expected_speed_of_motor2_rps = 0;
+const int MAX_SPEED = 300;
+const int MIN_SPEED = 0;
+
+printf("请输入电机1、电机2目标转速(rps，空格分隔)：");
+// 读取两个int型数据
+int res = scanf("%d %d", &expected_speed_of_motor1_rps, &expected_speed_of_motor2_rps);
+
+// 合法性判断
+if (res == 2) 
+{
+    if (expected_speed_of_motor1_rps >= MIN_SPEED && expected_speed_of_motor1_rps <= MAX_SPEED &&
+        expected_speed_of_motor2_rps >= MIN_SPEED && expected_speed_of_motor2_rps <= MAX_SPEED)
+    {
+        printf("输入正确！电机1：%d，电机2：%d\n", expected_speed_of_motor1_rps, expected_speed_of_motor2_rps);
+        // 这里可以直接调用你的闭环控制函数
+    }
+    else
+    {
+        printf("输入错误：转速超出范围！\n");
+    }
+}
+else
+{
+    printf("输入错误：请输入两个整数！\n");
+    fflush(stdin); // 清空输入缓存
+}
+
+
+
+
     while (true) {
         if (has_input()) {
             char c = getchar();
@@ -762,8 +803,22 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
         compressimage(gray_frame);  // 压缩
         Ostu();      
         Longest_White_Column();
-        std::cout<<Mid_Line[40]- 40<<std::endl;
-      // PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
+       // std::cout<<Mid_Line[40]- 40<<std::endl; 
+     //  PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
+
+//以下开始测试轮胎闭环控制
+float speed_of_motor1=enc1.encoder_get_count();
+float speed_of_motor2=enc2.encoder_get_count();
+close_circle_control(
+    pwm1,pwm2,
+   speed_of_motor1,speed_of_motor2,
+    expected_speed_of_motor1_rps,
+    expected_speed_of_motor2_rps
+    )
+    
+
+
+
       //  printf("【全行列中线】\n");
 //for(int i=0; i<LCDH; i++){
  //   printf("行%2d: %d\n", 40, Mid_Line[i]);
