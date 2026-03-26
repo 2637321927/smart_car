@@ -36,7 +36,9 @@ sint16 Search_Stop_Line;
 // 每列白色像素统计
 // ====================
 sint16 White_Column[LCDW]; 
-const std::string TARGET_IP    = "192.168.43.213";
+const std::string TARGET_IP    = "192.168.43.146";
+//192.168.43.146 huawei
+//192.168.43.213 lianxiang
 // UDP目标端口
 const uint16_t    TARGET_PORT  = 8080;
 // 摄像头参数
