@@ -1,7 +1,7 @@
 #include "lq_all_demo.hpp"
 
-ls_atim_pwm pwm1_test(ATIM_PWM0_PIN81, 100, 0);
-ls_atim_pwm pwm2_test(ATIM_PWM1_PIN82, 100, 0); 
+//ls_atim_pwm pwm1_test(ATIM_PWM0_PIN81, 50, 0);
+//ls_atim_pwm pwm2_test(ATIM_PWM1_PIN82, 50, 0); 
 
 //encoder
 ls_encoder_pwm enc1_test(ENC_PWM0_PIN64, PIN_72);
@@ -13,8 +13,8 @@ int expected_speed_of_motor2_pwm=0;
 void input_speed(int&expected_speed_of_motor1_rps,int& expected_speed_of_motor2_rps){
     const int MAX_SPEED = 9500;
 const int MIN_SPEED = 0;
-    pwm1_test.atim_pwm_set_duty(0);
-    pwm2_test.atim_pwm_set_duty(0);
+    pwm1.atim_pwm_set_duty(0);
+    pwm2.atim_pwm_set_duty(0);
 printf("请输入电机1、电机2目标转速(pwm，空格分隔)：");
 // 读取两个int型数据
 int res = scanf("%d %d", &expected_speed_of_motor1_rps, &expected_speed_of_motor2_rps);
@@ -40,21 +40,21 @@ else
 }}
 
 
-void test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_motor2_pwm)
+void  test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_motor2_pwm)
 { 
     while(1){
-        usleep(100);
+        usleep(1000);
 
 
 
-pwm1_test.atim_pwm_set_duty(expected_speed_of_motor1_pwm);
-pwm2_test.atim_pwm_set_duty(expected_speed_of_motor2_pwm);
+pwm1.atim_pwm_set_duty(expected_speed_of_motor1_pwm);
+pwm2.atim_pwm_set_duty(expected_speed_of_motor2_pwm);
 
-int encoder_1=enc1_test.encoder_get_count();
+float encoder_1=enc1_test.encoder_get_count();
 
-int encoder_2=enc2_test.encoder_get_count();
+float encoder_2=enc2_test.encoder_get_count();
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
-printf("expected speed :%f:%f\n speed %f  %f\n", 
+printf("expected speed :%d:%d\n speed %f  %f\n", 
        expected_speed_of_motor1_pwm,
        expected_speed_of_motor2_pwm,
        encoder_1,

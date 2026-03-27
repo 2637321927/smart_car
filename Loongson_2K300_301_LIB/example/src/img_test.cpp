@@ -8,13 +8,8 @@ typedef signed short       sint16;  // 16位 有符号  <-- 你要的
 // 目标IP地址（UDP接收端）
 uint8_t otsuThreshold(uint8_t *image, uint16_t col, uint16_t row);
 typedef signed short sint16;
-
-ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 9999);
-ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 9999); 
-
 //encoder
-ls_encoder_pwm enc1(ENC_PWM0_PIN64, PIN_72);
-ls_encoder_pwm enc2(ENC_PWM1_PIN65, PIN_73);
+
 
 // 巡线全局变量
 sint16 Longest_White_Column_Left[2];

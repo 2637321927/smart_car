@@ -4,6 +4,10 @@
 #include "lq_drv_inc.hpp"
 #include "lq_app_inc.hpp"
 #include "lq_common.hpp"
+extern ls_atim_pwm pwm1;
+extern ls_atim_pwm pwm2;
+extern ls_encoder_pwm enc1;
+extern ls_encoder_pwm enc2;
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试
 void lq_gpio_input_demo(void);      // GPIO 输入模式测试
 void lq_pwm_demo(void);             // PWM 输出模式测试
