@@ -28,7 +28,7 @@ int main()
 //lq_atim_pwm_demo();
 //lq_ips20_demo();
 
-  img_test();
+ img_test();
 //lq_udp_img_trans_demo();
 //PID_control_test();
 //lq_atim_pwm_demo();
@@ -43,13 +43,21 @@ int main()
 
 //below is the test demo of camera_PD control
 
-float error_expected=40;
-float error_value=0;
+
 //while(!need_exit){
 //error_value=img_return();
 //img_test();
 //PID_control_test(pwm1,pwm2,error_value- error_expected);
 //}
+
+int expected_speed_of_motor1_pwm=0;
+int expected_speed_of_motor2_pwm=0;
+
+input_speed(expected_speed_of_motor1_pwm,expected_speed_of_motor2_pwm);
+
+test_enc_and_motor(expected_speed_of_motor1_pwm,expected_speed_of_motor2_pwm);
+
+
 
 
 

@@ -33,6 +33,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o.d"
   "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o"
   "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o.d"
+  "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o"
+  "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o.d"
   "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o"
   "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o.d"
   "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o"

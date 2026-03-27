@@ -685,6 +685,20 @@ CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_te
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.s"
 	/home/fdc/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.s
 
+CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o: /home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o"
+	/home/fdc/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o -c /home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i"
+	/home/fdc/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp > CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s"
+	/home/fdc/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s
+
 # Object files for target main
 main_OBJECTS = \
 "CMakeFiles/main.dir/main.cpp.o" \
@@ -730,7 +744,8 @@ main_OBJECTS = \
 "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o" \
 "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o" \
 "CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o" \
-"CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o"
+"CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o"
 
 # External object files for target main
 main_EXTERNAL_OBJECTS =
@@ -779,9 +794,10 @@ main: CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/
 main: CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o
 main: CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o
 main: CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o
 main: CMakeFiles/main.dir/build.make
 main: CMakeFiles/main.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/fdc/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Linking CXX executable main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/fdc/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Linking CXX executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
