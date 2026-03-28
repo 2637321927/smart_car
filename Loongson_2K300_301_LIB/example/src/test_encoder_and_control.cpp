@@ -4,8 +4,7 @@
 //ls_atim_pwm pwm2_test(ATIM_PWM1_PIN82, 50, 0); 
 
 //encoder
-ls_encoder_pwm enc1_test(ENC_PWM0_PIN64, PIN_72);
-ls_encoder_pwm enc2_test(ENC_PWM1_PIN65, PIN_73);
+
 
 int expected_speed_of_motor1_pwm=0;
 int expected_speed_of_motor2_pwm=0;
@@ -72,15 +71,15 @@ else
 
 void  test_enc_and_motor_rps(int expected_speed_of_motor1_rps,int expected_speed_of_motor2_rps)
 { 
-    while(1){
-        usleep(1000);
+    
+       
 
 
 //pwm1.atim_pwm_set_duty(expected_speed_of_motor1_rps);
 //pwm2.atim_pwm_set_duty(expected_speed_of_motor2_rps);
 
-float encoder_1=std::fabs(enc1_test.encoder_get_count());//give it abs in case of negative num
-float encoder_2=std::fabs(enc2_test.encoder_get_count());
+float encoder_1=std::fabs(enc1.encoder_get_count());//give it abs in case of negative num
+float encoder_2=std::fabs(enc2.encoder_get_count());
 
 close_circle_control(
     encoder_1,
@@ -95,7 +94,7 @@ printf("expected speed :%d:%d\n speed %f  %f\n",
        expected_speed_of_motor2_rps,
        encoder_1,
        encoder_2);
-    }
+    
 }
 
 
@@ -110,8 +109,8 @@ void  test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_
 pwm1.atim_pwm_set_duty(expected_speed_of_motor1_pwm);
 pwm2.atim_pwm_set_duty(expected_speed_of_motor2_pwm);
 
-float encoder_1=std::abs(enc1_test.encoder_get_count());//give it abs in case of negative num
-float encoder_2=std::abs(enc2_test.encoder_get_count());
+float encoder_1=std::abs(enc1.encoder_get_count());//give it abs in case of negative num
+float encoder_2=std::abs(enc2.encoder_get_count());
 
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 

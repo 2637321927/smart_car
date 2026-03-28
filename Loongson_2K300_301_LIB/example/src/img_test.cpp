@@ -1,7 +1,6 @@
 #include "lq_all_demo.hpp"
 typedef signed short       sint16;  // 16位 有符号  <-- 你要的
-#define LCDH    60   // 图像高度（行）
-#define LCDW    80   // 图像宽度（列）
+
 // =====================================================
 // 配置参数 - 根据需要修改
 // =====================================================
@@ -775,10 +774,11 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
         compressimage(gray_frame);  // 压缩
         Ostu();      
         Longest_White_Column();
-       // std::cout<<Mid_Line[40]- 40<<std::endl; 
-     //  PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
+       // std::cout<<Mid_Line[40]<<std::endl; 
 
 
+     /*------------below begin pid test-------------------*/
+PID_control_test(Mid_Line[40]);
 
 
       //  printf("【全行列中线】\n");
