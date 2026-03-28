@@ -31,12 +31,12 @@ float img_return(void);
 void lq_ncnn_photo_demo(cv::Mat& image,std::string& a);
 void cut(void);
 void close_circle_control(
-    ls_atim_pwm& pwm1,
-    ls_atim_pwm& pwm2,
     float& speed_of_motor1,
     float& speed_of_motor2,
     int target_speed_of_motor1_RPS,
     int target_speed_of_motor2_RPS);
     void input_speed(int&expected_speed_of_motor1_rps,int& expected_speed_of_motor2_rps);
     void test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_motor2_pwm);
+    void input_speed_rps(int&expected_speed_of_motor1_rps,int& expected_speed_of_motor2_rps);
+    void  test_enc_and_motor_rps(int expected_speed_of_motor1_rps,int expected_speed_of_motor2_rps);
 #endif

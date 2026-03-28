@@ -28,11 +28,13 @@ void calculate_differential_for_motor(
     pwm1_plusduty = error_current1 * P + (error_current1 - error_last1) * D;
     pwm2_plusduty = error_current2 * P + (error_current2 - error_last2) * D;
 
+    printf("P1:%f  D1:%f\n",error_current1 * P ,(error_current1 - error_last1) * D);
+   printf("P2:%f  D2:%f\n",error_current2 * P ,(error_current2 - error_last2) * D);
     // 更新上一次误差
     error_last1 = error_current1;
     error_last2 = error_current2;
 
-    printf("speed of motor1:%fspeed of motor2 %f",speed_of_motor1,speed_of_motor2);
+    
 }
 
 /********************************************************************************
@@ -43,8 +45,6 @@ void calculate_differential_for_motor(
  ********************************************************************************/
 
 void close_circle_control(
-    ls_atim_pwm& pwm1,
-    ls_atim_pwm& pwm2,
     float& speed_of_motor1,
     float& speed_of_motor2,
     int target_speed_of_motor1_RPS,
@@ -54,7 +54,7 @@ void close_circle_control(
     // 静态变量：保存当前PWM占空比（闭环控制的核心！）
     static int current_pwm1 = 0;
     static int current_pwm2 = 0;
-
+    //std::cout<<"caonima        "<<target_speed_of_motor1_RPS<<"    "<<target_speed_of_motor2_RPS<<std::endl;//test
     // PWM调整量（全变量初始化）
     int pwm1_plusduty = 0;
     int pwm2_plusduty = 0;
