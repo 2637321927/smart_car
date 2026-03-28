@@ -54,12 +54,14 @@ int main()
 //PID_control_test(pwm1,pwm2,error_value- error_expected);
 //}
 
-int expected_speed_of_motor1_pwm=0;
-int expected_speed_of_motor2_pwm=0;
-//pwm1_test.atim_pwm_set_polarity(atim_pwm_polarity_t _pola);
-input_speed(expected_speed_of_motor1_pwm,expected_speed_of_motor2_pwm);
 
-test_enc_and_motor(expected_speed_of_motor1_pwm,expected_speed_of_motor2_pwm);
+
+int expected_speed_of_motor1_rps=0;
+int expected_speed_of_motor2_rps=0;
+//pwm1_test.atim_pwm_set_polarity(atim_pwm_polarity_t _pola);
+input_speed_rps(expected_speed_of_motor1_rps,expected_speed_of_motor2_rps);
+
+test_enc_and_motor_rps(expected_speed_of_motor1_rps,expected_speed_of_motor2_rps);//adjust speed
 
 
 //test_enc_and_motor(10,10);
