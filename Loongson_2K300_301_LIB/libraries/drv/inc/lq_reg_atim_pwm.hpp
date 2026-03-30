@@ -85,7 +85,7 @@ public:
     ls_atim_pwm();   // 空构造函数
     ~ls_atim_pwm();  // 析构函数
     // 有参构造函数
-    ls_atim_pwm(atim_pwm_pin_t _pin, uint32_t period, uint32_t duty, atim_pwm_polarity_t _pola = ATIM_PWM_POL_NORMAL);
+    ls_atim_pwm(atim_pwm_pin_t _pin, uint32_t period, uint32_t duty, atim_pwm_polarity_t _pola = ATIM_PWM_POL_INV);
 
 public:
     void atim_pwm_enable(void);     // 使能 ATIM PWM 通道

@@ -7,35 +7,36 @@
  * @note    GPIO 输出测试, 使用引脚 81/82 作为输出引脚, 交替输出高电平和低电平.
             
  ********************************************************************************/
-int calculate_diffrential(float error)//给我误差值，给你差分输入值
+int calculate_diffrential(int error,int expect_error)//给我误差值，给你差分输入值
         {        
         float Diffrential=0;//diffrencial 差分输入，即输出轮胎的转速差
-       float P = 50; // 比例系数
+       float P = 1; // 比例系数
        float D= 0.1; // 差分系数
-       volatile static float error_current,error_last;// 当前误差和上一次误差
-       error_current=error;//当前误差
+       volatile static int error_current,error_last;// 当前误差和上一次误差
+       error_current=error-expect_error;//当前误差
        
        Diffrential=error_current*P+ (error_current-error_last)*D;//PD控制算法
        error_last=error_current;//更新一下误差
+
+       printf("Df_P:%f Df_D %f\n",error_current*P,(error_current-error_last)*D);
          return Diffrential;//返回差分输入
         }
-void PID_control_test(ls_atim_pwm& pwm1,ls_atim_pwm& pwm2,float error)
+void PID_control_test(int error)
 {
 
 
-      //ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
-    // ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0);
-    // 默认极性的构造方式
-    /*自定义极性的构造方式
-    ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 2000, ATIM_PWM_POL_NORMAL);
-    // 拷贝构造使用方法, 调用 pwm3 与调用 pwm1 同效
-    ls_atim_pwm pwm3(pwm1);
-    // 拷贝赋值使用方法, 调用 pwm4 与调用 pwm2 同效
-    ls_atim_pwm pwm4 = pwm2;*/
-     int diffrential = calculate_diffrential(error);
-     int pwm1_duty1 = (500 + diffrential < 1000) ? (500+ diffrential) : 1000;//从1000开始，差分输入增加pwm1的占空比,并且做了限幅（不得大于5000）
-      int pwm2_duty1 = (500 - diffrential > 0) ? (500 - diffrential) : 0;//从1000开始，差分输入减少pwm2的占空比，并且做了限幅（不得小于0）
-      std::cout<<pwm1_duty1<<"       "<<pwm2_duty1<<std::endl;
-      pwm1.atim_pwm_set_duty(pwm1_duty1);
-      pwm2.atim_pwm_set_duty(pwm2_duty1);
+ 
+     int diffrential = calculate_diffrential(error,LCDW /2);
+     int pwm1_duty_rps=expected_speed_of_motor1_rps + diffrential ;
+      int pwm2_duty_rps=expected_speed_of_motor2_rps - diffrential ;
+     if (pwm1_duty_rps<0){pwm1_duty_rps=0;};
+     if (pwm1_duty_rps>200){pwm1_duty_rps=200;};
+     if (pwm2_duty_rps<0){pwm2_duty_rps=0;};
+     if (pwm2_duty_rps>200){pwm2_duty_rps=200;};
+
+     //int pwm1_duty1 = (expected_speed_of_motor1_rps + diffrential < 200) ? (expected_speed_of_motor1_rps + diffrential) : 2000;//从1000开始，差分输入增加pwm1的占空比,并且做了限幅（不得大于5000）
+      //int pwm2_duty1 = (500 - diffrential > 0) ? (500 - diffrential) : 0;//从1000开始，差分输入减少pwm2的占空比，并且做了限幅（不得小于0）
+test_enc_and_motor_rps(pwm1_duty_rps,pwm2_duty_rps);//adjust speed
+
+     
 }

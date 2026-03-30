@@ -1,20 +1,14 @@
 #include "lq_all_demo.hpp"
 typedef signed short       sint16;  // 16位 有符号  <-- 你要的
-#define LCDH    60   // 图像高度（行）
-#define LCDW    80   // 图像宽度（列）
+
 // =====================================================
 // 配置参数 - 根据需要修改
 // =====================================================
 // 目标IP地址（UDP接收端）
 uint8_t otsuThreshold(uint8_t *image, uint16_t col, uint16_t row);
-ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 9000);
-ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 9000); 
 typedef signed short sint16;
-
-
 //encoder
-ls_encoder_pwm enc1(ENC_PWM0_PIN64, PIN_72);
-ls_encoder_pwm enc2(ENC_PWM1_PIN65, PIN_73);
+
 
 // 巡线全局变量
 sint16 Longest_White_Column_Left[2];
@@ -41,7 +35,7 @@ sint16 Search_Stop_Line;
 // 每列白色像素统计
 // ====================
 sint16 White_Column[LCDW]; 
-const std::string TARGET_IP    = "192.168.43.213";
+const std::string TARGET_IP    = "192.168.43.146";
 //192.168.43.146 huawei
 //192.168.43.213 lianxiang
 // UDP目标端口
@@ -161,6 +155,7 @@ uint8_t Thresholds[3] = {0};
 
 // 外部定义的图像数组
 uint8_t Image_Use1[LCDH][LCDW];
+
 
 // ===================== 分块大津 =====================
 void Ostu(void)
@@ -663,6 +658,7 @@ void Longest_White_Column(void)//最长白列巡线
            }
 }
 /********************************************************************************
+ * 
  * @brief   UDP 图像传输测试.
  * @param   none.
  * @return  none.
@@ -673,6 +669,7 @@ void cut(void){
           pwm1.atim_pwm_disable();
 pwm2.atim_pwm_disable();
 }
+
 void img_test(void)
 {
       //pwm1.atim_pwm_disable();
@@ -706,6 +703,15 @@ void img_test(void)
     auto start_time = std::chrono::high_resolution_clock::now();
 
     printf("Start streaming... Press Ctrl+C to stop\r\n");
+
+
+//轮胎pd调速测试：输入你想的转速
+
+// 轮胎PD调速：输入目标转速（纯输入板块）
+
+
+
+
     while (true) {
         if (has_input()) {
             char c = getchar();
@@ -768,9 +774,11 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
         compressimage(gray_frame);  // 压缩
         Ostu();      
         Longest_White_Column();
-        std::cout<<Mid_Line[40]- 40<<std::endl; 
-     //  PID_control_test(pwm1,pwm2,Mid_Line[40]- 40);
+       // std::cout<<Mid_Line[40]<<std::endl; 
 
+
+     /*------------below begin pid test-------------------*/
+PID_control_test(Mid_Line[40]);
 
 
       //  printf("【全行列中线】\n");
