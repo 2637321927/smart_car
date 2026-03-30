@@ -734,14 +734,14 @@ int cut_border = 50; // 裁掉边缘的宽度
 // 裁剪规则：左、上、右 裁剪，底部不裁剪
 //图像识别部分
 
-cv::Mat crop_img = frame(
-    cv::Rect(
-        cut_border+50,    // 左边裁掉 cut_border 像素
-        cut_border,    // 上边裁掉 cut_border 像素
-        frame.cols - 2 * cut_border,  // 宽度 = 总宽 - 左 - 右
-        frame.rows - cut_border       // 高度 = 总高 - 上边（底部不动）
-    )
-);
+cv::Mat crop_img = frame;//(
+  //  cv::Rect(
+      // cut_border+50,    // 左边裁掉 cut_border 像素
+     //   cut_border,    // 上边裁掉 cut_border 像素
+       // frame.cols - 2 * cut_border,  // 宽度 = 总宽 - 左 - 右
+      //  frame.rows - cut_border       // 高度 = 总高 - 上边（底部不动）
+   // )
+//);
 /*
 // 裁剪后的图
         cv::Mat image;
@@ -778,6 +778,9 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
 
 
      /*------------below begin pid test-------------------*/
+
+     
+     printf("Mid_line:%d\n",Mid_Line[40]);
 PID_control_test(Mid_Line[40]);
 
 
@@ -878,7 +881,7 @@ float img_return(void)
     cv::Mat big_mat;
     cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
         // 发送JPEG压缩图像
-        ssize_t sent = udp_client.udp_send_image(big_mat, JPEG_QUALITY);
+        ssize_t sent = udp_client.udp_send_image(frame, JPEG_QUALITY);
         if (sent < 0) {
             printf("ERROR: Failed to send image\r\n");
         }
