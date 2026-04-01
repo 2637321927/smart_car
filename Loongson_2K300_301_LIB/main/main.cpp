@@ -2,13 +2,17 @@
 bool need_exit = false;
 //ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
 //ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0); 
+// Ctrl+C 触发的函数
+//ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
+//ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0); 
 ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 50, 0);
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 50, 0); 
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
 int expected_speed_of_motor1_rps=0;
 int expected_speed_of_motor2_rps=0;
-// Ctrl+C 触发的函数
+lq_udp_client udp_client;
+int mid;
 void handle_exit(int sig)
 {
     printf("\n⚠️  检测到 Ctrl + C，开始安全退出...\n");
@@ -33,8 +37,8 @@ int main()
 {
 //lq_atim_pwm_demo();
 //lq_ips20_demo();
-
-
+input_speed_rps(expected_speed_of_motor1_rps,expected_speed_of_motor2_rps);
+  img_test();
 //lq_udp_img_trans_demo();
 //PID_control_test();
 //lq_atim_pwm_demo();
@@ -56,20 +60,13 @@ int main()
 //PID_control_test(pwm1,pwm2,error_value- error_expected);
 //}
 
+//以下为轮胎控制代码
+//初始化
 
 
 
 
-input_speed_rps(expected_speed_of_motor1_rps,expected_speed_of_motor2_rps);
 
- img_test();
-
-//input_speed_rps(expected_speed_of_motor1_rps,expected_speed_of_motor2_rps);
-
-//test_enc_and_motor_rps(expected_speed_of_motor1_rps,expected_speed_of_motor2_rps);//adjust speed
-
-
-//test_enc_and_motor(10,10);
 
 
 

@@ -10,6 +10,8 @@ extern ls_atim_pwm pwm1;
 extern ls_atim_pwm pwm2;
 extern ls_encoder_pwm enc1;
 extern ls_encoder_pwm enc2;
+ extern  lq_udp_client udp_client;
+ extern int mid;
 extern  int expected_speed_of_motor1_rps;
 extern int expected_speed_of_motor2_rps;
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试

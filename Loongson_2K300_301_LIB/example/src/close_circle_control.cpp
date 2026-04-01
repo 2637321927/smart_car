@@ -13,7 +13,7 @@ void calculate_differential_for_motor(
     int& pwm1_plusduty, int& pwm2_plusduty)
 {
     // PD参数
-    const float P = 6.0f;
+    const float P = 20.0f;
     const float D = 0.1f;
 
     // 静态变量：保存上一次误差（函数内持久化）

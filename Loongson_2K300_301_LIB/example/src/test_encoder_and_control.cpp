@@ -88,7 +88,11 @@ close_circle_control(
     expected_speed_of_motor2_rps);
 
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
-
+       char encoder_str[64];
+        snprintf(encoder_str, sizeof(encoder_str), "ex_rps1:%d,ex_rps2:%d,rps1:%f,rpd2:%f,mid:%d", expected_speed_of_motor1_rps, expected_speed_of_motor2_rps,encoder_1,encoder_2,mid);
+        
+        // 发送编码器数据
+        udp_client.udp_send_string(encoder_str);
 printf("expected speed :%d:%d\n speed %f  %f\n", 
        expected_speed_of_motor1_rps,
        expected_speed_of_motor2_rps,
