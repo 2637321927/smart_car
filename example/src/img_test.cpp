@@ -483,7 +483,7 @@ void lq_ncnn_photo_demo(cv::Mat& image,std::string& a)
 }
 
 
-void Longest_White_Column(void)//最长白列巡线
+void Longest_White_Column(void)//最长白列巡线{}
 {
 
     //compressimage(gray_frame);      //图像压缩，把原始的80*170的图像压缩成60*80的,因为不需要那么多的信息，60*80能处理好的话已经足够
@@ -820,20 +820,27 @@ void Identify(void)
                && y > 0 && Image_Use1[y-2][Right_Line[y]] == 255 && Image_Use1[y-5][Right_Line[y]] == 255)    //右下拐点
             {
                 star=y;
-                for(uint8_t  y=star;y<=(star+20);y++)
+                // 修复：uint8死循环 + 越界，增加边界保护
+                for(int y = star; y <= star+20 && y < LCDH-2; y++)
                 {
                     if(Right_Line[y]<77 && my_abs(Right_Line[y+1]-Right_Line[y])<3
                     && my_abs(Right_Line[y+2]-Right_Line[y])<4)
                     {
                         findr_x=Right_Line[y];
                         findr_y=y;
+
+                        examcount = 0; // 每次清零
                         for(uint8_t  dircount = 0;dircount<5;dircount++)
                         {
                             examr_x=findr_x+directionrd[dircount][0];
                             examr_y=findr_y+directionrd[dircount][1];
-                            if(Image_Use1[examr_y][examr_x]==255)
+                            // 安全检查：防止越界
+                            if(examr_x >=0 && examr_x < LCDW && examr_y >=0 && examr_y < LCDH)
                             {
-                                examcount++;
+                                if(Image_Use1[examr_y][examr_x]==255)
+                                {
+                                    examcount++;
+                                }
                             }
                         }
                         if(examcount >= 4)
@@ -852,28 +859,22 @@ void Identify(void)
                             Last_Right_Down_Point[0]=Right_Down_Point[0];
                             Last_Right_Down_Point[1]=Right_Down_Point[1];
 
-                                Right_Down_Point_finish_flag = 1;
-
+                            Right_Down_Point_finish_flag = 1;
                             break;
                         }
                         else
                         {
                             Right_Down_Point_finish_flag = 0;
                             examcount=0;
-                            //printf("未找到右下拐点");
                         }
                     }
                     if(y>55)
                     {
                         Right_Down_Point_finish_flag=0;
-                        //printf("未找到右下拐点");
                     }
                 }
             }
-
         }
-
-
 
        if(Left_Down_Point_finish_flag == 0)
         {
@@ -881,20 +882,27 @@ void Identify(void)
                && y > 0 && Image_Use1[y-2][Left_Line[y]] == 255 && Image_Use1[y-5][Left_Line[y]] == 255)     //左下拐点
             {
                 star=y;
-                for(uint8_t  y=star;y<=(star+20);y++)
+                // 修复：uint8死循环 + 越界，增加边界保护
+                for(int y = star; y <= star+20 && y < LCDH-2; y++)
                 {
                     if(Left_Line[y]>2 && my_abs(Left_Line[y+1]-Left_Line[y])<3
                        && my_abs(Left_Line[y+2]-Left_Line[y])<4)
                     {
                         findl_x=Left_Line[y];
                         findl_y=y;
+
+                        examcount = 0; // 每次清零
                         for(uint8_t  dircount = 0;dircount<5;dircount++)
                         {
                             examl_x=findl_x+directionld[dircount][0];
                             examl_y=findl_y+directionld[dircount][1];
-                            if(Image_Use1[examl_y][examl_x]==255)
+                            // 安全检查：防止越界
+                            if(examl_x >=0 && examl_x < LCDW && examl_y >=0 && examl_y < LCDH)
                             {
-                                examcount++;
+                                if(Image_Use1[examl_y][examl_x]==255)
+                                {
+                                    examcount++;
+                                }
                             }
                         }
                         if(examcount>=4 )
@@ -903,38 +911,32 @@ void Identify(void)
                             Left_Down_Point[0]=findl_x;
                             Left_Down_Point[1]=findl_y;
                             if(abs( Last_Left_Down_Point[1]-Left_Down_Point[1])<=5)
-                                                       {
-                                                           Last_Left_Down_Point_finish_flag = 1;
-                                                       }
-                                                       else
-                                                           Last_Left_Down_Point_finish_flag = 0;
+                            {
+                                Last_Left_Down_Point_finish_flag = 1;
+                            }
+                            else
+                                Last_Left_Down_Point_finish_flag = 0;
 
-                                                       Last_Left_Down_Point[0]=Left_Down_Point[0];
-                                                       Last_Left_Down_Point[1]=Left_Down_Point[1];
+                            Last_Left_Down_Point[0]=Left_Down_Point[0];
+                            Last_Left_Down_Point[1]=Left_Down_Point[1];
 
-                       Left_Down_Point_finish_flag = 1;
-
+                            Left_Down_Point_finish_flag = 1;
                             break;
                         }
                         else
                         {
                             Left_Down_Point_finish_flag = 0;
                             examcount=0;
-                            //printf("未找到左下拐点");
                         }
                     }
                     if(y>55)
                     {
                         Left_Down_Point_finish_flag=0;
-                        //printf("未找到左下拐点");
                     }
                 }
             }
         }
-
-
     }
-
 
     if(Left_Down_Point_finish_flag==1 && Right_Down_Point_finish_flag==1)
         end=Right_Down_Point[1];
@@ -944,6 +946,7 @@ void Identify(void)
         end=Right_Down_Point[1];
     else
         end=55;
+
     for(uint8_t  y=10;y<=55;y++)
     {
         if(Right_Up_Point_finish_flag == 0)
@@ -952,7 +955,8 @@ void Identify(void)
                     &&Right_Lost_Flag[y+1]==2&&Right_Lost_Flag[y+2]==2&&Right_Lost_Flag[y+3]==2)   //右上拐点
             {
                star=y;
-               for(uint8_t  y=star;y>=(star-20);y--)
+               // 修复：uint8死循环 + 越界，增加边界保护
+               for(int y = star; y >= star-20 && y >= 2; y--)
                {
                    if(Right_Line[y]<77 && my_abs(Right_Line[y-1]-Right_Line[y])<4
                    && my_abs(Right_Line[y-2]-Right_Line[y])<4 && Image_Use1[y][Right_Line[y]-6] == 255
@@ -962,13 +966,19 @@ void Identify(void)
                    {
                        findr_x=Right_Line[y];
                        findr_y=y;
+
+                       examcount = 0; // 每次清零
                        for(uint8_t  dircount = 0;dircount<5;dircount++)
                        {
                            examr_x=findr_x+directionru[dircount][0];
                            examr_y=findr_y+directionru[dircount][1];
-                           if(Image_Use1[examr_y][examr_x]==255)
+                           // 安全检查：防止越界
+                           if(examr_x >=0 && examr_x < LCDW && examr_y >=0 && examr_y < LCDH)
                            {
-                               examcount++;
+                               if(Image_Use1[examr_y][examr_x]==255)
+                               {
+                                   examcount++;
+                               }
                            }
                        }
                        if(examcount>=4 && findr_y >0)
@@ -977,21 +987,6 @@ void Identify(void)
                            Right_Up_Point[0]=findr_x;
                            Right_Up_Point[1]=findr_y;
                            Right_Up_Point_finish_flag = 1;
-                           /*if(Last_Right_Point[1] == 0)
-                           {
-                               Last_Right_Point[1] = Right_Up_Point[1];
-                           }
-                           if(Right_Up_Point[1] < 10)
-                           {
-                               Right_Up_Point[1] = Last_Right_Point[1];
-                               Right_Up_Point_finish_flag = 0;
-                           }
-                           else
-                           {
-                               Right_Up_Point_finish_flag = 1;
-                               Last_Right_Point[1] = Right_Up_Point[1];
-                           }
-                           //findrcount=(int)star-(int)findr_y;*/
                            break;
                        }
                        else
@@ -1005,7 +1000,6 @@ void Identify(void)
                        Right_Up_Point_finish_flag=0;
                        break;
                    }
-
                }
             }
         }
@@ -1016,7 +1010,8 @@ void Identify(void)
                     &&Left_Lost_Flag[y+1]==2&&Left_Lost_Flag[y+2]==2&&Left_Lost_Flag[y+3]==2)     //左上拐点
             {
                 star=y;
-                for(uint8_t  y=star;y>=(star-20);y--)
+                // 修复：uint8死循环 + 越界，增加边界保护
+                for(int y = star; y >= star-20 && y >= 2; y--)
                 {
                     if(Left_Line[y]>2 && my_abs(Left_Line[y-1]-Left_Line[y])<4
                    && my_abs(Left_Line[y-2]-Left_Line[y])<4 && Image_Use1[y][Left_Line[y]+6] == 255
@@ -1026,13 +1021,19 @@ void Identify(void)
                     {
                         findl_x=Left_Line[y];
                         findl_y=y;
+
+                        examcount = 0; // 每次清零
                         for(uint8_t dircount = 0;dircount<5;dircount++)
                         {
                             examl_x=findl_x+directionlu[dircount][0];
                             examl_y=findl_y+directionlu[dircount][1];
-                            if(Image_Use1[examl_y][examl_x]==255)
+                            // 安全检查：防止越界
+                            if(examl_x >=0 && examl_x < LCDW && examl_y >=0 && examl_y < LCDH)
                             {
-                                examcount++;
+                                if(Image_Use1[examl_y][examl_x]==255)
+                                {
+                                    examcount++;
+                                }
                             }
                         }
                         if(examcount>=4 && findl_y > 0)
@@ -1041,21 +1042,6 @@ void Identify(void)
                             Left_Up_Point[0]=findl_x;
                             Left_Up_Point[1]=findl_y;
                             Left_Up_Point_finish_flag = 1;
-                            /*if(Last_Left_Point[1] == 0)
-                            {
-                                Last_Left_Point[1] = Left_Up_Point[1];
-                            }
-                            if(Left_Up_Point[1] < 16)
-                            {
-                                Left_Up_Point[1] = Last_Left_Point[1];
-                                Left_Up_Point_finish_flag = 0;
-                            }
-                            else
-                            {
-
-                                Last_Left_Point[1] = Left_Up_Point[1];
-                            }
-                            findlcount=(int)star-(int)y;*/
                             break;
                         }
                         else
@@ -1069,13 +1055,10 @@ void Identify(void)
                         Left_Up_Point_finish_flag=0;
                         break;
                     }
-
                 }
             }
         }
-
-
-}
+    }
 }
 void Judge_Track_Element(void)
 {
@@ -1089,41 +1072,66 @@ void Judge_Track_Element(void)
     CrossFlag = 0;
     RoundLeftFlag = 0;
     RoundRightFlag = 0;
-
-    //=====================================================================
-    // 【1】判断 十字路口
-    // 特征：双边大量丢线 + 连续性都很差 + 赛道很宽
-    //=====================================================================
-    if( Both_Lost_Time > 30          // 很多行双边都丢线
-     && Road_Wide[LCDH-10] > 55       // 近处赛道特别宽
-     && conti_left != 0 && conti_right != 0 )  // 左右线都不连续
+    // ==============================================
+    // 【1】十字路口判断（更稳定）
+    // ==============================================
+    if( Both_Lost_Time > 25                // 双边大量丢线
+     && Road_Wide[LCDH-10] > 40            // 赛道变宽
+     && Road_Wide[LCDH-20] > 40
+     && conti_left !=0 && conti_right !=0  // 左右都不连续
+     && !Left_Down_Point_finish_flag       // 没有单侧拐点
+     && !Right_Down_Point_finish_flag )
     {
         CrossFlag = 1;
     }
 
-    //=====================================================================
-    // 【2】判断 左环岛
-    // 特征：左边大量丢线 + 右边正常 + 左下/左上拐点出现
-    //=====================================================================
-    if( Left_Lost_Time > 35        // 左边丢线很多
-     && Right_Lost_Time < 10       // 右边基本正常
-     && Road_Wide[30] > 45         // 赛道明显变宽
-     && (Left_Down_Point_finish_flag || Left_Up_Point_finish_flag) )  // 出现左拐点
+    // ==============================================
+    // 【2】左环岛判断（更精准）
+    // ==============================================
+    if( Left_Lost_Time > 8                // 左边大量丢线
+     && Right_Lost_Time < 5               // 右边正常
+     //&& Road_Wide[25] > 38                 // 赛道明显变宽
+     && conti_left != 0                    // 左边不连续
+     && (Left_Down_Point_finish_flag || Left_Up_Point_finish_flag) )
     {
         RoundLeftFlag = 1;
     }
 
-    //=====================================================================
-    // 【3】判断 右环岛
-    // 特征：右边大量丢线 + 左边正常 + 右下/右上拐点出现
-    //=====================================================================
-    if( Right_Lost_Time > 35       // 右边丢线很多
-     && Left_Lost_Time < 10        // 左边基本正常
-     && Road_Wide[30] > 45         // 赛道明显变宽
-     && (Right_Down_Point_finish_flag || Right_Up_Point_finish_flag) ) // 出现右拐点
+    // ==============================================
+    // 【3】右环岛判断（更精准）
+    // ==============================================
+    if( Right_Lost_Time > 8              // 右边大量丢线
+     && Left_Lost_Time < 5               // 左边正常
+     //&& Road_Wide[25] > 38                 // 赛道明显变宽
+     && conti_right != 0                   // 右边不连续
+     && (Right_Down_Point_finish_flag || Right_Up_Point_finish_flag) )
     {
-        RoundRightFlag = 1;
+       RoundRightFlag= 1;
     }
+}
+void send_udp(){
+        char encoder_str[64];
+        // 如果只有一个编码器
+        // snprintf(encoder_str, sizeof(encoder_str), "ch1:%.2f", ch1);
+        // 如果有两个编码器
+            int conti_left, conti_right;
+ Identify();
+    // 1. 先调用你已有的连续性检测（从近到远扫一段）
+    conti_left  = Continuity_Change_Left(LCDH-10, 15);
+    conti_right = Continuity_Change_Right(LCDH-10, 15);
+
+    // 2. 先清零所有标志
+    CrossFlag = 0;
+    
+    RoundLeftFlag = 0;
+    RoundRightFlag = 0;
+     //   snprintf(encoder_str, sizeof(encoder_str), "RL:%d,LL:%d,RW:%d,LD:%d,LU:%d,CL:%d,CR:%d,RD:%d,RU:%d", Right_Lost_Time,Left_Lost_Time,Road_Wide[25],Left_Down_Point_finish_flag,Left_Up_Point_finish_flag
+    //,conti_left ,conti_right,Right_Down_Point_finish_flag,Right_Up_Point_finish_flag);
+    Judge_Track_Element();
+   snprintf(encoder_str, sizeof(encoder_str), "Rh:%d,Lh:%d",  RoundRightFlag ,RoundLeftFlag);
+        // 发送编码器数据
+        udp_client.udp_send_string(encoder_str);
+
 }
 void img_test(void)
 {
@@ -1230,6 +1238,7 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
         compressimage(gray_frame);  // 压缩
         Ostu();      
         Longest_White_Column();
+       // send_udp();
        // std::cout<<Mid_Line[40]<<std::endl; 
 
      // char encoder_str[64];
@@ -1240,14 +1249,16 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
      /*------------below begin pid test-------------------*/
 
      mid=Mid_Line[40];
-     Identify();
-     Judge_Track_Element();
-     if(RoundLeftFlag){
-        std::cout<<"leftround"<<std::endl;
-     }
-    if(RoundRightFlag){
-        std::cout<<"rightround"<<std::endl;
-     }
+   //  Identify();
+   // Judge_Track_Element();
+
+     // std::cout<<Right_Lost_Time<<"  "<<Left_Lost_Time<<"  "<<"  "<<Road_Wide[25]<<"  "<<Left_Down_Point_finish_flag <<" "<<Left_Up_Point_finish_flag<<std::endl;
+     //if(RoundLeftFlag){
+     //   std::cout<<"leftround"<<std::endl;
+  //  }
+  //  if(RoundRightFlag){
+   //     std::cout<<"rightround"<<std::endl;
+  //  }
 PID_control_test(Mid_Line[40]);
 
 
@@ -1278,7 +1289,7 @@ for (int i = 0; i < LCDH; i++) {
     }
 }
     // 放大一下，不然60x80太小了A，看不见
-    std::cout<<color_mat.cols<<std::endl;
+    //std::cout<<color_mat.cols<<std::endl;
     cv::Mat big_mat;
    // cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
     cv::resize(color_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
