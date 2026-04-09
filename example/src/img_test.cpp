@@ -1133,11 +1133,9 @@ void send_udp(){
         udp_client.udp_send_string(encoder_str);
 
 }
-void img_test(void)
+void start_camera(void)
 {
-      //pwm1.atim_pwm_disable();
-//pwm2.atim_pwm_disable();
-    printf("=========================================\r\n");
+        printf("=========================================\r\n");
     printf("  UDP Camera + Encoder Stream\r\n");
     printf("=========================================\r\n");
     printf("Target IP:   %s\r\n", TARGET_IP.c_str());
@@ -1165,6 +1163,9 @@ void img_test(void)
     auto start_time = std::chrono::high_resolution_clock::now();
 
     printf("Start streaming... Press Ctrl+C to stop\r\n");
+}
+void img_test(void)
+{
 
 
 //轮胎pd调速测试：输入你想的转速
@@ -1174,16 +1175,6 @@ void img_test(void)
 
 
 
-    while (true) {
-        if (has_input()) {
-            char c = getchar();
-            if (c == 'q') {
-                std::cout<<"caonima"<<std::endl;
-                cut();
-                 while (getchar() != EOF); 
-                break;
-            } 
-        }
         // ===================== 获取并发送图像 =====================
         // 获取原始图像
        // cv::Mat gray_frame = cam.get_gray_frame();
@@ -1259,7 +1250,7 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
   //  if(RoundRightFlag){
    //     std::cout<<"rightround"<<std::endl;
   //  }
-PID_control_test(Mid_Line[40]);
+//PID_control_test(Mid_Line[40]);
 
 
       //  printf("【全行列中线】\n");
@@ -1300,7 +1291,7 @@ for (int i = 0; i < LCDH; i++) {
         }
 
         frame_count++;
-
+/*
         // ===================== 每秒打印状态 =====================
         auto now = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time).count();
@@ -1311,10 +1302,8 @@ for (int i = 0; i < LCDH; i++) {
             encoder_count = 0;
             start_time = now;
         }
-    }
-    std::cout<<"caonissma"<<std::endl;
-     reset_terminal(); // 必须恢复终端！
-     std::cout<<"caonimssa"<<std::endl;
+            */
+    
 }
 float img_return(void)
 {

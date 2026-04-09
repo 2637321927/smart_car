@@ -12,8 +12,14 @@ extern ls_encoder_pwm enc1;
 extern ls_encoder_pwm enc2;
  extern  lq_udp_client udp_client;
  extern int mid;
-extern  int expected_speed_of_motor1_rps;
-extern int expected_speed_of_motor2_rps;
+extern int latest_error;
+extern float encoder_1;
+extern float encoder_2;
+extern int set_speed_of_motor1_rps;
+extern int set_speed_of_motor2_rps;
+extern int pwm1_duty_rps;//after the cauculation 
+extern int pwm2_duty_rps;
+void start_camera(void); // start camera
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试
 void lq_gpio_input_demo(void);      // GPIO 输入模式测试
 void lq_pwm_demo(void);             // PWM 输出模式测试
@@ -41,9 +47,9 @@ void close_circle_control(
     float& speed_of_motor2,
     int target_speed_of_motor1_RPS,
     int target_speed_of_motor2_RPS);
-    void input_speed(int&expected_speed_of_motor1_rps,int& expected_speed_of_motor2_rps);
+    void input_speed(int&set_speed_of_motor1_rps,int& set_speed_of_motor2_rps);
     void test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_motor2_pwm);
     void input_speed_rps(int&expected_speed_of_motor1_rps,int& expected_speed_of_motor2_rps);
-    void  test_enc_and_motor_rps(int expected_speed_of_motor1_rps,int expected_speed_of_motor2_rps);
-
+    void  test_enc_and_motor_rps();
+    
 #endif

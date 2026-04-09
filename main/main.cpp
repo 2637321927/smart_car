@@ -1,16 +1,20 @@
 #include "main.hpp"
+#include "lq_timer.hpp"
+
 bool need_exit = false;
-//ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
-//ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0); 
-// Ctrl+C 触发的函数
-//ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 100, 0);
-//ls_atim_pwm pwm2(ATIM_PWM1_PIN82, 100, 0); 
+
+//begin to test timer
+lq_timer speed_timer;
+lq_timer dir_timer;
+
+int latest_error = 0;
+
 ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 50, 0);
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 50, 0); 
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
-int expected_speed_of_motor1_rps=0;
-int expected_speed_of_motor2_rps=0;
+int set_speed_of_motor1_rps=0;
+int set_speed_of_motor2_rps=0;
 lq_udp_client udp_client;
 int mid;
 void handle_exit(int sig)
@@ -35,40 +39,34 @@ void handle_exit(int sig)
 // 全局变量，保存原来的终端模式
 int main()
 {
-//lq_atim_pwm_demo();
-//lq_ips20_demo();
-input_speed_rps(expected_speed_of_motor1_rps,expected_speed_of_motor2_rps);
-  img_test();
-//lq_udp_img_trans_demo();
-//PID_control_test();
-//lq_atim_pwm_demo();
- //signal(SIGINT, handle_exit);  // 绑定 Ctrl+C
-    uint16_t dis;
-
-  //  lq_i2c_vl53l0x vl53l0x;
-
-//img_test();
-//lq_encoder_pwm_demo();
-//lq_encoder_pwm_demo();
-
-//below is the test demo of camera_PD control
 
 
-//while(!need_exit){
-//error_value=img_return();
-//img_test();
-//PID_control_test(pwm1,pwm2,error_value- error_expected);
-//}
+input_speed_rps(set_speed_of_motor1_rps,set_speed_of_motor2_rps);
 
-//以下为轮胎控制代码
-//初始化
+   speed_timer.set_seconds_ms(5, []() {
+       test_enc_and_motor_rps;        // 直接调用你封装好的速度函数
+    });
 
+    dir_timer.set_seconds_ms(10, []() {
+        PID_control_test(latest_error);   // 直接调用你封装好的方向函数
+    });
+start_camera();
+while (1)
+{
+         if (has_input()) {
+            char c = getchar();
+            if (c == 'q') {
+                std::cout<<"caonima"<<std::endl;
+                cut();
+                 while (getchar() != EOF); 
+                break;
+            } 
+        }
+ img_test();
 
-
-
-
-
-
-
+}
+     std::cout<<"caonissma"<<std::endl;
+     reset_terminal(); // 必须恢复终端！
+     std::cout<<"caonimssa"<<std::endl;
     return 0;
 }
