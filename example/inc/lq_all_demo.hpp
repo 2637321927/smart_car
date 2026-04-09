@@ -19,6 +19,7 @@ extern int set_speed_of_motor1_rps;
 extern int set_speed_of_motor2_rps;
 extern int pwm1_duty_rps;//after the cauculation 
 extern int pwm2_duty_rps;
+ extern lq_camera cam;
 void start_camera(void); // start camera
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试
 void lq_gpio_input_demo(void);      // GPIO 输入模式测试

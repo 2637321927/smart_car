@@ -1,5 +1,6 @@
 #include "lq_all_demo.hpp"
-
+int pwm1_duty_rps=0;
+int pwm2_duty_rps=0;
 /********************************************************************************
  * @brief   PID 控制测试.
  * @param   none.
@@ -27,15 +28,13 @@ void PID_control_test(int error)
 
         
      int diffrential = calculate_diffrential(error,40);
-     int pwm1_duty_rps=expected_speed_of_motor1_rps + diffrential ;
-      int pwm2_duty_rps=expected_speed_of_motor2_rps - diffrential ;
+     pwm1_duty_rps=set_speed_of_motor1_rps + diffrential ;
+     pwm2_duty_rps=set_speed_of_motor2_rps - diffrential ;
      if (pwm1_duty_rps<0){pwm1_duty_rps=0;};
      if (pwm1_duty_rps>200){pwm1_duty_rps=200;};
      if (pwm2_duty_rps<0){pwm2_duty_rps=0;};
      if (pwm2_duty_rps>200){pwm2_duty_rps=200;};
- 
-     //int pwm1_duty1 = (expected_speed_of_motor1_rps + diffrential < 200) ? (expected_speed_of_motor1_rps + diffrential) : 2000;//从1000开始，差分输入增加pwm1的占空比,并且做了限幅（不得大于5000）
-      //int pwm2_duty1 = (500 - diffrential > 0) ? (500 - diffrential) : 0;//从1000开始，差分输入减少pwm2的占空比，并且做了限幅（不得小于0）
-test_enc_and_motor_rps(pwm1_duty_rps,pwm2_duty_rps);//adjust speed
+
+//test_enc_and_motor_rps();use no more
 
 }

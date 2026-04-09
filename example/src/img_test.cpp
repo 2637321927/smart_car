@@ -71,39 +71,12 @@ const uint8_t     JPEG_QUALITY = 100;
 // 全局数组：存储压缩后的 60x80 灰度图
 // 注意：LCDH 和 LCDW 必须定义为 60 和 80
 uint8_t Image_Use[60][80]; 
-static struct termios old_tio;
+
 int my_abs(int a)
 {
     return a>0 ? a : -a;
 }
-// 开启 非阻塞输入
-void set_terminal_nonblock() {
-    struct termios new_tio;
-    tcgetattr(STDIN_FILENO, &old_tio);
-    new_tio = old_tio;
 
-    // 关闭 行缓冲 + 关闭回显
-    new_tio.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
-}
-
-// 恢复终端（非常重要！）
-void reset_terminal() {
-    tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
-}
-
-// 判断：有没有按键输入？
-bool has_input() {
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-
-    // 超时 0 → 不等待，直接返回
-    struct timeval tv = {0, 0};
-    select(STDIN_FILENO + 1, &fds, nullptr, nullptr, &tv);
-
-    return FD_ISSET(STDIN_FILENO, &fds);
-}
 // 输入：gray_frame - 此时是 160x120 的灰度图 (CV_8UC1)
 // 输出：Image_Use - 压缩成 60x80 的灰度图
 // 获取当前时间戳字符串
@@ -1149,7 +1122,6 @@ void start_camera(void)
     printf("UDP client initialized\r\n");
 
     // 初始化摄像头
-    lq_camera cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
     if (!cam.is_opened()) {
         printf("ERROR: Failed to open camera!\r\n");
         return;
@@ -1171,10 +1143,6 @@ void img_test(void)
 //轮胎pd调速测试：输入你想的转速
 
 // 轮胎PD调速：输入目标转速（纯输入板块）
-
-
-
-
         // ===================== 获取并发送图像 =====================
         // 获取原始图像
        // cv::Mat gray_frame = cam.get_gray_frame();
@@ -1221,7 +1189,7 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
       //  cv::Mat frame = cam.get_binary_frame();
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
-            continue;
+            return;
         }
         cv::Mat gray_frame;
 
@@ -1239,7 +1207,8 @@ cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scal
      //   udp_client.udp_send_string(encoder_str);
      /*------------below begin pid test-------------------*/
 
-     mid=Mid_Line[40];
+     latest_error=Mid_Line[40];
+
    //  Identify();
    // Judge_Track_Element();
 
@@ -1290,7 +1259,7 @@ for (int i = 0; i < LCDH; i++) {
             printf("ERROR: Failed to send image\r\n");
         }
 
-        frame_count++;
+       // frame_count++;
 /*
         // ===================== 每秒打印状态 =====================
         auto now = std::chrono::high_resolution_clock::now();
