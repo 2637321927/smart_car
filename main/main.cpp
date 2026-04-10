@@ -1,7 +1,9 @@
 #include "main.hpp"
 #include "lq_timer.hpp"
 #include <atomic>
-
+#include <thread>
+#include <mutex>
+#include <chrono>
 bool need_exit = false;
 
 //begin to test timer   
@@ -14,8 +16,10 @@ ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 50, 0);
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 50, 0); 
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
+
 int set_speed_of_motor1_rps=0;
 int set_speed_of_motor2_rps=0;
+
 lq_udp_client udp_client;
 // 摄像头参数
 const uint16_t    CAM_WIDTH    = 160;     // 宽
@@ -24,7 +28,9 @@ const uint16_t    CAM_FPS      = 120;     // 帧率
 static struct termios old_tio;
     lq_camera cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
 int mid;
-
+std::atomic<bool> cam_thread_running{true};
+cv::Mat global_frame;  // 全局图像
+std::mutex frame_mutex; // 互斥锁，保护图像
 
 void timer_tick()
 {
@@ -35,7 +41,22 @@ void timer_tick()
     if (tick % 10 == 0) flag_10ms = true;
 }//timer
 
-
+// ===================== 【摄像头独立线程】 =====================
+void camera_thread_func()
+{
+    while (cam_thread_running)
+    {
+        cv::Mat frame=cam.get_raw_frame();
+        if (!frame.empty())
+        {
+            // 加锁 → 安全更新全局图像
+            std::lock_guard<std::mutex> lock(frame_mutex);
+            global_frame = frame.clone();
+        }
+        // 摄像头频率 30fps 足够
+        std::this_thread::sleep_for(std::chrono::milliseconds(33));
+    }
+}
 
 
 
@@ -96,7 +117,8 @@ start_camera();
 set_terminal_nonblock();
 
  base_timer.set_seconds_ms(1, timer_tick);//start kicker
-
+std::thread cam_thread(camera_thread_func);
+    cam_thread.detach();
 /*
    speed_timer.set_seconds_ms(5, []() {
        test_enc_and_motor_rps();      
@@ -116,7 +138,7 @@ while (1)
             char c = getchar();
             if (c == 'q') {
                 std::cout<<"caonima"<<std::endl;
-                cut();
+                cut();q
                  while (getchar() != EOF); 
                 break;
             } 
@@ -130,14 +152,30 @@ while (1)
           PID_control_test(latest_error); // 直接调用你封装好的方向函数
         }
 
-        if (flag_5ms)
+if (flag_5ms)
         {
             flag_5ms = false;
            test_enc_and_motor_rps(); // 直接调用你封装好的速度函数
         }
+        
+        printf("expected speed: %d %d",pwm1_duty_rps,pwm2_duty_rps);
+
+// 【安全读取图像】
+        cv::Mat display_frame;
+        {
+            std::lock_guard<std::mutex> lock(frame_mutex);
+            if (!global_frame.empty())
+                display_frame = global_frame.clone();
+        }
+
+        if (!display_frame.empty())
+        {
+            // 在这里处理画面 + 发送UDP
+            // img_test() 原来的逻辑，改用 display_frame
+             img_test(display_frame);
+        }
 
 
- img_test();
 
 }
      std::cout<<"caonissma"<<std::endl;

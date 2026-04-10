@@ -1136,7 +1136,7 @@ void start_camera(void)
 
     printf("Start streaming... Press Ctrl+C to stop\r\n");
 }
-void img_test(void)
+void img_test(cv::Mat display_frame)
 {
 
 
@@ -1146,7 +1146,8 @@ void img_test(void)
         // ===================== 获取并发送图像 =====================
         // 获取原始图像
        // cv::Mat gray_frame = cam.get_gray_frame();
-       cv::Mat frame = cam.get_raw_frame();
+       cv::Mat frame=display_frame;
+     //  cv::Mat frame = cam.get_raw_frame();
                cv::flip(frame, frame, -1); //颠倒上下左右
        // 原图 img
 int cut_border = 50; // 裁掉边缘的宽度
