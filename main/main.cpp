@@ -1,22 +1,21 @@
 #include "main.hpp"
 #include "lq_timer.hpp"
+#include <atomic>
 
 bool need_exit = false;
 
-//begin to test timer
-lq_timer speed_timer;
-lq_timer dir_timer;
-std::atomic<float>  encoder_1=0;
-std::atomic<float>  encoder_2=0;
-std::atomic<int>  latest_error = 0;
-std::atomic<int>  pwm1_duty_rps=0;
-std::atomic<int>  pwm2_duty_rps=0;
+//begin to test timer   
+lq_timer base_timer;
+volatile bool flag_5ms = false;
+volatile bool flag_10ms = false;
+int latest_error = 0;
+
 ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 50, 0);
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 50, 0); 
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
-std::atomic<int>  set_speed_of_motor1_rps=0;
-std::atomic<int> set_speed_of_motor2_rps=0;
+int set_speed_of_motor1_rps=0;
+int set_speed_of_motor2_rps=0;
 lq_udp_client udp_client;
 // 摄像头参数
 const uint16_t    CAM_WIDTH    = 160;     // 宽
@@ -24,7 +23,22 @@ const uint16_t    CAM_HEIGHT   = 120;     // 高
 const uint16_t    CAM_FPS      = 120;     // 帧率
 static struct termios old_tio;
     lq_camera cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
-std::atomic<int>  mid;
+int mid;
+
+
+void timer_tick()
+{
+    static int tick = 0;
+    tick++;
+
+    if (tick % 5 == 0)  flag_5ms = true;
+    if (tick % 10 == 0) flag_10ms = true;
+}//timer
+
+
+
+
+
 void handle_exit(int sig)
 {
     printf("\n⚠️  检测到 Ctrl + C，开始安全退出...\n");
@@ -81,16 +95,19 @@ input_speed_rps(set_speed_of_motor1_rps,set_speed_of_motor2_rps);
 start_camera();
 set_terminal_nonblock();
 
+ base_timer.set_seconds_ms(1, timer_tick);//start kicker
 
+/*
    speed_timer.set_seconds_ms(5, []() {
        test_enc_and_motor_rps();      
-      // std::cout<<"fuck you"<<std::endl;  // 直接调用你封装好的速度函数
+       std::cout<<"fuck you"<<std::endl;  // 直接调用你封装好的速度函数
     });
 
     dir_timer.set_seconds_ms(10, []() {
         PID_control_test(latest_error);   // 直接调用你封装好的方向函数
     });
-//std::cout<<"fuck you2"<<std::endl; 
+*/
+std::cout<<"fuck you2"<<std::endl; 
 
 while (1)
 {
@@ -105,20 +122,23 @@ while (1)
             } 
             std::cout<<"fuck you3"<<std::endl; 
         }
-            */  
+            */
+
+ if (flag_10ms)
+        {
+            flag_10ms = false;
+          PID_control_test(latest_error); // 直接调用你封装好的方向函数
+        }
+
+        if (flag_5ms)
+        {
+            flag_5ms = false;
+           test_enc_and_motor_rps(); // 直接调用你封装好的速度函数
+        }
+
 
  img_test();
-// 正确写法：字符串单独闭合，变量写在外面，逗号分隔
-       char encoder_str[64];
-        snprintf(encoder_str, sizeof(encoder_str), "ex_rps1:%d,ex_rps2:%d,rps1:%f,rpd2:%f,mid:%d", pwm1_duty_rps, pwm2_duty_rps,encoder_1,encoder_2,mid);
-        
-        // 发送编码器数据
-        udp_client.udp_send_string(encoder_str);
-printf("expected speed :%d:%d\n speed %f  %f\n", 
-       pwm1_duty_rps,
-       pwm2_duty_rps,
-       encoder_1,
-       encoder_2);
+
 }
      std::cout<<"caonissma"<<std::endl;
      reset_terminal(); // 必须恢复终端！
