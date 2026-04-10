@@ -1,7 +1,7 @@
 #include "lq_all_demo.hpp"
 
-
-
+float encoder_1=0;
+float encoder_2=0;
 int expected_speed_of_motor1_pwm=0;
 int expected_speed_of_motor2_pwm=0;
 

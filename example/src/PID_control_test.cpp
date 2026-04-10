@@ -1,5 +1,7 @@
 #include "lq_all_demo.hpp"
 
+int pwm1_duty_rps=0;
+int pwm2_duty_rps=0;
 /********************************************************************************
  * @brief   PID 控制测试.
  * @param   none.

@@ -4,7 +4,6 @@
 #include "lq_drv_inc.hpp"
 #include "lq_app_inc.hpp"
 #include "lq_common.hpp"
-#include <atomic>
 const int LCDH   = 60 ;  // 图像高度（行）
 const int LCDW    =80 ;  // 图像宽度（列）
 extern ls_atim_pwm pwm1;
@@ -13,13 +12,13 @@ extern ls_encoder_pwm enc1;
 extern ls_encoder_pwm enc2;
  extern  lq_udp_client udp_client;
  extern int mid;
-extern std::atomic<int> latest_error;
-extern std::atomic<float> encoder_1;
-extern std::atomic<float> encoder_2;
-extern std::atomic<int> set_speed_of_motor1_rps;
-extern std::atomic<int> set_speed_of_motor2_rps;
-extern std::atomic<int> pwm1_duty_rps;
-extern std::atomic<int> pwm2_duty_rps;
+extern int latest_error;
+extern  float encoder_1;
+extern float encoder_2;
+extern  int set_speed_of_motor1_rps;
+extern  int set_speed_of_motor2_rps;
+extern int pwm1_duty_rps;
+extern int pwm2_duty_rps;
  extern lq_camera cam;
 void start_camera(void); // start camera
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试

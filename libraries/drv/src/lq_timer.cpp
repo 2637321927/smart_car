@@ -8,7 +8,7 @@
  * @example lq_timer timer;
  * @note    none.
  ********************************************************************************/
-lq_timer::lq_timer() : is_running_(false), target_ns_(0), callback_(nullptr), timer_thread_(&lq_timer::timer_handler_thread, this)
+lq_timer::lq_timer() : is_running_(false), target_ns_(0), callback_(nullptr), thread_running_(true), timer_thread_(&lq_timer::timer_handler_thread, this)
 {
 }
 
