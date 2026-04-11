@@ -12,8 +12,8 @@ volatile bool flag_5ms = false;
 volatile bool flag_10ms = false;
 int latest_error = 0;
 
-ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 50, 0);
-ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 50, 0); 
+ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 200, 0);
+ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 200, 0); 
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
 
@@ -39,6 +39,8 @@ void timer_tick()
 
     if (tick % 5 == 0)  flag_5ms = true;
     if (tick % 10 == 0) flag_10ms = true;
+
+    if (tick >= 1000) tick = 0;//in case of sprinng
 }//timer
 
 // ===================== 【摄像头独立线程】 =====================
@@ -54,10 +56,9 @@ void camera_thread_func()
             global_frame = frame.clone();
         }
         // 摄像头频率 30fps 足够
-        std::this_thread::sleep_for(std::chrono::milliseconds(33));
+       // std::this_thread::sleep_for(std::chrono::milliseconds(33));
     }
 }
-
 
 
 void handle_exit(int sig)
@@ -108,6 +109,20 @@ bool has_input() {
     return FD_ISSET(STDIN_FILENO, &fds);
 }
 // 全局变量，保存原来的终端模式
+
+void image_thread_func()
+{
+    while (1)
+    {
+       
+
+       
+
+    }
+}
+
+
+
 int main()
 {
 
@@ -129,7 +144,7 @@ std::thread cam_thread(camera_thread_func);
         PID_control_test(latest_error);   // 直接调用你封装好的方向函数
     });
 */
-std::cout<<"fuck you2"<<std::endl; 
+
 
 while (1)
 {
@@ -158,7 +173,7 @@ if (flag_5ms)
            test_enc_and_motor_rps(); // 直接调用你封装好的速度函数
         }
         
-        printf("expected speed: %d %d",pwm1_duty_rps,pwm2_duty_rps);
+        //printf("\n expected speed: %d %d \n",pwm1_duty_rps,pwm2_duty_rps);
 
 // 【安全读取图像】
         cv::Mat display_frame;
@@ -175,7 +190,20 @@ if (flag_5ms)
              img_test(display_frame);
         }
 
+char encoder_str[64];
+     /*
+        snprintf(encoder_str, sizeof(encoder_str),
+         "{\"ex_rps1\":%d,\"ex_rps2\":%d,\"rps1\":%f,\"rpd2\":%f,\"mid\":%d}\n",
+         pwm1_duty_rps, pwm2_duty_rps, encoder_1, encoder_2, mid);
+        // 发送编码器数据
+        udp_client.udp_send_string(encoder_str);
+*/
 
+/*printf("expected speed :%d:%d\n speed %f  %f\n", 
+       pwm1_duty_rps,
+       pwm2_duty_rps,
+       encoder_1,
+       encoder_2);*/
 
 }
      std::cout<<"caonissma"<<std::endl;
