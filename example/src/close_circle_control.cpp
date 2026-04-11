@@ -28,8 +28,8 @@ void calculate_differential_for_motor(
     pwm1_plusduty = error_current1 * P + (error_current1 - error_last1) * D;
     pwm2_plusduty = error_current2 * P + (error_current2 - error_last2) * D;
 
-    printf("P1:%f  D1:%f\n",error_current1 * P ,(error_current1 - error_last1) * D);
-   printf("P2:%f  D2:%f\n",error_current2 * P ,(error_current2 - error_last2) * D);
+    //printf("P1:%f  D1:%f\n",error_current1 * P ,(error_current1 - error_last1) * D);
+   //printf("P2:%f  D2:%f\n",error_current2 * P ,(error_current2 - error_last2) * D);
     // 更新上一次误差
     error_last1 = error_current1;
     error_last2 = error_current2;

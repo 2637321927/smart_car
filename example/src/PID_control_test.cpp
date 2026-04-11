@@ -20,7 +20,7 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
        Diffrential=error_current*P+ (error_current-error_last)*D;//PD控制算法
        error_last=error_current;//更新一下误差
         
-       printf("Df_P:%f Df_D %f\n",error_current*P,(error_current-error_last)*D);
+      // printf("Df_P:%f Df_D %f\n",error_current*P,(error_current-error_last)*D);
          return Diffrential;//返回差分输入
         }
 void PID_control_test(int error)

@@ -7,12 +7,12 @@
 const std::string TARGET_IP    = "192.168.43.213";
 //192.168.43.146 huawei
 //192.168.43.213 lianxiang
-// UDP目标端口 
-const uint16_t    TARGET_PORT  = 8080;
 // 摄像头参数
 const uint16_t    CAM_WIDTH    = 160;     // 宽
 const uint16_t    CAM_HEIGHT   = 120;     // 高
 const uint16_t    CAM_FPS      = 120;     // 帧率
+// UDP目标端口 
+const uint16_t    TARGET_PORT  = 8080;
 // 方块参数（画面中间）
 const uint16_t    RECT_SIZE    = 20;
 // JPEG编码质量 (1-100)
