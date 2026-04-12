@@ -6,35 +6,30 @@
  * @return  PWM调整量
  * @note    PD算法，带抗噪微分，固定周期调用
  ********************************************************************************/
-
 void calculate_differential_for_motor(
     const float& speed_of_motor1, const float& speed_of_motor2,
     const int target_speed_of_motor1_RPS, const int target_speed_of_motor2_RPS,
     int& pwm1_plusduty, int& pwm2_plusduty)
 {
-    // PD参数
-    const float P = 20.0f;
-    const float D = 0.1f;
+    const float P = 2.8f;   // 大幅降低，更柔
+    const float D = 0.12f;
 
-    // 静态变量：保存上一次误差（函数内持久化）
-    static float error_last1 = 0.0f;
-    static float error_last2 = 0.0f;
+    static float error_last1 = 0;
+    static float error_last2 = 0;
 
-    // 计算当前误差（目标转速 - 当前转速，单位必须统一：RPS）
-    const float error_current1 = target_speed_of_motor1_RPS - speed_of_motor1;
-    const float error_current2 = target_speed_of_motor2_RPS - speed_of_motor2;
+    float err1 = target_speed_of_motor1_RPS - speed_of_motor1;
+    float err2 = target_speed_of_motor2_RPS - speed_of_motor2;
 
-    // PD控制算法
-    pwm1_plusduty = error_current1 * P + (error_current1 - error_last1) * D;
-    pwm2_plusduty = error_current2 * P + (error_current2 - error_last2) * D;
+    // 速度环也加滤波！
+    static float err_f1 = 0, err_f2 = 0;
+    err_f1 = (err_f1 * 6 + err1) / 7;
+    err_f2 = (err_f2 * 6 + err2) / 7;
 
-    //printf("P1:%f  D1:%f\n",error_current1 * P ,(error_current1 - error_last1) * D);
-   //printf("P2:%f  D2:%f\n",error_current2 * P ,(error_current2 - error_last2) * D);
-    // 更新上一次误差
-    error_last1 = error_current1;
-    error_last2 = error_current2;
+    pwm1_plusduty = err_f1 * P + (err_f1 - error_last1) * D;
+    pwm2_plusduty = err_f2 * P + (err_f2 - error_last2) * D;
 
-    
+    error_last1 = err_f1;
+    error_last2 = err_f2;
 }
 
 /********************************************************************************
@@ -45,8 +40,8 @@ void calculate_differential_for_motor(
  ********************************************************************************/
 
 void close_circle_control(
-    float& speed_of_motor1,
-    float& speed_of_motor2,
+    float speed_of_motor1,
+    float speed_of_motor2,
     int target_speed_of_motor1_RPS,
     int target_speed_of_motor2_RPS)
 {

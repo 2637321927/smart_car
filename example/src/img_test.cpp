@@ -1129,16 +1129,19 @@ void start_camera(void)
     printf("Camera opened: %dx%d @ %dfps\r\n", cam.get_width(), cam.get_height(), cam.get_fps());
 
     // 发送帧计数
-    uint32_t frame_count = 0;
-    uint32_t encoder_count = 0;
+   // uint32_t frame_count = 0;
+ //   uint32_t encoder_count = 0;
     // 记录开始时间
     auto start_time = std::chrono::high_resolution_clock::now();
 
     printf("Start streaming... Press Ctrl+C to stop\r\n");
 }
-void img_test(cv::Mat display_frame)
+int img_test(cv::Mat& frame)
 {
-
+        if (frame.empty()) {
+            printf("ERROR: Failed to read frame\r\n");
+            return 0;
+        }
 
 //轮胎pd调速测试：输入你想的转速
 
@@ -1146,87 +1149,24 @@ void img_test(cv::Mat display_frame)
         // ===================== 获取并发送图像 =====================
         // 获取原始图像
        // cv::Mat gray_frame = cam.get_gray_frame();
-       cv::Mat frame=display_frame;
-     //  cv::Mat frame = cam.get_raw_frame();
+      // cv::Mat frame = cam.get_raw_frame();
                cv::flip(frame, frame, -1); //颠倒上下左右
        // 原图 img
 int cut_border = 50; // 裁掉边缘的宽度
 
 
-// 裁剪规则：左、上、右 裁剪，底部不裁剪
-//图像识别部分
-/*
-cv::Mat crop_img = frame(
-    cv::Rect(
-        cut_border+50,    // 左边裁掉 cut_border 像素
-        cut_border,    // 上边裁掉 cut_border 像素
-        frame.cols - 2 * cut_border,  // 宽度 = 总宽 - 左 - 右
-        frame.rows - cut_border       // 高度 = 总高 - 上边（底部不动）
-    )
-);
-*/
+
 cv::Mat  crop_img= frame(cv::Rect(45, 0, frame.cols-45, frame.rows));
-/*
-// 裁剪后的图
-        cv::Mat image;
-           cv::resize(crop_img, image, cv::Size(60, 60), 0, 0, cv::INTER_NEAREST);
-           std::string a;
-            lq_ncnn_photo_demo(image,a);
-            int rows = crop_img.rows;
-        int cols = image.cols;
-        int x1 = (cols - 20) / 2;
-        int y1 = (rows - 20) / 2;
-        std::cout<<2<<a<<1<<std::endl;
-        if(a=="vehicle"){
-        cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scalar(0, 255, 0), 2);//green
-        }
-        else if(a=="weapon"){
-cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scalar(0, 0, 255), 2);//red
-        }
-        else{
-cv::rectangle(crop_img, cv::Point(x1, y1), cv::Point(x1 + 20, y1 + 20), cv::Scalar(255, 0, 0), 2);//blue
-        }
-*/
-      //  cv::Mat frame = cam.get_binary_frame();
-        if (frame.empty()) {
-            printf("ERROR: Failed to read frame\r\n");
-            return;
-        }
+
         cv::Mat gray_frame;
 
        cv::cvtColor(crop_img, gray_frame, cv::COLOR_BGR2GRAY);
         compressimage(gray_frame);  // 压缩
         Ostu();      
         Longest_White_Column();
-       // send_udp();
-       // std::cout<<Mid_Line[40]<<std::endl; 
-
-     // char encoder_str[64];
-     //   snprintf(encoder_str, sizeof(encoder_str), "mid:%d",Mid_Line[40]);
-        
-        // 发送编码器数据
-     //   udp_client.udp_send_string(encoder_str);
-     /*------------below begin pid test-------------------*/
-
-     latest_error=Mid_Line[40];
-
-   //  Identify();
+   
+   // Identify();
    // Judge_Track_Element();
-
-     // std::cout<<Right_Lost_Time<<"  "<<Left_Lost_Time<<"  "<<"  "<<Road_Wide[25]<<"  "<<Left_Down_Point_finish_flag <<" "<<Left_Up_Point_finish_flag<<std::endl;
-     //if(RoundLeftFlag){
-     //   std::cout<<"leftround"<<std::endl;
-  //  }
-  //  if(RoundRightFlag){
-   //     std::cout<<"rightround"<<std::endl;
-  //  }
-//PID_control_test(Mid_Line[40]);
-
-
-      //  printf("【全行列中线】\n");
-//for(int i=0; i<LCDH; i++){
- //   printf("行%2d: %d\n", 40, Mid_Line[i]);
-//}
            cv::Mat binary_mat(LCDH, LCDW, CV_8UC1, Image_Use1);
 
 cv::Mat color_mat;
@@ -1259,21 +1199,7 @@ for (int i = 0; i < LCDH; i++) {
         if (sent < 0) {
             printf("ERROR: Failed to send image\r\n");
         }
-
-       // frame_count++;
-/*
-        // ===================== 每秒打印状态 =====================
-        auto now = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time).count();
-        if (elapsed >= 1) {
-            float fps = (float)frame_count / (float)elapsed;
-           // printf("FPS: %.2f\r\n", fps);
-            frame_count = 0;
-            encoder_count = 0;
-            start_time = now;
-        }
-            */
-    
+          return Mid_Line[40];
 }
 float img_return(void)
 {

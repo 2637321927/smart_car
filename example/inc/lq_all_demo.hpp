@@ -4,6 +4,8 @@
 #include "lq_drv_inc.hpp"
 #include "lq_app_inc.hpp"
 #include "lq_common.hpp"
+//#include <mutex> 
+//extern std::mutex g_mutex;  // 全局锁
 const int LCDH   = 60 ;  // 图像高度（行）
 const int LCDW    =80 ;  // 图像宽度（列）
 extern ls_atim_pwm pwm1;
@@ -11,14 +13,15 @@ extern ls_atim_pwm pwm2;
 extern ls_encoder_pwm enc1;
 extern ls_encoder_pwm enc2;
  extern  lq_udp_client udp_client;
- extern int mid;
-extern int latest_error;
-extern  float encoder_1;
-extern float encoder_2;
-extern  int set_speed_of_motor1_rps;
-extern  int set_speed_of_motor2_rps;
-extern int pwm1_duty_rps;
-extern int pwm2_duty_rps;
+ volatile extern int mid;
+volatile extern int latest_error;
+volatile extern float encoder_1;
+volatile extern float encoder_2;
+volatile extern int set_speed_of_motor1_rps;
+volatile extern int set_speed_of_motor2_rps;
+volatile extern int pwm1_duty_rps;
+volatile extern int pwm2_duty_rps;
+volatile  extern int test_count ;
  extern lq_camera cam;
 void start_camera(void); // start camera
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试
@@ -37,20 +40,20 @@ void lq_vl53l0x_demo(void);         // VL53L0X 测试
 void lq_udp_img_trans_demo(void);   // UDP 图像传输测试
 void lq_udp_wavefrom_demo(void);    // UDP 波形传输测试
 void lq_icm42688_demo(void);        // ICM42688 测试
-void img_test(cv::Mat display_frame);
+int img_test(cv::Mat& frame);
 void PID_control_test(int error);
 int calculate_diffrential(float error,float expect_error);
 float img_return(void);
 void lq_ncnn_photo_demo(cv::Mat& image,std::string& a);
 void cut(void);
 void close_circle_control(
-    float& speed_of_motor1,
-    float& speed_of_motor2,
+    float speed_of_motor1,
+    float speed_of_motor2,
     int target_speed_of_motor1_RPS,
     int target_speed_of_motor2_RPS);
     void input_speed(int&set_speed_of_motor1_rps,int& set_speed_of_motor2_rps);
     void test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_motor2_pwm);
-    void input_speed_rps(int&expected_speed_of_motor1_rps,int& expected_speed_of_motor2_rps);
+    void input_speed_rps();
     void  test_enc_and_motor_rps();
     
 #endif

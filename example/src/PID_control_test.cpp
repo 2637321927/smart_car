@@ -1,7 +1,5 @@
 #include "lq_all_demo.hpp"
-
-int pwm1_duty_rps=0;
-int pwm2_duty_rps=0;
+ 
 /********************************************************************************
  * @brief   PID 控制测试.
  * @param   none.
@@ -9,33 +7,62 @@ int pwm2_duty_rps=0;
  * @note    GPIO 输出测试, 使用引脚 81/82 作为输出引脚, 交替输出高电平和低电平.
             
  ********************************************************************************/
-int calculate_diffrential(int error,int expect_error)//给我误差值，给你差分输入值
-        {        
-        float Diffrential=0;//diffrencial 差分输入，即输出轮胎的转速差
-       float P = 0.2; // 比例系数
-       float D= 0.1; // 差分系数
-       volatile static int error_current,error_last;// 当前误差和上一次误差
-       error_current=error-expect_error;//当前误差
-       
-       Diffrential=error_current*P+ (error_current-error_last)*D;//PD控制算法
-       error_last=error_current;//更新一下误差
-        
-      // printf("Df_P:%f Df_D %f\n",error_current*P,(error_current-error_last)*D);
-         return Diffrential;//返回差分输入
-        }
+int calculate_diffrential(int error, int expect_error)
+{
+    const float P = 0.25f; 
+    const float D = 0.08f;
+
+    static int error_last = 0;
+
+    int err = error - expect_error;
+
+    // 误差先做滤波，防止跳变
+    static int err_filter = 0;
+    err_filter = (err_filter * 7 + err) / 8;  // 一阶低通滤波
+
+    int out = err_filter * P + (err_filter - error_last) * D;
+    error_last = err_filter;
+
+    return out;
+}
 void PID_control_test(int error)
 {
+    // 1. 计算转向差速
+    int diffrential = calculate_diffrential(error, 40);
 
+    // 2. 计算期望速度
+    int want1 = set_speed_of_motor1_rps + diffrential;
+    int want2 = set_speed_of_motor2_rps - diffrential;
 
-        
-     int diffrential = calculate_diffrential(error,40);
-     pwm1_duty_rps=set_speed_of_motor1_rps + diffrential ;
-     pwm2_duty_rps=set_speed_of_motor2_rps - diffrential ;
-     if (pwm1_duty_rps<0){pwm1_duty_rps=0;};
-     if (pwm1_duty_rps>200){pwm1_duty_rps=200;};
-     if (pwm2_duty_rps<0){pwm2_duty_rps=0;};
-     if (pwm2_duty_rps>200){pwm2_duty_rps=200;};
+    // ===================== 【核心：速度平滑，真正解决卡顿】 =====================
+    const int MAX_STEP = 2;   // 每次最多变 2，越小越丝滑
 
-//test_enc_and_motor_rps();use no more
+    // 左电机平滑
+    if (want1 > pwm1_duty_rps)
+        pwm1_duty_rps += std::min(want1 - pwm1_duty_rps, MAX_STEP);
+    else if (want1 < pwm1_duty_rps)
+        pwm1_duty_rps -= std::min(pwm1_duty_rps - want1, MAX_STEP);
 
+    // 右电机平滑
+    if (want2 > pwm2_duty_rps)
+        pwm2_duty_rps += std::min(want2 - pwm2_duty_rps, MAX_STEP);
+    else if (want2 < pwm2_duty_rps)
+        pwm2_duty_rps -= std::min(pwm2_duty_rps - want2, MAX_STEP);
+    // ===========================================================================
+
+    // 最后安全限幅
+   const int MAX_SPEED = 200;
+    const int MIN_SPEED = 0;
+
+    // 左电机限幅
+    if (pwm1_duty_rps > MAX_SPEED)
+        pwm1_duty_rps = MAX_SPEED;
+    else if (pwm1_duty_rps < MIN_SPEED)
+        pwm1_duty_rps = MIN_SPEED;
+
+    // 右电机限幅
+    if (pwm2_duty_rps > MAX_SPEED)
+        pwm2_duty_rps = MAX_SPEED;
+    else if (pwm2_duty_rps < MIN_SPEED)
+        pwm2_duty_rps = MIN_SPEED;
 }
