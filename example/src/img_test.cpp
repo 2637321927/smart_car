@@ -64,9 +64,9 @@ const std::string TARGET_IP    = "192.168.43.213";
 // UDP目标端口
 const uint16_t    TARGET_PORT  = 8080;
 // 摄像头参数
-const uint16_t    CAM_WIDTH    = 320;     // 宽
-const uint16_t    CAM_HEIGHT   = 240;     // 高
-const uint16_t    CAM_FPS      = 120;     // 帧率
+const uint16_t    CAM_WIDTH    = 160;     // 宽
+const uint16_t    CAM_HEIGHT   = 120;     // 高
+const uint16_t    CAM_FPS      = 60;     // 帧率
 const uint8_t     JPEG_QUALITY = 100;
 // 全局数组：存储压缩后的 60x80 灰度图
 // 注意：LCDH 和 LCDW 必须定义为 60 和 80
@@ -1152,11 +1152,11 @@ int img_test(cv::Mat& frame)
       // cv::Mat frame = cam.get_raw_frame();
                cv::flip(frame, frame, -1); //颠倒上下左右
        // 原图 img
-int cut_border = 50; // 裁掉边缘的宽度
+//int cut_border = 50; // 裁掉边缘的宽度
 
 
-
-cv::Mat  crop_img= frame(cv::Rect(45, 0, frame.cols-45, frame.rows));
+//320*240 45 160*120 22
+cv::Mat  crop_img= frame(cv::Rect(22, 0, frame.cols-22, frame.rows));
 
         cv::Mat gray_frame;
 
@@ -1199,56 +1199,5 @@ for (int i = 0; i < LCDH; i++) {
         if (sent < 0) {
             printf("ERROR: Failed to send image\r\n");
         }
-          return Mid_Line[40];
-}
-float img_return(void)
-{
-
-    // 初始化UDP客户端
-    lq_udp_client udp_client;
-    udp_client.udp_client_init(TARGET_IP, TARGET_PORT);
-    printf("UDP client initialized\r\n");
-
-    // 初始化摄像头
-    lq_camera cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
-    if (!cam.is_opened()) {
-        printf("ERROR: Failed to open camera!\r\n");
-        return -1;
-    }
-
-    // 发送帧计数
-    uint32_t frame_count = 0;
-    uint32_t encoder_count = 0;
-    // 记录开始时间
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-
-        // ===================== 获取并发送图像 =====================
-        // 获取原始图像
-        cv::Mat gray_frame = cam.get_gray_frame();
-        cv::flip(gray_frame, gray_frame, -1); //颠倒上下左右
-      //  cv::Mat frame = cam.get_binary_frame();
-        if (gray_frame.empty()) {
-            printf("ERROR: Failed to read frame\r\n");
-           return -1;
-        }
-        //cv::Mat gray_frame;
-
-       // cv::cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
-        compressimage(gray_frame);  // 压缩
-        Ostu();      
-        Longest_White_Column();
-      cv::Mat binary_mat(LCDH, LCDW, CV_8UC1, Image_Use1);
-
-    // 放大一下，不然60x80太小了A，看不见
-    cv::Mat big_mat;
-    cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
-        // 发送JPEG压缩图像
-        ssize_t sent = udp_client.udp_send_image(big_mat, JPEG_QUALITY);
-        if (sent < 0) {
-            printf("ERROR: Failed to send image\r\n");
-        }
-    printf("%d\n",Mid_Line[20]);
-    return Mid_Line[20];
-    
+          return Mid_Line[43];
 }

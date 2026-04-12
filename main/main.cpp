@@ -84,20 +84,20 @@ start_camera();
 //set_terminal_nonblock();
 
 
-   speed_timer.set_seconds_ms(5, []() {
+   speed_timer.set_seconds_ms(3, []() {
      test_enc_and_motor_rps();   
      //   test_count++;   
      //  std::cout<<"fuck you"<<std::endl;  // 直接调用你封装好的速度函数
     });
 
-    dir_timer.set_seconds_ms(10, []() {
+    dir_timer.set_seconds_ms(6, []() {
         PID_control_test(latest_error);   // 直接调用你封装好的方向函数
     });
 //std::cout<<"fuck you2"<<std::endl; 
   
 while (1)
 {
-    /*
+    
          if (has_input()) {
             char c = getchar();
             if (c == 'q') {
@@ -106,9 +106,8 @@ while (1)
                  while (getchar() != EOF); 
                 break;
             } 
-            std::cout<<"fuck you3"<<std::endl; 
         }
-            */  
+              
 // std::lock_guard<std::mutex> lock(g_mutex);
  cv::Mat frame = cam.get_raw_frame();
 latest_error=img_test(frame);
