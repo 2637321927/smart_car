@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main
+CMAKE_SOURCE_DIR = /home/fdc/smart_car/main
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build
+CMAKE_BINARY_DIR = /home/fdc/smart_car/main/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/main.dir/depend.make
@@ -72,732 +72,732 @@ include CMakeFiles/main.dir/flags.make
 CMakeFiles/main.dir/main.cpp.o: CMakeFiles/main.dir/flags.make
 CMakeFiles/main.dir/main.cpp.o: ../main.cpp
 CMakeFiles/main.dir/main.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/main.dir/main.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/main.cpp.o -MF CMakeFiles/main.dir/main.cpp.o.d -o CMakeFiles/main.dir/main.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/main.dir/main.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/main.cpp.o -MF CMakeFiles/main.dir/main.cpp.o.d -o CMakeFiles/main.dir/main.cpp.o -c /home/fdc/smart_car/main/main.cpp
 
 CMakeFiles/main.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/main.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/main.cpp > CMakeFiles/main.dir/main.cpp.i
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/main/main.cpp > CMakeFiles/main.dir/main.cpp.i
 
 CMakeFiles/main.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/main.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/main.cpp -o CMakeFiles/main.dir/main.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.s
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o -MF CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o.d -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o -c /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp > CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i
-
-CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s"
-	/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp -o CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/main/main.cpp -o CMakeFiles/main.dir/main.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o: /home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o -c /home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o: /home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o -c /home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o: /home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o -c /home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o: /home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o -c /home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o: /home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o -c /home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o: /home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o -c /home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o: /home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o -c /home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o: /home/fdc/smart_car/libraries/common/src/lq_utils.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o -c /home/fdc/smart_car/libraries/common/src/lq_utils.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/common/src/lq_utils.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/common/src/lq_utils.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_camera.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_camera.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_camera.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_camera.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_timer.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_timer.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_timer.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_timer.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_uart.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_uart.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_uart.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_uart.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o: /home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o -c /home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp > CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o: /home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o -c /home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o: /home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o -c /home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o: /home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o -c /home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o: /home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o -c /home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o: /home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o -c /home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o: /home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o -c /home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o: /home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o -c /home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o: /home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o -c /home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o: /home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o -c /home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o: /home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o -c /home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o: /home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o -c /home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o: /home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o -c /home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o: /home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o -c /home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o: /home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o -c /home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o: /home/fdc/smart_car/example/src/PID_control_test.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o -c /home/fdc/smart_car/example/src/PID_control_test.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/PID_control_test.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/PID_control_test.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o: /home/fdc/smart_car/example/src/close_circle_control.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o -c /home/fdc/smart_car/example/src/close_circle_control.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/close_circle_control.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/close_circle_control.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o: /home/fdc/smart_car/example/src/img_test.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o -c /home/fdc/smart_car/example/src/img_test.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/img_test.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/img_test.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.s
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o: /home/fdc/smart_car/example/src/test_encoder_and_control.cpp
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o: CMakeFiles/main.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o -MF CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o.d -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o -c /home/fdc/smart_car/example/src/test_encoder_and_control.cpp
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.i"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fdc/smart_car/example/src/test_encoder_and_control.cpp > CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.i
+
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.s"
+	/home/fdc/smart_car/main/../tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fdc/smart_car/example/src/test_encoder_and_control.cpp -o CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.s
 
 # Object files for target main
 main_OBJECTS = \
 "CMakeFiles/main.dir/main.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o" \
-"CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o"
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o" \
+"CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o"
 
 # External object files for target main
 main_EXTERNAL_OBJECTS =
 
 main: CMakeFiles/main.dir/main.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o
-main: CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/app/display/lq_display_tft18.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_i2c_dev.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/common/src/lq_utils.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_camera.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_canfd.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_map_addr.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_module_load.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_ncnn.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_adc.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_reg_spi.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_soft_spi.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_tcp_client.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_timer.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_uart.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/libraries/drv/src/lq_udp_client.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/02_lq_pwm_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/06_lq_canfd_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/07_lq_ncnn_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/08_lq_ips20_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/09_lq_mpu6050_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.o
+main: CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o
 main: CMakeFiles/main.dir/build.make
 main: CMakeFiles/main.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Linking CXX executable main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/fdc/smart_car/main/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Linking CXX executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -809,6 +809,6 @@ CMakeFiles/main.dir/clean:
 .PHONY : CMakeFiles/main.dir/clean
 
 CMakeFiles/main.dir/depend:
-	cd /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/CMakeFiles/main.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/fdc/smart_car/main/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/fdc/smart_car/main /home/fdc/smart_car/main /home/fdc/smart_car/main/build /home/fdc/smart_car/main/build /home/fdc/smart_car/main/build/CMakeFiles/main.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/main.dir/depend
 

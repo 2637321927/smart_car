@@ -1,4 +1,4 @@
-# Install script for directory: /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main
+# Install script for directory: /home/fdc/smart_car/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,7 +39,7 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-objdump")
+  set(CMAKE_OBJDUMP "/home/fdc/smart_car/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/bin/loongarch64-linux-gnu-objdump")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/fdc/smart_car/main/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
