@@ -1063,7 +1063,7 @@ void Judge_Track_Element(void)
     // ==============================================
     if( Left_Lost_Time > 8                // 左边大量丢线
      && Right_Lost_Time < 5               // 右边正常
-     //&& Road_Wide[25] > 38                 // 赛道明显变宽
+     && Road_Wide[25] > 38                 // 赛道明显变宽
      && conti_left != 0                    // 左边不连续
      && (Left_Down_Point_finish_flag || Left_Up_Point_finish_flag) )
     {
@@ -1075,7 +1075,7 @@ void Judge_Track_Element(void)
     // ==============================================
     if( Right_Lost_Time > 8              // 右边大量丢线
      && Left_Lost_Time < 5               // 左边正常
-     //&& Road_Wide[25] > 38                 // 赛道明显变宽
+     && Road_Wide[25] > 38                 // 赛道明显变宽
      && conti_right != 0                   // 右边不连续
      && (Right_Down_Point_finish_flag || Right_Up_Point_finish_flag) )
     {
@@ -1113,12 +1113,14 @@ void start_camera(void)
     printf("=========================================\r\n");
     printf("Target IP:   %s\r\n", TARGET_IP.c_str());
     printf("Target Port: %d\r\n", TARGET_PORT);
+    printf("Target_img Port: %d\r\n", 8081);
     printf("Resolution:  %dx%d\r\n", CAM_WIDTH, CAM_HEIGHT);
     printf("FPS:         %d\r\n", CAM_FPS);
     printf("=========================================\r\n");
 
-    // 初始化UDP客户端
+    // 初始化UDP客户端S
     udp_client.udp_client_init(TARGET_IP, TARGET_PORT);
+    udp_client_img.udp_client_init(TARGET_IP, 8081);
     printf("UDP client initialized\r\n");
 
     // 初始化摄像头
@@ -1193,11 +1195,11 @@ for (int i = 0; i < LCDH; i++) {
     //std::cout<<color_mat.cols<<std::endl;
     cv::Mat big_mat;
    // cv::resize(binary_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
-    cv::resize(color_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
+  cv::resize(color_mat, big_mat, cv::Size(320, 240), 0, 0, cv::INTER_NEAREST);
         // 发送JPEG压缩图像
-        ssize_t sent = udp_client.udp_send_image(big_mat, JPEG_QUALITY);
-        if (sent < 0) {
-            printf("ERROR: Failed to send image\r\n");
-        }
+      ssize_t sent =  udp_client_img.udp_send_image(big_mat, JPEG_QUALITY);
+  if (sent < 0) {
+          printf("ERROR: Failed to send image\r\n");
+      }
           return Mid_Line[43];
 }

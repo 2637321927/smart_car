@@ -19,6 +19,7 @@ ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
  volatile int set_speed_of_motor1_rps=0;
  volatile int set_speed_of_motor2_rps=0;
 lq_udp_client udp_client;
+lq_udp_client udp_client_img;
 volatile int test_count = 0;
 // 摄像头参数
 const uint16_t    CAM_WIDTH    = 160;     // 宽
@@ -114,11 +115,13 @@ latest_error=img_test(frame);
 //std::cout<<"fuck you"<<std::endl;
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 
-      char encoder_str[64];
-        snprintf(encoder_str, sizeof(encoder_str), "ex_rps1:%d,ex_rps2:%d,rps1:%f,rpd2:%f,mid:%d", pwm1_duty_rps, pwm2_duty_rps,encoder_1,encoder_2,mid);
-        
-        // 发送编码器数据
-        udp_client.udp_send_string(encoder_str);
+char encoder_str[128];
+snprintf(encoder_str, sizeof(encoder_str),
+         "{\"ex_rps1\":%d,\"ex_rps2\":%d,\"rps1\":%.2f,\"rps2\":%.2f,\"mid\":%d,\"road-wide\":%d}",
+         pwm1_duty_rps, pwm2_duty_rps, encoder_1, encoder_2, mid,Road_Wide[25]);
+
+// 发送函数
+udp_client.udp_send_string(encoder_str);
     
      // std::this_thread::yield(); // 必须加！让定时器能跑
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
