@@ -1120,15 +1120,15 @@ void start_camera(void)
 
     // 初始化UDP客户端S
     udp_client.udp_client_init(TARGET_IP, TARGET_PORT);
-    udp_client_img.udp_client_init(TARGET_IP, 8081);
+    udp_client_img.udp_client_init("192.168.43.213" , 8081);
     printf("UDP client initialized\r\n");
 
     // 初始化摄像头
-    if (!cam.is_opened()) {
-        printf("ERROR: Failed to open camera!\r\n");
-        return;
-    }
-    printf("Camera opened: %dx%d @ %dfps\r\n", cam.get_width(), cam.get_height(), cam.get_fps());
+   // if (!cam.is_opened()) {
+  //      printf("ERROR: Failed to open camera!\r\n");
+        //return;
+   // }
+   // printf("Camera opened: %dx%d @ %dfps\r\n", cam.get_width(), cam.get_height(), cam.get_fps());
 
     // 发送帧计数
    // uint32_t frame_count = 0;
@@ -1201,5 +1201,6 @@ for (int i = 0; i < LCDH; i++) {
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
+      mid=Mid_Line[43];
           return Mid_Line[43];
 }
