@@ -22,6 +22,8 @@ volatile  int pwm1_duty_rps=0;
 volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
 ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0);
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 17000, 0); 
+ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
+ls_gpio polar_pwm2(PIN_22, GPIO_MODE_OUT);
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
  volatile int set_speed_of_motor1_rps=0;
@@ -171,39 +173,45 @@ if (sscanf(buf, "#spd=%d;", &set_speed_of_motor1_rps) == 1)
 // 全局变量，保存原来的终端模式
 void encoder_sample_1ms_thread()
 {
-    static float buf1[3] = {0};
-    static float buf2[3] = {0};
+    static float buf1[5] = {0};
+    static float buf2[5] = {0};
     static int idx = 0;
     static float sum1 = 0.0f;
     static float sum2 = 0.0f;
 
     while (1)
     {
-        float s1 = std::fabs(enc1.encoder_get_count());
-        float s2 = std::fabs(enc2.encoder_get_count());
+        float s1 = -enc1.encoder_get_count();
+        float s2 = enc2.encoder_get_count();
 
+        // 减掉即将被覆盖的旧值
         sum1 -= buf1[idx];
         sum2 -= buf2[idx];
 
+        // 存入新采样
         buf1[idx] = s1;
         buf2[idx] = s2;
 
+        // 加上新值
         sum1 += buf1[idx];
         sum2 += buf2[idx];
 
-        idx = (idx + 1) % 3;
+        // 移动索引
+        idx = (idx + 1) % 5;
 
-        encoder1_speed_avg = sum1 / 3.0f;
-        encoder2_speed_avg = sum2 / 3.0f;
+        // 计算平均
+        encoder1_speed_avg = sum1 / 5.0f;
+        encoder2_speed_avg = sum2 / 5.0f;
 
-        usleep(1000);
+        usleep(1000);  // 1ms 采样周期
     }
 }
 int main()
 {
-
    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等线程就绪
 input_speed_rps();
+//test polor
+
 start_camera();
 //set_terminal_nonblock();
 
@@ -214,13 +222,13 @@ vofa_recv_init();
      encoder_sample_1ms_thread();
     });
 
-   speed_timer.set_seconds_ms(3, []() {
+   speed_timer.set_seconds_ms(5, []() {
      test_enc_and_motor_rps();   
      //   test_count++;   
      //  std::cout<<"fuck you"<<std::endl;  // 直接调用你封装好的速度函数
     });
 
-    dir_timer.set_seconds_ms(6, []() {
+    dir_timer.set_seconds_ms(10, []() {
       PID_control_test(latest_error);   // 直接调用你封装好的方向函数
     });
 //std::cout<<"fuck you2"<<std::endl; 
