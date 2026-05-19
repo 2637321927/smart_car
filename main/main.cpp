@@ -1,16 +1,39 @@
 #include "main.hpp"
-#include "img.hpp"
-#include "circle.hpp"
 #include "lq_timer.hpp"
 #include <math.h>
+#include "img.hpp"
+#include "circle.hpp"
 bool need_exit = false;
+// 全局互斥锁（解决多线程冲突）
+//std::mutex g_mutex;
+//begin to test timer
+lq_timer speed_timer;
+lq_timer dir_timer;
+lq_timer encoder_ave_timer;
+volatile  int pwm1_duty_rps=0;
+ volatile  int pwm2_duty_rps=0;
  volatile  int latest_error = 0;
-// 摄像头参数
-const uint8_t     JPEG_QUALITY = 60;
-const uint16_t    CAM_WIDTH    = 320;     // 宽vofa_receive(lq_udp_client &udp)
-const uint16_t    CAM_HEIGHT   = 240;     // 高
-const uint16_t    CAM_FPS      = 60;     // 帧率
- volatile  int mid;
+ volatile  float encoder_1=0;
+ volatile  float encoder_2=0;
+ volatile  float P1_motor=0;
+ volatile  float P2_motor=0;
+  volatile  float I1_motor=0;
+ volatile  float I2_motor=0;
+ volatile float alpha_flit = 0.0f;   // 可调，0.7~0.85都可以先试
+ volatile float encoder1_speed_avg = 0.0f;
+volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
+ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0);
+ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 17000, 0); 
+ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
+ls_gpio polar_pwm2(PIN_22, GPIO_MODE_OUT);
+ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
+ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
+ volatile int set_speed_of_motor1_rps=0;
+ volatile int set_speed_of_motor2_rps=0;
+lq_udp_client udp_client;
+lq_udp_client udp_client_img;
+volatile int test_count = 0;
+
  cv::Rect red_block_rect;   // 红色标记块外接矩形
  cv::Rect plate_rect;       // 目标板区域矩形
  bool have_target = false;
@@ -126,131 +149,11 @@ void save_per_map(void) {
     }
     
 }
-void vofa_recv_init()
-{
-    // 新建UDP socket
-    vofa_recv_fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if(vofa_recv_fd < 0) return;
-
-    // 端口复用
-    int opt = 1;
-    setsockopt(vofa_recv_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-    // 绑定本地 8080 端口，专门收VOFA
-    struct sockaddr_in local;
-    memset(&local, 0, sizeof(local));
-    local.sin_family = AF_INET;
-    local.sin_port = htons(8080);
-    local.sin_addr.s_addr = INADDR_ANY;
-    bind(vofa_recv_fd, (struct sockaddr*)&local, sizeof(local));
-
-    // 设置非阻塞
-    int flags = fcntl(vofa_recv_fd, F_GETFL, 0);
-    fcntl(vofa_recv_fd, F_SETFL, flags | O_NONBLOCK);
-}
-
-// 接收 + 解析 + 自动生效
-void vofa_recv_cmd(void)
-{
-    if (vofa_recv_fd < 0) return;
-
-    char buf[128] = {0};
-    struct sockaddr_in src_addr;
-    socklen_t addr_len = sizeof(src_addr);
-
-    int ret = recvfrom(vofa_recv_fd, buf, sizeof(buf)-1,
-                       MSG_DONTWAIT,
-                       (struct sockaddr*)&src_addr, &addr_len);
-
-    if (ret <= 0)
-    {
-        // 无数据，直接返回
-        return;
-    }
-
-    // ==================== 打印收到的指令 ====================
-    printf("[VOFA] RX: %s\n", buf);
-
-    // ==================== 解析指令 ====================
-    float ftmp = 0;
-
-    if (sscanf(buf, "#thres=%f;", &ftmp) == 1)
-    {
-        thres = ftmp;
-        printf("[VOFA] thres = %.1f\n", thres);
-    }
-    if (sscanf(buf, "#aim=%f;", &ftmp) == 1)
-    {
-        aim_distance = ftmp;
-        printf("[VOFA] aim = %.2f\n", aim_distance);
-    }
-    if (sscanf(buf, "#blur=%f;", &ftmp) == 1)
-    {
-        line_blur_kernel = ftmp;
-        printf("[VOFA] blur = %.1f\n", line_blur_kernel);
-    }
-    if (sscanf(buf, "#Kp=%f;", &ftmp) == 1)
-    {
-        servo_kp = ftmp;
-        printf("[VOFA] Kp = %.3f\n", servo_kp);
-    }
-    if (sscanf(buf, "#Ki=%f;", &ftmp) == 1)
-    {
-        servo_ki = ftmp;
-        printf("[VOFA] Ki = %.3f\n", servo_ki);
-    }
-    if (sscanf(buf, "#Kd=%f;", &ftmp) == 1)
-    {
-        servo_kd = ftmp;
-        printf("[VOFA] Kd = %.3f\n", servo_kd);
-    }
-        if (sscanf(buf, "#miny=%f;", &ftmp) == 1)
-    {
-        track_min_y= int(ftmp);
-        printf("[VOFA] miny = %.3f\n", servo_kd);
-    }
-        if (sscanf(buf, "#maxy=%f;", &ftmp) == 1)
-    {
-        track_max_y = int(ftmp);
-        printf("[VOFA] maxy = %.3f\n", servo_kd);
-    }
-}
-//std::mutex g_mutex;
-//begin to test timer
-lq_timer speed_timer;
-lq_timer dir_timer;
-lq_timer encoder_ave_timer;
-volatile  int pwm1_duty_rps=0;
- volatile  int pwm2_duty_rps=0;
- volatile  int latest_error = 0;
- volatile  float encoder_1=0;
- volatile  float encoder_2=0;
- volatile  float P1_motor=0;
- volatile  float P2_motor=0;
-  volatile  float I1_motor=0;
- volatile  float I2_motor=0;
- volatile float alpha_flit = 0.0f;   // 可调，0.7~0.85都可以先试
- volatile float encoder1_speed_avg = 0.0f;
-volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
-ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0);
-ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 17000, 0); 
-ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
-ls_gpio polar_pwm2(PIN_22, GPIO_MODE_OUT);
-ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
-ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
- volatile int set_speed_of_motor1_rps=0;
- volatile int set_speed_of_motor2_rps=0;
-lq_udp_client udp_client;
-lq_udp_client udp_client_img;
-lq_udp_client udp_client_img2;
-lq_udp_client udp_receive;
-volatile int test_count = 0;
 // 摄像头参数
-const std::string TARGET_IP    = "192.168.43.213";
-const uint8_t     JPEG_QUALITY = 60;
-const uint16_t    CAM_WIDTH    = 320;     // 宽vofa_receive(lq_udp_client &udp)
+const uint16_t    CAM_WIDTH    = 320;     // 宽
 const uint16_t    CAM_HEIGHT   = 240;     // 高
 const uint16_t    CAM_FPS      = 60;     // 帧率
+const uint8_t     JPEG_QUALITY = 100;
 static struct termios old_tio;
     lq_camera cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
  volatile  int mid;
@@ -427,9 +330,12 @@ int main()
    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等线程就绪
 input_speed_rps();
 //test polor
-
+ float error=0;
 start_camera();
 save_per_map();
+     img_line.width = IMG_W;
+    img_line.height = IMG_H;
+    img_line.data = new uint8_t[img_line.width * img_line.height];
 
 //set_terminal_nonblock();
 
@@ -443,6 +349,7 @@ vofa_recv_init();
    speed_timer.set_seconds_ms(5, []() {
      test_enc_and_motor_rps();   
      //   test_count++;   
+     //  std::cout<<"fuck you"<<std::endl;  // 直接调用你封装好的速度函数
     });
 
     dir_timer.set_seconds_ms(10, []() {
@@ -452,19 +359,38 @@ vofa_recv_init();
   
 while (1)
 {
-     cv::Mat frame = cam.get_raw_frame();
-      float error=0;
+    
          if (has_input()) {
             char c = getchar();
             if (c == 'q') {
-                std::cout<<"quit"<<std::endl;
+                std::cout<<"caonima"<<std::endl;
                 cut();
                  while (getchar() != EOF); 
                 break;
             } 
         }
            vofa_recv_cmd()   ;
-            cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+// std::lock_guard<std::mutex> lock(g_mutex);
+ //cv::Mat frame = cam.get_raw_frame();
+//latest_error=img_test(frame);
+ cv::Mat frame = cam.get_raw_frame();
+       cv::flip(frame, frame, -1); //颠倒上下左右
+ // 检测红色块和目标板
+ //detectRedPlate(frame);
+
+ // 如果找到了，就在原图上画框
+ /*if (have_target)
+ {
+     cv::Mat aframe=frame;
+     // 红色块：画红色框
+     cv::rectangle(aframe, red_block_rect, cv::Scalar(0, 0, 255), 2);
+     // 目标板区域：画青蓝色框
+     cv::rectangle(aframe, plate_rect, cv::Scalar(255, 255, 0), 2);
+     cv::imshow("AAA", aframe);
+     cv::waitKey(1);
+ }
+ */
+ cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
             continue;
@@ -589,18 +515,67 @@ img0.step=frame.step;
 
 
         }
-latest_error=error/10;
+latest_error=-error;
                clear_image(&img_line);
-            // 绘制道路元素
-            //draw_yroad();
-            //draw_circle();
-            draw_cross();
-// std::lock_guard<std::mutex> lock(g_mutex);
- //cv::Mat frame = cam.get_raw_frame();
-//latest_error=img_test(frame);
+               cv::Mat birdview;
+
+// 1. 直接用 OpenCV 官方 warpPerspective → 绝对正确！
+cv::warpPerspective(frame, birdview, M, cv::Size(IMG_W, IMG_H));
+
+
+// 2. 转彩色，用于画彩色线
+cv::Mat bgr_bird;
+cv::cvtColor(birdview, bgr_bird, cv::COLOR_GRAY2BGR);
+
+// 3. 在鸟瞰图上画：左线(蓝)、右线(绿)、中线(白)
+for (int i = 0; i < rpts0s_num; i++) {
+    int x = cvRound(rpts0s[i][0]);
+    int y = cvRound(rpts0s[i][1]);
+    if (x >= 0 && x < IMG_W && y >= 0 && y < IMG_H)
+        bgr_bird.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 0);
+}
+for (int i = 0; i < rpts1s_num; i++) {
+    int x = cvRound(rpts1s[i][0]);
+    int y = cvRound(rpts1s[i][1]);
+    if (x >= 0 && x < IMG_W && y >= 0 && y < IMG_H)
+        bgr_bird.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
+}
+for (int i = 0; i < rptsn_num; i++) {
+    int x = cvRound(rptsn[i][0]);
+    int y = cvRound(rptsn[i][1]);
+    if (x >= 0 && x < IMG_W && y >= 0 && y < IMG_H)
+        bgr_bird.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
+}
+
+// 4. 画预瞄点（红色 X）
+ int aim_idx = clip(cvRound(aim_distance / sample_dist), 0, rptsn_num - 1);
+if (rptsn_num > 0) {
+    int x = cvRound(rptsn[aim_idx][0]);
+    int y = cvRound(rptsn[aim_idx][1]);
+    cv::drawMarker(bgr_bird, cv::Point(x, y), cv::Scalar(0, 0, 255), cv::MARKER_TILTED_CROSS, 10, 2);
+}
+
+// 5. 画角点
+if (Lpt0_found) {
+    int x = cvRound(rpts0s[Lpt0_rpts0s_id][0]);
+    int y = cvRound(rpts0s[Lpt0_rpts0s_id][1]);
+    cv::drawMarker(bgr_bird, cv::Point(x, y), cv::Scalar(0, 255, 255), cv::MARKER_CROSS, 8, 2);
+}
+if (Lpt1_found) {
+    int x = cvRound(rpts1s[Lpt1_rpts1s_id][0]);
+    int y = cvRound(rpts1s[Lpt1_rpts1s_id][1]);
+    cv::drawMarker(bgr_bird, cv::Point(x, y), cv::Scalar(0, 255, 255), cv::MARKER_CROSS, 8, 2);
+}
+
+// 6. 显示角度
+char text[64];
+sprintf(text, "Angle: %.1f", error);
+cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
+
+// 7. 显示最终鸟瞰图（就是你要的效果）
+cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
-/*
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
 char encoder_str[256];
@@ -611,99 +586,15 @@ snprintf(encoder_str, sizeof(encoder_str),
          safe_float(I1_motor),    
          safe_float(I2_motor));
 
-    // 2. 一次性发送：数据 + 帧尾
-    udp_client.udp_send((const void*)data, sizeof(data));          // 发N个浮点数
-    udp_client.udp_send((const void*)VOFA_FRAME_TAIL, 4);         // 发帧尾
-    */
-//vofa_receive(udp_receive);
 // 发送函数
-
-//udp_client.udp_send_string(encoder_str);
-               clear_image(&img_line);
-            // 绘制道路元素
-            //draw_yroad();
-            //draw_circle();
-            draw_cross();
-
-
-        // 绘制道路线            
-            for (int i = 0; i < rpts0s_num; i++) {
-                AT_IMAGE(&img_line, clip(rpts0s[i][0], 0, img_line.width - 1),
-                         clip(rpts0s[i][1], 0, img_line.height - 1)) = 255;
-            }
-            for (int i = 0; i < rpts1s_num; i++) {
-                AT_IMAGE(&img_line, clip(rpts1s[i][0], 0, img_line.width - 1),
-                         clip(rpts1s[i][1], 0, img_line.height - 1)) = 255;
-            }
-            for (int i = 0; i < rptsn_num; i++) {
-                AT_IMAGE(&img_line, clip(rptsn[i][0], 0, img_line.width - 1),
-                         clip(rptsn[i][1], 0, img_line.height - 1)) = 255;
-            }
-            // 绘制锚点
-            int aim_idx = clip(round(aim_distance / sample_dist), 0, rptsn_num - 1);
-            draw_x(&img_line, rptsn[aim_idx][0], rptsn[aim_idx][1], 3, 255);
-            // 绘制角点
-            if (Lpt0_found) {
-                draw_x(&img_line, rpts0s[Lpt0_rpts0s_id][0], rpts0s[Lpt0_rpts0s_id][1], 3, 255);
-            }
-            if (Lpt1_found) {
-                draw_x(&img_line, rpts1s[Lpt1_rpts1s_id][0], rpts1s[Lpt1_rpts1s_id][1], 3, 255);
-            
-        
-        }///*
-       
-         cv::Mat draw_mat(img_line.height, img_line.width, CV_8UC1, img_line.data);
-        ssize_t sent = udp_client_img.udp_send_image(draw_mat, JPEG_QUALITY);
-        if (sent < 0) {
-            printf("ERROR: Failed to send image\r\n");
-        }
-          //  */
-            // 1. 把 OpenCV 灰度图转成彩色图，才能画彩色线
- 
-///*
-    cv::Mat color_frame;
-    cv::cvtColor(frame, color_frame, cv::COLOR_GRAY2BGR);
-
-// 画左边线（原图）→ 蓝色
-for (int i = 0; i < ipts0_num; i++) {
-    int x = ipts0[i][0];  // 原图X
-    int y = ipts0[i][1];  // 原图Y
-    if (x >= 0 && x < 320 && y >=0 && y < 240) {
-        color_frame.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 0);
-    }
-}
-
-// 画右边线（原图）→ 绿色s
-for (int i = 0; i < ipts1_num; i++) {
-    int x = ipts1[i][0];
-    int y = ipts1[i][1];
-    if (x >= 0 && x < 320 && y >=0 && y < 240) {
-        color_frame.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
-    }
-}
-char angle_text[64];
-// 把角度保留1位小数，拼成字符串
-sprintf(angle_text, "Angle: %.1f deg", error);  
-
-// 在图像左上角画出白色文字
-cv::putText(
-    color_frame,          // 要画的图（彩色原图）
-    angle_text,           // 文字内容
-    cv::Point(10, 30),    // 文字位置（x=10, y=30）
-    cv::FONT_HERSHEY_SIMPLEX,  // 字体
-    0.8,                  // 字体大小
-    cv::Scalar(255,255,255),    // 颜色：白色
-    1                    // 线条粗细
-);
-    // 5. 发送给上位机
-    udp_client_img2.udp_send_image(color_frame, JPEG_QUALITY);
-   
-    
-    //*/
+udp_client.udp_send_string(encoder_str);
+ ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+  if (sent < 0) {
+          printf("ERROR: Failed to send image\r\n");
+      }
      // std::this_thread::yield(); // 必须加！让定时器能跑
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
 }
-
      std::cout<<"caonissma"<<std::endl;
      reset_terminal(); // 必须恢复终端！
      std::cout<<"caonimssa"<<std::endl;

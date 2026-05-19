@@ -465,101 +465,101 @@ home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.s
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.cpp.s
 
-home/fdc/smart_car/example/src/PID_control.o: home/fdc/smart_car/example/src/PID_control.cpp.o
-.PHONY : home/fdc/smart_car/example/src/PID_control.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.o
 
 # target to build an object file
-home/fdc/smart_car/example/src/PID_control.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control.cpp.o
-.PHONY : home/fdc/smart_car/example/src/PID_control.cpp.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.o
 
-home/fdc/smart_car/example/src/PID_control.i: home/fdc/smart_car/example/src/PID_control.cpp.i
-.PHONY : home/fdc/smart_car/example/src/PID_control.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.i
 
 # target to preprocess a source file
-home/fdc/smart_car/example/src/PID_control.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control.cpp.i
-.PHONY : home/fdc/smart_car/example/src/PID_control.cpp.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.i
 
-home/fdc/smart_car/example/src/PID_control.s: home/fdc/smart_car/example/src/PID_control.cpp.s
-.PHONY : home/fdc/smart_car/example/src/PID_control.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.s
 
 # target to generate assembly for a file
-home/fdc/smart_car/example/src/PID_control.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control.cpp.s
-.PHONY : home/fdc/smart_car/example/src/PID_control.cpp.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.cpp.s
 
-home/fdc/smart_car/example/src/dir_circle.o: home/fdc/smart_car/example/src/dir_circle.cpp.o
-.PHONY : home/fdc/smart_car/example/src/dir_circle.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.o
 
 # target to build an object file
-home/fdc/smart_car/example/src/dir_circle.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/dir_circle.cpp.o
-.PHONY : home/fdc/smart_car/example/src/dir_circle.cpp.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.o
 
-home/fdc/smart_car/example/src/dir_circle.i: home/fdc/smart_car/example/src/dir_circle.cpp.i
-.PHONY : home/fdc/smart_car/example/src/dir_circle.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.i
 
 # target to preprocess a source file
-home/fdc/smart_car/example/src/dir_circle.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/dir_circle.cpp.i
-.PHONY : home/fdc/smart_car/example/src/dir_circle.cpp.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.i
 
-home/fdc/smart_car/example/src/dir_circle.s: home/fdc/smart_car/example/src/dir_circle.cpp.s
-.PHONY : home/fdc/smart_car/example/src/dir_circle.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.s
 
 # target to generate assembly for a file
-home/fdc/smart_car/example/src/dir_circle.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/dir_circle.cpp.s
-.PHONY : home/fdc/smart_car/example/src/dir_circle.cpp.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.s
 
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.o
 
 # target to build an object file
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.o
 
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.i
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.i
 
 # target to preprocess a source file
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.i
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.i
 
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.s
 
 # target to generate assembly for a file
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.s
 
-home/fdc/smart_car/example/src/spd_circle.o: home/fdc/smart_car/example/src/spd_circle.cpp.o
-.PHONY : home/fdc/smart_car/example/src/spd_circle.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o
 
 # target to build an object file
-home/fdc/smart_car/example/src/spd_circle.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/spd_circle.cpp.o
-.PHONY : home/fdc/smart_car/example/src/spd_circle.cpp.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o
 
-home/fdc/smart_car/example/src/spd_circle.i: home/fdc/smart_car/example/src/spd_circle.cpp.i
-.PHONY : home/fdc/smart_car/example/src/spd_circle.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.i
 
 # target to preprocess a source file
-home/fdc/smart_car/example/src/spd_circle.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/spd_circle.cpp.i
-.PHONY : home/fdc/smart_car/example/src/spd_circle.cpp.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.i
 
-home/fdc/smart_car/example/src/spd_circle.s: home/fdc/smart_car/example/src/spd_circle.cpp.s
-.PHONY : home/fdc/smart_car/example/src/spd_circle.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.s
 
 # target to generate assembly for a file
-home/fdc/smart_car/example/src/spd_circle.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/spd_circle.cpp.s
-.PHONY : home/fdc/smart_car/example/src/spd_circle.cpp.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.s
 
 home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.o
@@ -585,29 +585,29 @@ home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cp
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.s
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.s
 
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.o
 
 # target to build an object file
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.o
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.o
 
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.i
 
 # target to preprocess a source file
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.i
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.i
 
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.s
 
 # target to generate assembly for a file
-home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s
-.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.cpp.s
 
 home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.o
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.o
@@ -1314,138 +1314,150 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... main"
-	@echo "... home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.o"
-	@echo "... home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.i"
-	@echo "... home/fdc/smart_car/example/src/01_lq_gpio_basic_demo.s"
-	@echo "... home/fdc/smart_car/example/src/02_lq_pwm_demo.o"
-	@echo "... home/fdc/smart_car/example/src/02_lq_pwm_demo.i"
-	@echo "... home/fdc/smart_car/example/src/02_lq_pwm_demo.s"
-	@echo "... home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.o"
-	@echo "... home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.i"
-	@echo "... home/fdc/smart_car/example/src/03_lq_gtim_pwm_demo.s"
-	@echo "... home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.o"
-	@echo "... home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.i"
-	@echo "... home/fdc/smart_car/example/src/04_lq_atim_pwm_demo.s"
-	@echo "... home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.o"
-	@echo "... home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.i"
-	@echo "... home/fdc/smart_car/example/src/05_lq_encoder_pwm_demo.s"
-	@echo "... home/fdc/smart_car/example/src/06_lq_canfd_demo.o"
-	@echo "... home/fdc/smart_car/example/src/06_lq_canfd_demo.i"
-	@echo "... home/fdc/smart_car/example/src/06_lq_canfd_demo.s"
-	@echo "... home/fdc/smart_car/example/src/07_lq_ncnn_demo.o"
-	@echo "... home/fdc/smart_car/example/src/07_lq_ncnn_demo.i"
-	@echo "... home/fdc/smart_car/example/src/07_lq_ncnn_demo.s"
-	@echo "... home/fdc/smart_car/example/src/08_lq_ips20_demo.o"
-	@echo "... home/fdc/smart_car/example/src/08_lq_ips20_demo.i"
-	@echo "... home/fdc/smart_car/example/src/08_lq_ips20_demo.s"
-	@echo "... home/fdc/smart_car/example/src/09_lq_mpu6050_demo.o"
-	@echo "... home/fdc/smart_car/example/src/09_lq_mpu6050_demo.i"
-	@echo "... home/fdc/smart_car/example/src/09_lq_mpu6050_demo.s"
-	@echo "... home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.o"
-	@echo "... home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.i"
-	@echo "... home/fdc/smart_car/example/src/10_lq_lsm6dsr_demo.s"
-	@echo "... home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.o"
-	@echo "... home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.i"
-	@echo "... home/fdc/smart_car/example/src/11_lq_vl53l0x_demo.s"
-	@echo "... home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.o"
-	@echo "... home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.i"
-	@echo "... home/fdc/smart_car/example/src/12_lq_udp_img_trans_demo.s"
-	@echo "... home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.o"
-	@echo "... home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.i"
-	@echo "... home/fdc/smart_car/example/src/13_lq_udp_wavefrom_demo.s"
-	@echo "... home/fdc/smart_car/example/src/14_lq_icm42688_demo.o"
-	@echo "... home/fdc/smart_car/example/src/14_lq_icm42688_demo.i"
-	@echo "... home/fdc/smart_car/example/src/14_lq_icm42688_demo.s"
-	@echo "... home/fdc/smart_car/example/src/PID_control.o"
-	@echo "... home/fdc/smart_car/example/src/PID_control.i"
-	@echo "... home/fdc/smart_car/example/src/PID_control.s"
-	@echo "... home/fdc/smart_car/example/src/dir_circle.o"
-	@echo "... home/fdc/smart_car/example/src/dir_circle.i"
-	@echo "... home/fdc/smart_car/example/src/dir_circle.s"
-	@echo "... home/fdc/smart_car/example/src/img_test.o"
-	@echo "... home/fdc/smart_car/example/src/img_test.i"
-	@echo "... home/fdc/smart_car/example/src/img_test.s"
-	@echo "... home/fdc/smart_car/example/src/spd_circle.o"
-	@echo "... home/fdc/smart_car/example/src/spd_circle.i"
-	@echo "... home/fdc/smart_car/example/src/spd_circle.s"
-	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_ips20.o"
-	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_ips20.i"
-	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_ips20.s"
-	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_tft18.o"
-	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_tft18.i"
-	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_tft18.s"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.o"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.i"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_icm42688.s"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.o"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.i"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_lsm6dsr.s"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.o"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.i"
-	@echo "... home/fdc/smart_car/libraries/app/gyro/lq_i2c_mpu6050.s"
-	@echo "... home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.o"
-	@echo "... home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.i"
-	@echo "... home/fdc/smart_car/libraries/app/lq_i2c_vl53l0x.s"
-	@echo "... home/fdc/smart_car/libraries/common/src/lq_i2c_dev.o"
-	@echo "... home/fdc/smart_car/libraries/common/src/lq_i2c_dev.i"
-	@echo "... home/fdc/smart_car/libraries/common/src/lq_i2c_dev.s"
-	@echo "... home/fdc/smart_car/libraries/common/src/lq_utils.o"
-	@echo "... home/fdc/smart_car/libraries/common/src/lq_utils.i"
-	@echo "... home/fdc/smart_car/libraries/common/src/lq_utils.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_camera.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_camera.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_camera.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_canfd.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_canfd.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_canfd.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_map_addr.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_map_addr.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_map_addr.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_module_load.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_module_load.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_module_load.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_ncnn.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_ncnn.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_ncnn.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_adc.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_adc.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_adc.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_atim_pwm.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_gpio.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_gtim.pwm.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_pwm.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_pwm_encoder.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_spi.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_spi.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_reg_spi.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_soft_i2c.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_soft_spi.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_soft_spi.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_soft_spi.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_tcp_client.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_tcp_client.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_tcp_client.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_timer.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_timer.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_timer.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_uart.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_uart.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_uart.s"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_udp_client.o"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_udp_client.i"
-	@echo "... home/fdc/smart_car/libraries/drv/src/lq_udp_client.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/01_lq_gpio_basic_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/03_lq_gtim_pwm_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/04_lq_atim_pwm_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/05_lq_encoder_pwm_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/06_lq_canfd_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/07_lq_ncnn_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/08_lq_ips20_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/09_lq_mpu6050_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/10_lq_lsm6dsr_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/11_lq_vl53l0x_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/12_lq_udp_img_trans_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/13_lq_udp_wavefrom_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/14_lq_icm42688_demo.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/spd_circle.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_tft18.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_icm42688.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_lsm6dsr.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/gyro/lq_i2c_mpu6050.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/lq_i2c_vl53l0x.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_i2c_dev.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/common/src/lq_utils.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_camera.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_canfd.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_map_addr.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_module_load.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_ncnn.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_adc.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_atim_pwm.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gpio.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_gtim.pwm.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_pwm_encoder.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_reg_spi.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_i2c.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_soft_spi.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_tcp_client.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_timer.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_uart.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/drv/src/lq_udp_client.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

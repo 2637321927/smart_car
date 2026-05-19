@@ -1,33 +1,18 @@
-CMakeFiles/main.dir/main.cpp.o: \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/main.cpp \
+CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp.o: \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/02_lq_pwm_demo.cpp \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/stdc-predef.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/main.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/stdio.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/libc-header-start.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/lq_all_demo.hpp \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/drv/inc/lq_drv_inc.hpp \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/drv/inc/lq_camera.hpp \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/iostream \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/bits/c++config.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/bits/os_defines.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/features.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/sys/cdefs.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/wordsize.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/long-double.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/gnu/stubs.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/gnu/stubs-lp64.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/lib/gcc/loongarch64-linux-gnu/8.3.0/include/stddef.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/lib/gcc/loongarch64-linux-gnu/8.3.0/include/stdarg.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/typesizes.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__fpos_t.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__mbstate_t.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__fpos64_t.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__FILE.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/FILE.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/struct_FILE.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/cookie_io_functions_t.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/stdio_lim.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/sys_errlist.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/drv/inc/lq_drv_inc.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/drv/inc/lq_camera.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/iostream \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/bits/c++config.h \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/bits/os_defines.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/bits/cpu_defines.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/ostream \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/ios \
@@ -37,11 +22,17 @@ CMakeFiles/main.dir/main.cpp.o: \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/bits/postypes.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/cwchar \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/wchar.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/libc-header-start.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/floatn.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/floatn-common.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/lib/gcc/loongarch64-linux-gnu/8.3.0/include/stddef.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/lib/gcc/loongarch64-linux-gnu/8.3.0/include/stdarg.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/wchar.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/wint_t.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/mbstate_t.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__mbstate_t.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__FILE.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/FILE.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/locale_t.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__locale_t.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/exception \
@@ -73,6 +64,8 @@ CMakeFiles/main.dir/main.cpp.o: \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/cstdint \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/lib/gcc/loongarch64-linux-gnu/8.3.0/include/stdint.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/stdint.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/typesizes.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/stdint-intn.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/stdint-uintn.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/bits/localefwd.h \
@@ -139,6 +132,13 @@ CMakeFiles/main.dir/main.cpp.o: \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/stdlib-float.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/bits/std_abs.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/cstdio \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/stdio.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__fpos_t.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/__fpos64_t.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/struct_FILE.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/types/cookie_io_functions_t.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/stdio_lim.h \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/sys_errlist.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/c++/8.3.0/cerrno \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/errno.h \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/bits/errno.h \
@@ -517,8 +517,4 @@ CMakeFiles/main.dir/main.cpp.o: \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/common/inc/lq_i2c_dev.hpp \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/app/gyro/lq_i2c_icm42688.hpp \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/app/gyro/lq_i2c_lsm6dsr.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/app/lq_i2c_vl53l0x.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/lq_all_demo.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/drv/inc/lq_timer.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/img.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/circle.hpp
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/app/lq_i2c_vl53l0x.hpp
