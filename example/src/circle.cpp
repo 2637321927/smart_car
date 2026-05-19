@@ -1,7 +1,11 @@
 #include "circle.hpp"
 #include "img.hpp"
-#include "lq_all_demo.hpp"
-
+#include <algorithm>
+#include<cmath>
+#include <iostream>
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 enum cross_type_e cross_type = CROSS_NONE;
 
 const char *cross_type_name[CROSS_NUM] = {
@@ -10,15 +14,7 @@ const char *cross_type_name[CROSS_NUM] = {
 };
 enum circle_type_e circle_type = CIRCLE_NONE;
 
-//方便串口收发
-const char *circle_type_name[CIRCLE_NUM] = {
-        "CIRCLE_NONE",
-        "CIRCLE_LEFT_BEGIN", "CIRCLE_RIGHT_BEGIN",
-        "CIRCLE_LEFT_RUNNING", "CIRCLE_RIGHT_RUNNING",
-        "CIRCLE_LEFT_IN", "CIRCLE_RIGHT_IN",
-        "CIRCLE_LEFT_OUT", "CIRCLE_RIGHT_OUT",
-        "CIRCLE_LEFT_END", "CIRCLE_RIGHT_END",
-};
+
 
 // 编码器，用于防止一些重复触发等。
 int64_t circle_encoder;
@@ -28,16 +24,17 @@ int have_left_line = 0, have_right_line = 0;
 
 void check_circle() {
     // 非圆环模式下，单边L角点, 单边长直道
-    if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found && is_straight1) {
+    if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found) {
         circle_type = CIRCLE_LEFT_BEGIN;
+        std::cout << "begin" << std::endl;
     }
-    if (circle_type == CIRCLE_NONE && !Lpt0_found && Lpt1_found && is_straight0) {
+    if (circle_type == CIRCLE_NONE && !Lpt0_found && Lpt1_found) {
         circle_type = CIRCLE_RIGHT_BEGIN;
+        std::cout << "begin" << std::endl;
     }
 }
 
 void run_circle() {
-    int64_t current_encoder = get_total_encoder();
 
     // 左环开始，寻外直道右线
     if (circle_type == CIRCLE_LEFT_BEGIN) {
@@ -45,13 +42,13 @@ void run_circle() {
 
         //先丢左线后有线
         if (rpts0s_num < 0.2 / sample_dist) { none_left_line++; }
-        if (rpts0s_num > 1.0 / sample_dist && none_left_line > 2) {
+        if (rpts0s_num > 0.5 / sample_dist && none_left_line > 2) {
             have_left_line++;
             if (have_left_line > 1) {
                 circle_type = CIRCLE_LEFT_IN;
                 none_left_line = 0;
                 have_left_line = 0;
-                circle_encoder = current_encoder;
+                circle_encoder = 0;
             }
         }
     }
@@ -59,10 +56,23 @@ void run_circle() {
     else if (circle_type == CIRCLE_LEFT_IN) {
         track_type = TRACK_LEFT;
 
+        //先丢右线后有线
+        if (rpts1s_num < 0.2 / sample_dist) { none_right_line++; }
+        if (rpts1s_num > 0.5 / sample_dist && none_right_line > 2) {
+            have_right_line++;
+            if (have_right_line > 1) {
+                circle_type = CIRCLE_LEFT_RUNNING;
+                none_right_line = 0;
+                have_right_line = 0;
+                circle_encoder = 0;
+            }
+        }
+    //todo：改成先丢线后有线感觉可以
         //编码器打表过1/4圆   应修正为右线为转弯无拐点
      //   if (rpts0s_num < 0.1 / sample_dist ||
          //   current_encoder - circle_encoder >= ENCODER_PER_METER * (3.14 * 1 / 2)) { circle_type = CIRCLE_LEFT_RUNNING; }
     }
+
     //正常巡线，寻外圆右线
     else if (circle_type == CIRCLE_LEFT_RUNNING) {
         track_type = TRACK_RIGHT;
@@ -77,10 +87,19 @@ void run_circle() {
     else if (circle_type == CIRCLE_LEFT_OUT) {
         track_type = TRACK_LEFT;
 
-        //右线为长直道
-        if (is_straight1) {
-            circle_type = CIRCLE_LEFT_END;
+        //右线为长直道.，这个地方要改
+                //先丢右线后有线
+        if (rpts1s_num < 0.2 / sample_dist) { none_right_line++; }
+        if (rpts1s_num > 0.5 / sample_dist && none_right_line > 2) {
+            have_right_line++;
+            if (have_right_line > 1) {
+                circle_type = CIRCLE_LEFT_END;
+                none_right_line = 0;
+                have_right_line = 0;
+                circle_encoder = 0;
+            }
         }
+         
     }
     //走过圆环，寻右线
     else if (circle_type == CIRCLE_LEFT_END) {
@@ -99,20 +118,30 @@ void run_circle() {
 
         //先丢右线后有线
         if (rpts1s_num < 0.2 / sample_dist) { none_right_line++; }
-        if (rpts1s_num > 1.0 / sample_dist && none_right_line > 2) {
+        if (rpts1s_num > 0.5 / sample_dist && none_right_line > 2) {//这里可以调
             have_right_line++;
             if (have_right_line > 1) {
                 circle_type = CIRCLE_RIGHT_IN;
                 none_right_line = 0;
                 have_right_line = 0;
-                circle_encoder = current_encoder;
+                circle_encoder = 0;
             }
         }
     }
     //入右环，寻右内圆环
     else if (circle_type == CIRCLE_RIGHT_IN) {
         track_type = TRACK_RIGHT;
-
+        //先丢左线后有线
+        if (rpts0s_num < 0.2 / sample_dist) { none_left_line++; }
+        if (rpts0s_num > 0.5 / sample_dist && none_left_line > 2) {
+            have_left_line++;
+            if (have_left_line > 1) {
+                circle_type = CIRCLE_RIGHT_RUNNING;
+                none_left_line = 0;
+                have_left_line = 0;
+                circle_encoder = 0;
+            }
+        }
         //编码器打表过1/4圆   应修正为左线为转弯无拐点
        // if (rpts1s_num < 0.1 / sample_dist ||
           //  current_encoder - circle_encoder >= ENCODER_PER_METER * (3.14 * 1 / 2)) { circle_type = CIRCLE_RIGHT_RUNNING; }
@@ -131,12 +160,19 @@ void run_circle() {
     //出环，寻内圆
     else if (circle_type == CIRCLE_RIGHT_OUT) {
         track_type = TRACK_RIGHT;
-
+        //先丢左线后有线
+        if (rpts0s_num < 0.2 / sample_dist) { none_left_line++; }
+        if (rpts0s_num > 0.5 / sample_dist && none_left_line > 2) {
+            have_left_line++;
+            if (have_left_line > 1) {
+                 circle_type = CIRCLE_RIGHT_END;
+                none_left_line = 0;
+                have_left_line = 0;
+                circle_encoder = 0;
+            }
+        }
         //左长度加倾斜角度  应修正左右线找到且为直线
         //if((rpts1s_num >100 && !Lpt1_found))  {have_right_line++;}
-        if (is_straight0) {
-            circle_type = CIRCLE_RIGHT_END;
-        }
     }
         //走过圆环，寻左线
     else if (circle_type == CIRCLE_RIGHT_END) {
@@ -193,67 +229,38 @@ int not_have_line = 0;
 
 int far_x1 = 86, far_x2 = 280, far_y1, far_y2;
 void find_corners() {
-    // 识别Y,L拐点
-    Ypt0_found = Ypt1_found = Lpt0_found = Lpt1_found = false;
-    is_straight0 = rpts0s_num > 1. / sample_dist;
-    is_straight1 = rpts1s_num > 1. / sample_dist;
-    for (int i = 0; i < rpts0s_num; i++) {
+    // 识别L拐点
+     Lpt0_found = Lpt1_found = false;
+    is_straight0 = rpts0s_num > 0.5 / sample_dist;
+    is_straight1 = rpts1s_num > 0.5 / sample_dist;
+    for (int i = 0; i < rpts0s_num*0.6; i++) {//不要找的太远
         if (rpts0an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         float conf = fabs(rpts0a[i]) - (fabs(rpts0a[im1]) + fabs(rpts0a[ip1])) / 2;
 
-        //Y角点阈值
-        if (Ypt0_found == false && 30. / 180. * PI < conf && conf < 65. / 180. * PI && i < 0.8 / sample_dist) {
-            Ypt0_rpts0s_id = i;
-            Ypt0_found = true;
-        }
         //L角点阈值
         if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.8 / sample_dist) {
             Lpt0_rpts0s_id = i;
             Lpt0_found = true;
         }
         //长直道阈值
-        if (conf > 5. / 180. * PI && i < 1.0 / sample_dist) is_straight0 = false;
-        if (Ypt0_found == true && Lpt0_found == true && is_straight0 == false) break;
+        if (conf > 15. / 180. * PI && 0.1 / sample_dist <i < 0.4 / sample_dist) is_straight0 = false;
+        if ( Lpt0_found == true && is_straight0 == false) break;
     }
-    for (int i = 0; i < rpts1s_num; i++) {
+    for (int i = 0; i < rpts1s_num*0.6; i++) {
         if (rpts1an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         float conf = fabs(rpts1a[i]) - (fabs(rpts1a[im1]) + fabs(rpts1a[ip1])) / 2;
-        if (Ypt1_found == false && 30. / 180. * PI < conf && conf < 65. / 180. * PI && i < 0.8 / sample_dist) {
-            Ypt1_rpts1s_id = i;
-            Ypt1_found = true;
-        }
         if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.8 / sample_dist) {
             Lpt1_rpts1s_id = i;
             Lpt1_found = true;
         }
 
-        if (conf > 5. / 180. * PI && i < 1.0 / sample_dist) is_straight1 = false;
+        if (conf > 15. / 180. * PI && 0.1 / sample_dist <i < 0.4 / sample_dist) is_straight1 = false;
 
-        if (Ypt1_found == true && Lpt1_found == true && is_straight1 == false) break;
-    }
-    // Y点二次检查,依据两角点距离及角点后张开特性
-    if (Ypt0_found && Ypt1_found) {
-        float dx = rpts0s[Ypt0_rpts0s_id][0] - rpts1s[Ypt1_rpts1s_id][0];
-        float dy = rpts0s[Ypt0_rpts0s_id][1] - rpts1s[Ypt1_rpts1s_id][1];
-        float dn = sqrtf(dx * dx + dy * dy);
-        if (fabs(dn - 0.45 * pixel_per_meter) < 0.15 * pixel_per_meter) {
-            float dwx = rpts0s[clip(Ypt0_rpts0s_id + 50, 0, rpts0s_num - 1)][0] -
-                        rpts1s[clip(Ypt1_rpts1s_id + 50, 0, rpts1s_num - 1)][0];
-            float dwy = rpts0s[clip(Ypt0_rpts0s_id + 50, 0, rpts0s_num - 1)][1] -
-                        rpts1s[clip(Ypt1_rpts1s_id + 50, 0, rpts1s_num - 1)][1];
-            float dwn = sqrtf(dwx * dwx + dwy * dwy);
-            if (!(dwn > 0.7 * pixel_per_meter &&
-                  rpts0s[clip(Ypt0_rpts0s_id + 50, 0, rpts0s_num - 1)][0] < rpts0s[Ypt0_rpts0s_id][0] &&
-                  rpts1s[clip(Ypt1_rpts1s_id + 50, 0, rpts1s_num - 1)][0] > rpts1s[Ypt1_rpts1s_id][0])) {
-                Ypt0_found = Ypt1_found = false;
-            }
-        } else {
-            Ypt0_found = Ypt1_found = false;
-        }
+        if ( Lpt1_found == true && is_straight1 == false) break;
     }
     // L点二次检查，车库模式不检查, 依据L角点距离及角点后张开特性，暂未实现车库
     if (1) {

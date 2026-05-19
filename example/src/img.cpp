@@ -1,5 +1,7 @@
 #include "img.hpp"
-#include "lq_all_demo.hpp"
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
 int min(int a,int b){
     return a<b?a:b;
 }
@@ -224,6 +226,17 @@ void process_image() {
     rpts1s_num = sizeof(rpts1s) / sizeof(rpts1s[0]);
     resample_points(rpts1b, rpts1b_num, rpts1s, &rpts1s_num, sample_dist * pixel_per_meter);
     
+    // 边线局部角度变化率
+    local_angle_points(rpts0s, rpts0s_num, rpts0a, (int)round(angle_dist / sample_dist));
+    rpts0a_num = rpts0s_num;
+    local_angle_points(rpts1s, rpts1s_num, rpts1a, (int)round(angle_dist / sample_dist));
+    rpts1a_num = rpts1s_num;
+
+    // 角度变化率非极大抑制
+    nms_angle(rpts0a, rpts0a_num, rpts0an, (int)round(angle_dist / sample_dist) * 2 + 1);
+    rpts0an_num = rpts0a_num;
+    nms_angle(rpts1a, rpts1a_num, rpts1an, (int)round(angle_dist / sample_dist) * 2 + 1);
+    rpts1an_num = rpts1a_num;
 
     // ===================== 【中线选择逻辑：只改中线，不改线】=====================
     int approx = (int)round(angle_dist / sample_dist);
@@ -269,6 +282,8 @@ void process_image() {
     {
         */
         // 丢线 → 使用你原来的中线
+    memset(rptsc0, 0, sizeof(rptsc0));
+    memset(rptsc1, 0, sizeof(rptsc1));
         track_leftline(rpts0s, rpts0s_num, rptsc0, approx,  pixel_per_meter * ROAD_WIDTH / 2);
         rptsc0_num = rpts0s_num;
 
@@ -527,7 +542,7 @@ void findline_lefthand_adaptive(image_t *img, int block_size, int clip_value, in
 
     // ✅ 真正正确的条件：允许走到图像边缘！
     while (step < *num
-        && x >= 0 && x < img->width
+        && x >= 2 && x < img->width-2
         && y >= 0 && y < img->height
         && y > track_min_y   // 远处截断，不回头
         && turn < 4)
@@ -585,7 +600,7 @@ void findline_righthand_adaptive(image_t *img, int block_size, int clip_value, i
 
     // ✅ 和左手完全一样！允许走到边缘！
     while (step < *num
-        && x >= 0 && x < img->width
+        && x >= 2 && x < img->width-2
         && y >= 0 && y < img->height
         && y > track_min_y
         && turn < 4)
@@ -1070,4 +1085,5 @@ void draw_o(image_t *img, int x, int y, int radius, uint8_t value) {
                 AT(img, clip(x + radius * cosf(i), 0, img->width - 1), clip(y + radius * sinf(i), 0, img->height - 1)) = value;
     }
 }
+
 

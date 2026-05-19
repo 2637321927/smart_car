@@ -1,13 +1,131 @@
 #include "main.hpp"
+#include "img.hpp"
+#include "circle.hpp"
 #include "lq_timer.hpp"
 #include <math.h>
 bool need_exit = false;
-// 全局互斥锁（解决多线程冲突）
-static int vofa_recv_fd = -1;
-float servo_kp = 1.2f;    // 给你PID用
-float servo_ki = 0.05f;
-float servo_kd = 0.3f;
-// 单独初始化一个只用于接收的UDP socket
+ volatile  int latest_error = 0;
+// 摄像头参数
+const uint8_t     JPEG_QUALITY = 60;
+const uint16_t    CAM_WIDTH    = 320;     // 宽vofa_receive(lq_udp_client &udp)
+const uint16_t    CAM_HEIGHT   = 240;     // 高
+const uint16_t    CAM_FPS      = 60;     // 帧率
+ volatile  int mid;
+ cv::Rect red_block_rect;   // 红色标记块外接矩形
+ cv::Rect plate_rect;       // 目标板区域矩形
+ bool have_target = false;
+
+ image_t img_raw;
+ image_t img0;
+ image_t img_thres;
+image_t img_line;
+cv::Mat M = (cv::Mat_<float>(3, 3) <<
+    -1.926069941510014, -3.371753034082217, 468.5182139603127,
+    0.01304919847285211, -6.564635749345294, 571.4708741748802,
+    0.0001131073803662276, -0.02128472622767542, 1);
+
+cv::Mat M_Reverse = (cv::Mat_<float>(3, 3) <<
+    -0.5213095398517877, 0.6145633088870834, -106.9620168336765,
+    -0.004803300317385806, 0.1842669595441624, -103.0527667664332,
+    -4.327297583230408e-05, 0.00385256014076622, -1.181351734105273);
+
+// Auxiliary calibration values
+// ground_width_m = 0.6
+#define M2PIX 274.7333333333333 // 米转像素
+
+ bool line_show_sample;
+bool line_show_blur;
+ bool track_left;
+
+float angle;
+ float mapx[IMG_H][IMG_W];
+float mapy[IMG_H][IMG_W];
+
+float thres = 95;            // 固定二值化阈值（判断黑线/背景）
+float block_size = 7;         // 自适应阈值的窗口大小
+float clip_value = 2;         // 自适应阈值减去的偏移量
+float track_min_y = 70;   // 越小 → 巡得越远
+float track_max_y = 238;  // 越大 → 巡到最底部
+float begin_x = 40;           // 巡线起始点 水平偏移
+float begin_y = 238;          // 巡线起始点 垂直位置（靠近车底）
+float line_blur_kernel = 5;   // 边线滤波平滑程度7-5
+float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
+float sample_dist = 0.02;     // 点集等距采样步长（米）
+float angle_dist = 0.2;       // 计算弯道角度的窗口长度
+float far_rate = 0.5;         // 远处点权重（控制转向柔和度）
+float aim_distance = 0.50;    // 目标点距离车身多远（米）
+// 原图左右边线
+int ipts0[POINTS_MAX_LEN][2];
+ int ipts1[POINTS_MAX_LEN][2];
+int ipts0_num, ipts1_num;
+// 变换后左右边线
+float rpts0[POINTS_MAX_LEN][2];
+ float rpts1[POINTS_MAX_LEN][2];
+ int rpts0_num, rpts1_num;
+// 变换后左右边线+滤波
+float rpts0b[POINTS_MAX_LEN][2];
+ float rpts1b[POINTS_MAX_LEN][2];
+ int rpts0b_num, rpts1b_num;
+// 变换后左右边线+等距采样
+float rpts0s[POINTS_MAX_LEN][2];
+ float rpts1s[POINTS_MAX_LEN][2];
+ int rpts0s_num, rpts1s_num;
+// 左右边线局部角度变化率
+ float rpts0a[POINTS_MAX_LEN];
+float rpts1a[POINTS_MAX_LEN];
+ int rpts0a_num, rpts1a_num;
+// 左右边线局部角度变化率+非极大抑制
+float rpts0an[POINTS_MAX_LEN];
+float rpts1an[POINTS_MAX_LEN];
+ int rpts0an_num, rpts1an_num;
+// 左/右中线
+float rptsc0[POINTS_MAX_LEN][2];
+float rptsc1[POINTS_MAX_LEN][2];
+ int rptsc0_num, rptsc1_num;
+// 中线
+float (*rpts)[2];
+ int rpts_num;
+// 归一化中线
+ float rptsn[POINTS_MAX_LEN][2];
+ int rptsn_num;
+
+// Y角点
+ int Ypt0_rpts0s_id, Ypt1_rpts1s_id;
+bool Ypt0_found, Ypt1_found;
+
+// L角点
+ int Lpt0_rpts0s_id, Lpt1_rpts1s_id;
+bool Lpt0_found, Lpt1_found;
+
+
+
+bool is_straight0, is_straight1;
+
+
+ enum track_type_e track_type;
+ // 保存映射
+void save_per_map(void) {
+
+    // 计算透视映射
+    for (int y = 0; y < IMG_H; y++) {
+        for (int x = 0; x < IMG_W; x++) {   
+            float U = M.at<float>(0, 0) * x + M.at<float>(0, 1) * y + M.at<float>(0, 2);
+            float V = M.at<float>(1, 0) * x + M.at<float>(1, 1) * y + M.at<float>(1, 2);
+            float W = M.at<float>(2, 0) * x + M.at<float>(2, 1) * y + M.at<float>(2, 2);
+            
+            // 避免除以零
+            if (W != 0.0f) {
+                mapx[y][x] = U / W;
+                mapy[y][x] = V / W;
+            } 
+            else {
+                mapx[y][x] = 0.0f;
+                mapy[y][x] = 0.0f;
+            }
+        }
+    }
+    
+}
 void vofa_recv_init()
 {
     // 新建UDP socket
@@ -337,7 +455,8 @@ vofa_recv_init();
   
 while (1)
 {
-    
+     cv::Mat frame = cam.get_raw_frame();
+      float error=0;
          if (has_input()) {
             char c = getchar();
             if (c == 'q') {
@@ -348,11 +467,143 @@ while (1)
             } 
         }
            vofa_recv_cmd()   ;
+            cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+        if (frame.empty()) {
+            printf("ERROR: Failed to read frame\r\n");
+            continue;
+        }
+       // cv::flip(frame, frame, -1);  
+        // 等待摄像头采集完毕
+img_raw.data = frame.data;
+img_raw.width = cam.get_width();
+img_raw.height = cam.get_height();
+img_raw.step=frame.step;
+img0.data = frame.data;
+img0.width = cam.get_width();
+img0.height = cam.get_height();
+img0.step=frame.step;
+        // 开始处理摄像头图像
+        process_image();    // 边线提取&处理
+        find_corners();     // 角点提取&筛选
+
+        // 预瞄距离,动态效果更佳
+        aim_distance = 0.15;
+
+        // 单侧线少，切换巡线方向  切外向圆
+        if (rpts0s_num < rpts1s_num / 2 && rpts0s_num < 60) {
+            track_type = TRACK_RIGHT;
+        } else if (rpts1s_num < rpts0s_num / 2 && rpts1s_num < 60) {
+            track_type = TRACK_LEFT;
+        } else if (rpts0s_num < 20 && rpts1s_num > rpts0s_num) {
+            track_type = TRACK_RIGHT;
+        } else if (rpts1s_num < 20 && rpts0s_num > rpts1s_num) {
+            track_type = TRACK_LEFT;
+        }
+
+
+   
+        // 分别检查十字 三叉 和圆环, 十字优先级最高
+            check_cross();
+        if (cross_type == CROSS_NONE)
+            check_circle();
+        if (cross_type != CROSS_NONE) {
+            circle_type = CIRCLE_NONE;
+        }
+
+        //车库 ,十字清Aprltag标志
+        //if (garage_type != GARAGE_NONE || cross_type != CROSS_NONE) apriltag_type = APRILTAG_NONE;
+
+        //根据检查结果执行模式
+        //if (yroad_type != YROAD_NONE) run_yroad();
+        if (cross_type != CROSS_NONE) run_cross();
+      if (circle_type != CIRCLE_NONE) run_circle();
+       // if (garage_type != GARAGE_NONE) run_garage();
+
+        // 中线跟踪
+        ///*
+        if (cross_type != CROSS_IN) {
+            if (track_type == TRACK_LEFT) {
+                rpts = rptsc0;
+                rpts_num = rptsc0_num;
+            } else {
+                rpts = rptsc1;
+                rpts_num = rptsc1_num;
+            }
+        } else {
+            //十字根据远线控制
+            if (track_type == TRACK_LEFT) {
+                track_leftline(far_rpts0s + far_Lpt0_rpts0s_id, far_rpts0s_num - far_Lpt0_rpts0s_id, rpts,
+                               (int) round(angle_dist / sample_dist), pixel_per_meter * ROAD_WIDTH / 2);
+                rpts_num = far_rpts0s_num - far_Lpt0_rpts0s_id;
+            } else {
+                track_rightline(far_rpts1s + far_Lpt1_rpts1s_id, far_rpts1s_num - far_Lpt1_rpts1s_id, rpts,
+                                (int) round(angle_dist / sample_dist), pixel_per_meter * ROAD_WIDTH / 2);
+                rpts_num = far_rpts1s_num - far_Lpt1_rpts1s_id;
+            }
+        }
+      //  */
+        // 车轮对应点(纯跟踪起始点)
+        float cx = mapx[(int) (IMG_H * 0.78f)][IMG_W / 2];
+        float cy = mapy[(int) (IMG_H * 0.78f)][IMG_W / 2];
+
+        // 找最近点(起始点中线归一化)
+        float min_dist = 1e10;
+        int begin_id = -1;
+        for (int i = 0; i < rpts_num; i++) {
+            float dx = rpts[i][0] - cx;
+            float dy = rpts[i][1] - cy;
+            float dist = sqrt(dx * dx + dy * dy);
+            if (dist < min_dist) {
+                min_dist = dist;
+                begin_id = i;
+            }
+        }
+
+        // 特殊模式下，不找最近点(由于边线会绕一圈回来，导致最近点为边线最后一个点，从而中线无法正常生成)
+      //  if (garage_type == GARAGE_IN_LEFT || garage_type == GARAGE_IN_RIGHT || cross_type == CROSS_IN) begin_id = 0;
+
+        // 中线有点，同时最近点不是最后几个点
+        if (begin_id >= 0 && rpts_num - begin_id >= 3) {
+            // 归一化中线，如果是根据左右track寻仙则需要这么干
+            rpts[begin_id][0] = cx;
+            rpts[begin_id][1] = cy;
+           rptsn_num = sizeof(rptsn) / sizeof(rptsn[0]);
+           resample_points(rpts + begin_id, rpts_num - begin_id, rptsn, &rptsn_num, sample_dist * pixel_per_meter);
+
+            // 远预锚点位置
+            int aim_idx = clip(round(aim_distance / sample_dist), 0, rptsn_num - 1);
+            // 近预锚点位置
+            int aim_idx_near = clip(round(0.25 / sample_dist), 0, rptsn_num - 1);
+
+            // 计算远锚点偏差值
+            float dx = rptsn[aim_idx][0] - cx;
+            float dy = cy - rptsn[aim_idx][1] + 0.2 * pixel_per_meter;
+            float dn = sqrt(dx * dx + dy * dy);
+            error = -atan2f(dx, dy) * 180 / PI;
+            assert(!isnan(error));
+
+            // 若考虑近点远点,可近似构造Stanley算法,避免撞路肩
+            // 计算近锚点偏差值
+            float dx_near = rptsn[aim_idx_near][0] - cx;
+            float dy_near = cy - rptsn[aim_idx_near][1] + 0.2 * pixel_per_meter;
+            float dn_near = sqrt(dx_near * dx_near + dy_near * dy_near);
+            float error_near = -atan2f(dx_near, dy_near) * 180 / PI;
+            assert(!isnan(error_near));
+
+
+        }
+latest_error=error/10;
+               clear_image(&img_line);
+            // 绘制道路元素
+            //draw_yroad();
+            //draw_circle();
+            draw_cross();
 // std::lock_guard<std::mutex> lock(g_mutex);
  //cv::Mat frame = cam.get_raw_frame();
 //latest_error=img_test(frame);
 //std::cout<<"fuck you"<<std::endl;
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
+/*
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
 char encoder_str[256];
@@ -370,7 +621,7 @@ snprintf(encoder_str, sizeof(encoder_str),
 //vofa_receive(udp_receive);
 // 发送函数
 
-udp_client.udp_send_string(encoder_str);
+//udp_client.udp_send_string(encoder_str);
                clear_image(&img_line);
             // 绘制道路元素
             //draw_yroad();
