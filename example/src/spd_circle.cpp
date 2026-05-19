@@ -1,7 +1,7 @@
 #include "lq_all_demo.hpp"
 
-volatile float P = 1.0f;
-volatile float I = 0.02f;
+volatile float P = 80.0f;
+volatile float I = 2.0f;
 volatile float D = 0.0f;
 
 /********************************************************************************
@@ -47,8 +47,8 @@ void calculate_differential_for_motor(
 
 
 
-    D1_motor = d_term1;
-    D2_motor = d_term2;
+    I1_motor = i_term1;
+    I2_motor = i_term2;
 
     // 更新历史误差
     error_prev1 = error_last1;
@@ -97,18 +97,18 @@ void close_circle_control(
 
     
 
-    pwm1.atim_pwm_set_duty(3000);
+    //pwm1.atim_pwm_set_duty(3000);
 
-    pwm2.atim_pwm_set_duty(3000);
+    //pwm2.atim_pwm_set_duty(3000);
     // motor1 输出
-    /*if (current_pwm1 >= 0)
+    if (current_pwm1 >= 0)
     {
-        polar_pwm1.gpio_level_set(GPIO_HIGH);   // 正转
+        polar_pwm1.gpio_level_set(GPIO_LOW);   // 正转
         pwm1.atim_pwm_set_duty(current_pwm1);
     }
     else
     {
-        polar_pwm1.gpio_level_set(GPIO_LOW);    // 反转
+        polar_pwm1.gpio_level_set(GPIO_HIGH);    // 反转
         pwm1.atim_pwm_set_duty(-current_pwm1);
     }
 
@@ -122,5 +122,5 @@ void close_circle_control(
     {
         polar_pwm2.gpio_level_set(GPIO_HIGH);   // 反转
         pwm2.atim_pwm_set_duty(-current_pwm2);
-    }*/
+    }
 }
