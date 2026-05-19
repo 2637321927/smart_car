@@ -1,11 +1,11 @@
 #include "lq_all_demo.hpp"
 
 
+
+//fliter test
 void input_speed_rps(){
     const int MAX_SPEED = 200;
 const int MIN_SPEED = 0;
-    pwm1.atim_pwm_set_duty(0);
-    pwm2.atim_pwm_set_duty(0);
 printf("请输入电机1、电机2目标转速(rps，空格分隔)：");
 // 读取两个int型数据
 int res = scanf("%d %d", &set_speed_of_motor1_rps, &set_speed_of_motor2_rps);
@@ -30,24 +30,19 @@ else
     fflush(stdin); // 清空输入缓存
 }}
 
-
-
-
-
-
-
-
 void  test_enc_and_motor_rps()
 { 
     
     
      //std::lock_guard<std::mutex> lock(g_mutex);
-encoder_1=std::fabs(enc1.encoder_get_count());//give it abs in case of negative num
-encoder_2=std::fabs(enc2.encoder_get_count());
+//encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
+//encoder_2=enc2.encoder_get_count();
+
+
 //std::cout<<"fuck you"<<std::endl;
 close_circle_control(
-    encoder_1,
-    encoder_2,
+  encoder1_speed_avg,
+  encoder2_speed_avg,
     pwm1_duty_rps,
     pwm2_duty_rps);
 }

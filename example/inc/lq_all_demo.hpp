@@ -13,6 +13,8 @@ const int LCDW    =80 ;  // 图像宽度（列）
 extern sint16 Road_Wide[LCDH]; 
 extern ls_atim_pwm pwm1;
 extern ls_atim_pwm pwm2;
+extern ls_gpio polar_pwm1;
+extern ls_gpio polar_pwm2;
 extern ls_encoder_pwm enc1;
 extern ls_encoder_pwm enc2;
  extern  lq_udp_client udp_client;
@@ -22,11 +24,22 @@ extern ls_encoder_pwm enc2;
 volatile extern int latest_error;
 volatile extern float encoder_1;
 volatile extern float encoder_2;
+volatile extern float P1_motor;
+ volatile extern float P2_motor;
+  volatile extern float D1_motor;
+ volatile extern float D2_motor;
 volatile extern int set_speed_of_motor1_rps;
 volatile extern int set_speed_of_motor2_rps;
 volatile extern int pwm1_duty_rps;
 volatile extern int pwm2_duty_rps;
 volatile  extern int test_count ;
+volatile extern float filtered_rps1;
+volatile extern float filtered_rps2;
+volatile extern float P;
+volatile extern float D;
+volatile extern float alpha_flit;   // 可调，0.7~0.85都可以先试
+ volatile extern float encoder1_speed_avg ;
+volatile extern float encoder2_speed_avg ;//demo for encoder ave
  extern lq_camera cam;
 void start_camera(void); // start camera
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试
