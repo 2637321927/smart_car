@@ -489,6 +489,30 @@ home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.s
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.cpp.s
 
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.o
+
+# target to build an object file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.o
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.i
+
+# target to preprocess a source file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.i
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.s
+
+# target to generate assembly for a file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.cpp.s
+
 home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.o
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.o
 
@@ -512,6 +536,30 @@ home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circl
 home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.cpp.s
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o
+
+# target to build an object file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.i
+
+# target to preprocess a source file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.i
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.s
+
+# target to generate assembly for a file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.s
 
 home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.o
@@ -560,6 +608,54 @@ home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encode
 home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.cpp.s
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.o
+
+# target to build an object file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.o
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.i
+
+# target to preprocess a source file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.i
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.s
+
+# target to generate assembly for a file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.cpp.s
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.o
+
+# target to build an object file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.o
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.i
+
+# target to preprocess a source file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.i
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.s
+
+# target to generate assembly for a file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.cpp.s
 
 home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.cpp.o
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.o
@@ -1263,15 +1359,27 @@ help:
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.o"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.i"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/PID_control_test.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/circle.s"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.o"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.i"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/close_circle_control.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.s"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.o"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.i"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.s"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.o"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.i"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/test_encoder_and_control.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/timer.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/udp_receive.s"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.o"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.i"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/libraries/app/display/lq_display_ips20.s"

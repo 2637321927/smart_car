@@ -161,10 +161,7 @@ ssize_t lq_udp_client::udp_recv(void *_buf, size_t _len)
     }
     // 接收数据
     socklen_t addr_len = sizeof(this->addr_);
-    ssize_t ret = recvfrom(this->socket_fd_, _buf, _len, 0, (struct sockaddr*)&this->addr_, &addr_len);
-    if (ret < 0) {
-        lq_log_error("recvfrom failed");
-    }
+    ssize_t ret = recvfrom(this->socket_fd_, _buf, _len, MSG_DONTWAIT, (struct sockaddr*)&this->addr_, &addr_len);
     return ret;
 }
 

@@ -7,6 +7,7 @@
 typedef signed short       sint16;
 //#include <mutex> 
 //extern std::mutex g_mutex;  // 全局锁
+extern int marker_status;  
 const int LCDH   = 60 ;  // 图像高度（行）
 const int LCDW    =80 ;  // 图像宽度（列）
 extern sint16 Road_Wide[LCDH]; 
@@ -16,6 +17,7 @@ extern ls_encoder_pwm enc1;
 extern ls_encoder_pwm enc2;
  extern  lq_udp_client udp_client;
  extern  lq_udp_client udp_client_img;
+  extern  lq_udp_client udp_client_img2;
  volatile extern int mid;
 volatile extern int latest_error;
 volatile extern float encoder_1;
@@ -58,5 +60,8 @@ void close_circle_control(
     void test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_motor2_pwm);
     void input_speed_rps();
     void  test_enc_and_motor_rps();
-    
+void vofa_receive(lq_udp_client &udp);
+
+
+
 #endif

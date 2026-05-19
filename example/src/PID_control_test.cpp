@@ -125,7 +125,7 @@ void PID_control_test(int error)
 
 
         
-     int diffrential = calculate_diffrential(error,40);
+     int diffrential = calculate_diffrential(error,0);
      pwm1_duty_rps=set_speed_of_motor1_rps + diffrential ;
      pwm2_duty_rps=set_speed_of_motor2_rps - diffrential ;
      if (pwm1_duty_rps<0){pwm1_duty_rps=0;};

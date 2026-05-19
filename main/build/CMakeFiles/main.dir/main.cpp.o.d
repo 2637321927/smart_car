@@ -519,4 +519,6 @@ CMakeFiles/main.dir/main.cpp.o: \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/app/gyro/lq_i2c_lsm6dsr.hpp \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/app/lq_i2c_vl53l0x.hpp \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/lq_all_demo.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/drv/inc/lq_timer.hpp
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../libraries/drv/inc/lq_timer.hpp \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/img.hpp \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/circle.hpp
