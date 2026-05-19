@@ -227,8 +227,8 @@ volatile  int pwm1_duty_rps=0;
  volatile  float encoder_2=0;
  volatile  float P1_motor=0;
  volatile  float P2_motor=0;
-  volatile  float D1_motor=0;
- volatile  float D2_motor=0;
+  volatile  float I1_motor=0;
+ volatile  float I2_motor=0;
  volatile float alpha_flit = 0.0f;   // 可调，0.7~0.85都可以先试
  volatile float encoder1_speed_avg = 0.0f;
 volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
@@ -448,10 +448,7 @@ vofa_recv_init();
     dir_timer.set_seconds_ms(10, []() {
       PID_control_test(latest_error);   // 直接调用你封装好的方向函数
     });
-     img_line.width = IMG_W;
-    img_line.height = IMG_H;
-    img_line.data = new uint8_t[img_line.width * img_line.height];
-    img_line.step = img_line.width;
+//std::cout<<"fuck you2"s<<std::endl; 
   
 while (1)
 {
@@ -611,8 +608,8 @@ snprintf(encoder_str, sizeof(encoder_str),
          "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"encoder_1\":%.2f,\"encoder_2\":%.2f,\"mid\":%d,\"road-wide\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
          safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps, safe_float(encoder_1), safe_float(encoder_2), mid,Road_Wide[25], safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
          safe_float(P2_motor),    
-         safe_float(D1_motor),    
-         safe_float(D2_motor));
+         safe_float(I1_motor),    
+         safe_float(I2_motor));
 
     // 2. 一次性发送：数据 + 帧尾
     udp_client.udp_send((const void*)data, sizeof(data));          // 发N个浮点数
