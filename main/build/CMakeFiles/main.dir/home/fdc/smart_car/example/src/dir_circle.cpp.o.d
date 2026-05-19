@@ -1,5 +1,5 @@
-CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o: \
- /home/fdc/smart_car/example/src/PID_control_test.cpp \
+CMakeFiles/main.dir/home/fdc/smart_car/example/src/dir_circle.cpp.o: \
+ /home/fdc/smart_car/example/src/dir_circle.cpp \
  /home/fdc/smart_car/tools/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.6/loongarch64-linux-gnu/sysroot/usr/include/stdc-predef.h \
  /home/fdc/smart_car/main/../example/inc/lq_all_demo.hpp \
  /home/fdc/smart_car/main/../libraries/drv/inc/lq_drv_inc.hpp \

@@ -465,53 +465,53 @@ home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.s
 .PHONY : home/fdc/smart_car/example/src/14_lq_icm42688_demo.cpp.s
 
-home/fdc/smart_car/example/src/PID_control_test.o: home/fdc/smart_car/example/src/PID_control_test.cpp.o
-.PHONY : home/fdc/smart_car/example/src/PID_control_test.o
+home/fdc/smart_car/example/src/PID_control.o: home/fdc/smart_car/example/src/PID_control.cpp.o
+.PHONY : home/fdc/smart_car/example/src/PID_control.o
 
 # target to build an object file
-home/fdc/smart_car/example/src/PID_control_test.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.o
-.PHONY : home/fdc/smart_car/example/src/PID_control_test.cpp.o
+home/fdc/smart_car/example/src/PID_control.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control.cpp.o
+.PHONY : home/fdc/smart_car/example/src/PID_control.cpp.o
 
-home/fdc/smart_car/example/src/PID_control_test.i: home/fdc/smart_car/example/src/PID_control_test.cpp.i
-.PHONY : home/fdc/smart_car/example/src/PID_control_test.i
+home/fdc/smart_car/example/src/PID_control.i: home/fdc/smart_car/example/src/PID_control.cpp.i
+.PHONY : home/fdc/smart_car/example/src/PID_control.i
 
 # target to preprocess a source file
-home/fdc/smart_car/example/src/PID_control_test.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.i
-.PHONY : home/fdc/smart_car/example/src/PID_control_test.cpp.i
+home/fdc/smart_car/example/src/PID_control.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control.cpp.i
+.PHONY : home/fdc/smart_car/example/src/PID_control.cpp.i
 
-home/fdc/smart_car/example/src/PID_control_test.s: home/fdc/smart_car/example/src/PID_control_test.cpp.s
-.PHONY : home/fdc/smart_car/example/src/PID_control_test.s
+home/fdc/smart_car/example/src/PID_control.s: home/fdc/smart_car/example/src/PID_control.cpp.s
+.PHONY : home/fdc/smart_car/example/src/PID_control.s
 
 # target to generate assembly for a file
-home/fdc/smart_car/example/src/PID_control_test.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control_test.cpp.s
-.PHONY : home/fdc/smart_car/example/src/PID_control_test.cpp.s
+home/fdc/smart_car/example/src/PID_control.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/PID_control.cpp.s
+.PHONY : home/fdc/smart_car/example/src/PID_control.cpp.s
 
-home/fdc/smart_car/example/src/close_circle_control.o: home/fdc/smart_car/example/src/close_circle_control.cpp.o
-.PHONY : home/fdc/smart_car/example/src/close_circle_control.o
+home/fdc/smart_car/example/src/dir_circle.o: home/fdc/smart_car/example/src/dir_circle.cpp.o
+.PHONY : home/fdc/smart_car/example/src/dir_circle.o
 
 # target to build an object file
-home/fdc/smart_car/example/src/close_circle_control.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.o
-.PHONY : home/fdc/smart_car/example/src/close_circle_control.cpp.o
+home/fdc/smart_car/example/src/dir_circle.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/dir_circle.cpp.o
+.PHONY : home/fdc/smart_car/example/src/dir_circle.cpp.o
 
-home/fdc/smart_car/example/src/close_circle_control.i: home/fdc/smart_car/example/src/close_circle_control.cpp.i
-.PHONY : home/fdc/smart_car/example/src/close_circle_control.i
+home/fdc/smart_car/example/src/dir_circle.i: home/fdc/smart_car/example/src/dir_circle.cpp.i
+.PHONY : home/fdc/smart_car/example/src/dir_circle.i
 
 # target to preprocess a source file
-home/fdc/smart_car/example/src/close_circle_control.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.i
-.PHONY : home/fdc/smart_car/example/src/close_circle_control.cpp.i
+home/fdc/smart_car/example/src/dir_circle.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/dir_circle.cpp.i
+.PHONY : home/fdc/smart_car/example/src/dir_circle.cpp.i
 
-home/fdc/smart_car/example/src/close_circle_control.s: home/fdc/smart_car/example/src/close_circle_control.cpp.s
-.PHONY : home/fdc/smart_car/example/src/close_circle_control.s
+home/fdc/smart_car/example/src/dir_circle.s: home/fdc/smart_car/example/src/dir_circle.cpp.s
+.PHONY : home/fdc/smart_car/example/src/dir_circle.s
 
 # target to generate assembly for a file
-home/fdc/smart_car/example/src/close_circle_control.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/close_circle_control.cpp.s
-.PHONY : home/fdc/smart_car/example/src/close_circle_control.cpp.s
+home/fdc/smart_car/example/src/dir_circle.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/dir_circle.cpp.s
+.PHONY : home/fdc/smart_car/example/src/dir_circle.cpp.s
 
 home/fdc/smart_car/example/src/img_test.o: home/fdc/smart_car/example/src/img_test.cpp.o
 .PHONY : home/fdc/smart_car/example/src/img_test.o
@@ -537,29 +537,29 @@ home/fdc/smart_car/example/src/img_test.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/img_test.cpp.s
 .PHONY : home/fdc/smart_car/example/src/img_test.cpp.s
 
-home/fdc/smart_car/example/src/test_encoder_and_control.o: home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o
-.PHONY : home/fdc/smart_car/example/src/test_encoder_and_control.o
+home/fdc/smart_car/example/src/spd_circle.o: home/fdc/smart_car/example/src/spd_circle.cpp.o
+.PHONY : home/fdc/smart_car/example/src/spd_circle.o
 
 # target to build an object file
-home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o
-.PHONY : home/fdc/smart_car/example/src/test_encoder_and_control.cpp.o
+home/fdc/smart_car/example/src/spd_circle.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/spd_circle.cpp.o
+.PHONY : home/fdc/smart_car/example/src/spd_circle.cpp.o
 
-home/fdc/smart_car/example/src/test_encoder_and_control.i: home/fdc/smart_car/example/src/test_encoder_and_control.cpp.i
-.PHONY : home/fdc/smart_car/example/src/test_encoder_and_control.i
+home/fdc/smart_car/example/src/spd_circle.i: home/fdc/smart_car/example/src/spd_circle.cpp.i
+.PHONY : home/fdc/smart_car/example/src/spd_circle.i
 
 # target to preprocess a source file
-home/fdc/smart_car/example/src/test_encoder_and_control.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.i
-.PHONY : home/fdc/smart_car/example/src/test_encoder_and_control.cpp.i
+home/fdc/smart_car/example/src/spd_circle.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/spd_circle.cpp.i
+.PHONY : home/fdc/smart_car/example/src/spd_circle.cpp.i
 
-home/fdc/smart_car/example/src/test_encoder_and_control.s: home/fdc/smart_car/example/src/test_encoder_and_control.cpp.s
-.PHONY : home/fdc/smart_car/example/src/test_encoder_and_control.s
+home/fdc/smart_car/example/src/spd_circle.s: home/fdc/smart_car/example/src/spd_circle.cpp.s
+.PHONY : home/fdc/smart_car/example/src/spd_circle.s
 
 # target to generate assembly for a file
-home/fdc/smart_car/example/src/test_encoder_and_control.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/test_encoder_and_control.cpp.s
-.PHONY : home/fdc/smart_car/example/src/test_encoder_and_control.cpp.s
+home/fdc/smart_car/example/src/spd_circle.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/fdc/smart_car/example/src/spd_circle.cpp.s
+.PHONY : home/fdc/smart_car/example/src/spd_circle.cpp.s
 
 home/fdc/smart_car/libraries/app/display/lq_display_ips20.o: home/fdc/smart_car/libraries/app/display/lq_display_ips20.cpp.o
 .PHONY : home/fdc/smart_car/libraries/app/display/lq_display_ips20.o
@@ -1260,18 +1260,18 @@ help:
 	@echo "... home/fdc/smart_car/example/src/14_lq_icm42688_demo.o"
 	@echo "... home/fdc/smart_car/example/src/14_lq_icm42688_demo.i"
 	@echo "... home/fdc/smart_car/example/src/14_lq_icm42688_demo.s"
-	@echo "... home/fdc/smart_car/example/src/PID_control_test.o"
-	@echo "... home/fdc/smart_car/example/src/PID_control_test.i"
-	@echo "... home/fdc/smart_car/example/src/PID_control_test.s"
-	@echo "... home/fdc/smart_car/example/src/close_circle_control.o"
-	@echo "... home/fdc/smart_car/example/src/close_circle_control.i"
-	@echo "... home/fdc/smart_car/example/src/close_circle_control.s"
+	@echo "... home/fdc/smart_car/example/src/PID_control.o"
+	@echo "... home/fdc/smart_car/example/src/PID_control.i"
+	@echo "... home/fdc/smart_car/example/src/PID_control.s"
+	@echo "... home/fdc/smart_car/example/src/dir_circle.o"
+	@echo "... home/fdc/smart_car/example/src/dir_circle.i"
+	@echo "... home/fdc/smart_car/example/src/dir_circle.s"
 	@echo "... home/fdc/smart_car/example/src/img_test.o"
 	@echo "... home/fdc/smart_car/example/src/img_test.i"
 	@echo "... home/fdc/smart_car/example/src/img_test.s"
-	@echo "... home/fdc/smart_car/example/src/test_encoder_and_control.o"
-	@echo "... home/fdc/smart_car/example/src/test_encoder_and_control.i"
-	@echo "... home/fdc/smart_car/example/src/test_encoder_and_control.s"
+	@echo "... home/fdc/smart_car/example/src/spd_circle.o"
+	@echo "... home/fdc/smart_car/example/src/spd_circle.i"
+	@echo "... home/fdc/smart_car/example/src/spd_circle.s"
 	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_ips20.o"
 	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_ips20.i"
 	@echo "... home/fdc/smart_car/libraries/app/display/lq_display_ips20.s"
