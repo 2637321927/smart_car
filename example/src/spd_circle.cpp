@@ -30,6 +30,11 @@ void calculate_differential_for_motor(
     // 真正的增量式 PID
     float p_term1 = P * (error_current1 - error_last1);
     float p_term2 = P * (error_current2 - error_last2);
+  if(p_term1>80)  p_term1=80;
+if(p_term1<-80) p_term1=-80;
+if(p_term2>80)  p_term2=80;
+if(p_term2<-80) p_term2=-80;
+    
 
     float i_term1 = I * error_current1;
     float i_term2 = I * error_current2;
