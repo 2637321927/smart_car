@@ -32,6 +32,8 @@ volatile extern int set_speed_of_motor1_rps;
 volatile extern int set_speed_of_motor2_rps;
 volatile extern int pwm1_duty_rps;
 volatile extern int pwm2_duty_rps;
+volatile extern int current_pwm1;
+volatile extern int current_pwm2;
 volatile  extern int test_count ;
 volatile extern float filtered_rps1;
 volatile extern float filtered_rps2;
