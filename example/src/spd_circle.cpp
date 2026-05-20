@@ -3,6 +3,8 @@
 volatile float P = 40.0f;
 volatile float I = 2.0f;
 volatile float D = 0.0f;
+volatile int current_pwm1 = 0;
+volatile int current_pwm2 = 0;
 
 /********************************************************************************
  * @brief   电机转速PD闭环控制
@@ -70,10 +72,6 @@ void close_circle_control(
     int target_speed_of_motor1_RPS,
     int target_speed_of_motor2_RPS)
 {
-    // 内部控制状态
-    static int current_pwm1 = 0;
-    static int current_pwm2 = 0;
-
     int pwm1_plusduty = 0;
     int pwm2_plusduty = 0;
 

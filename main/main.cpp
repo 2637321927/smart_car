@@ -578,10 +578,10 @@ cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
-char encoder_str[256];
+char encoder_str[384];
 snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"encoder_1\":%.2f,\"encoder_2\":%.2f,\"mid\":%d,\"road-wide\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
-         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps, safe_float(encoder_1), safe_float(encoder_2), mid,Road_Wide[25], safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"encoder_1\":%.2f,\"encoder_2\":%.2f,\"mid\":%d,\"road-wide\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
+         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps, safe_float(encoder_1), safe_float(encoder_2), mid,Road_Wide[25], current_pwm1, current_pwm2, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
          safe_float(P2_motor),    
          safe_float(I1_motor),    
          safe_float(I2_motor));
