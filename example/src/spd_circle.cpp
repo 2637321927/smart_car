@@ -1,6 +1,6 @@
 #include "lq_all_demo.hpp"
 
-volatile float P = 80.0f;
+volatile float P = 40.0f;
 volatile float I = 2.0f;
 volatile float D = 0.0f;
 

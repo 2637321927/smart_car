@@ -36,7 +36,7 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
 void PID_control_test(int error)
 {
 
-    int diffrential = calculate_diffrential(40, 40);
+    int diffrential = calculate_diffrential(error, 0);
     set_speed_of_motor2_rps=set_speed_of_motor1_rps;//for test esay
     pwm1_duty_rps = set_speed_of_motor1_rps + diffrential;
     pwm2_duty_rps = set_speed_of_motor2_rps - diffrential;
