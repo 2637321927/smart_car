@@ -59,31 +59,38 @@ extern float aim_distance ;    // 目标点距离车身多远（米）
 // 原图左右边线
 extern int ipts0[POINTS_MAX_LEN][2];
 extern int ipts1[POINTS_MAX_LEN][2];
-extern int ipts0_num, ipts1_num;
+extern int ipts2[POINTS_MAX_LEN][2];
+extern int ipts0_num, ipts1_num,ipts2_num;
 // 变换后左右边线
 extern float rpts0[POINTS_MAX_LEN][2];
 extern float rpts1[POINTS_MAX_LEN][2];
-extern int rpts0_num, rpts1_num;
+extern float rpts2[POINTS_MAX_LEN][2];
+extern int rpts0_num, rpts1_num,rpts2_num;
 // 变换后左右边线+滤波
 extern float rpts0b[POINTS_MAX_LEN][2];
 extern float rpts1b[POINTS_MAX_LEN][2];
-extern int rpts0b_num, rpts1b_num;
+extern float rpts2b[POINTS_MAX_LEN][2];
+extern int rpts0b_num, rpts1b_num,rpts2b_num;
 // 变换后左右边线+等距采样
 extern float rpts0s[POINTS_MAX_LEN][2];
 extern float rpts1s[POINTS_MAX_LEN][2];
-extern int rpts0s_num, rpts1s_num;
+extern float rpts2s[POINTS_MAX_LEN][2];
+extern int rpts0s_num, rpts1s_num,rpts2s_num;
 // 左右边线局部角度变化率
 extern float rpts0a[POINTS_MAX_LEN];
 extern float rpts1a[POINTS_MAX_LEN];
-extern int rpts0a_num, rpts1a_num;
+extern float rpts2a[POINTS_MAX_LEN];
+extern int rpts0a_num, rpts1a_num,rpts2a_num;
 // 左右边线局部角度变化率+非极大抑制
 extern float rpts0an[POINTS_MAX_LEN];
 extern float rpts1an[POINTS_MAX_LEN];
-extern int rpts0an_num, rpts1an_num;
+extern float rpts2an[POINTS_MAX_LEN];
+extern int rpts0an_num, rpts1an_num,rpts2an_num;
 // 左/右中线
 extern float rptsc0[POINTS_MAX_LEN][2];
 extern float rptsc1[POINTS_MAX_LEN][2];
-extern int rptsc0_num, rptsc1_num;
+extern float rptsc2[POINTS_MAX_LEN][2];
+extern int rptsc0_num, rptsc1_num,rptsc2_num;
 // 中线
 extern float (*rpts)[2];
 extern int rpts_num;

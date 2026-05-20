@@ -80,31 +80,38 @@ float aim_distance = 0.50;    // 目标点距离车身多远（米）
 // 原图左右边线
 int ipts0[POINTS_MAX_LEN][2];
  int ipts1[POINTS_MAX_LEN][2];
-int ipts0_num, ipts1_num;
+ int ipts2[POINTS_MAX_LEN][2];
+int ipts0_num, ipts1_num,ipts2_num;
 // 变换后左右边线
 float rpts0[POINTS_MAX_LEN][2];
  float rpts1[POINTS_MAX_LEN][2];
- int rpts0_num, rpts1_num;
+ float rpts2[POINTS_MAX_LEN][2];
+ int rpts0_num, rpts1_num,rpts2_num;
 // 变换后左右边线+滤波
 float rpts0b[POINTS_MAX_LEN][2];
  float rpts1b[POINTS_MAX_LEN][2];
- int rpts0b_num, rpts1b_num;
+ float rpts2b[POINTS_MAX_LEN][2];
+ int rpts0b_num, rpts1b_num,rpts2b_num;
 // 变换后左右边线+等距采样
 float rpts0s[POINTS_MAX_LEN][2];
  float rpts1s[POINTS_MAX_LEN][2];
- int rpts0s_num, rpts1s_num;
+ float rpts2s[POINTS_MAX_LEN][2];
+ int rpts0s_num, rpts1s_num,rpts2s_num;
 // 左右边线局部角度变化率
  float rpts0a[POINTS_MAX_LEN];
 float rpts1a[POINTS_MAX_LEN];
- int rpts0a_num, rpts1a_num;
+float rpts2a[POINTS_MAX_LEN];
+ int rpts0a_num, rpts1a_num,rpts2a_num;
 // 左右边线局部角度变化率+非极大抑制
 float rpts0an[POINTS_MAX_LEN];
 float rpts1an[POINTS_MAX_LEN];
- int rpts0an_num, rpts1an_num;
+float rpts2an[POINTS_MAX_LEN];
+ int rpts0an_num, rpts1an_num,rpts2an_num;
 // 左/右中线
 float rptsc0[POINTS_MAX_LEN][2];
 float rptsc1[POINTS_MAX_LEN][2];
- int rptsc0_num, rptsc1_num;
+float rptsc2[POINTS_MAX_LEN][2];
+int rptsc0_num, rptsc1_num,rptsc2_num;
 // 中线
 float (*rpts)[2];
  int rpts_num;
@@ -410,9 +417,10 @@ img0.step=frame.step;
         find_corners();     // 角点提取&筛选
 
         // 预瞄距离,动态效果更佳
-        aim_distance = 0.15;
+        aim_distance = 0.18;
 
         // 单侧线少，切换巡线方向  切外向圆
+
         if (rpts0s_num < rpts1s_num / 2 && rpts0s_num < 60) {
             track_type = TRACK_RIGHT;
         } else if (rpts1s_num < rpts0s_num / 2 && rpts1s_num < 60) {
@@ -422,9 +430,10 @@ img0.step=frame.step;
         } else if (rpts1s_num < 20 && rpts0s_num > rpts1s_num) {
             track_type = TRACK_LEFT;
         }
+        else{
+            track_type=midd;
+        }
 
-
-   
         // 分别检查十字 三叉 和圆环, 十字优先级最高
             check_cross();
         if (cross_type == CROSS_NONE)
@@ -444,13 +453,18 @@ img0.step=frame.step;
 
         // 中线跟踪
         ///*
+
         if (cross_type != CROSS_IN) {
             if (track_type == TRACK_LEFT) {
                 rpts = rptsc0;
                 rpts_num = rptsc0_num;
-            } else {
+            } else if (track_type == TRACK_RIGHT){
                 rpts = rptsc1;
                 rpts_num = rptsc1_num;
+            }
+            else {
+                rpts = rpts2s;
+                rpts_num = rpts2s_num;
             }
         } else {
             //十字根据远线控制

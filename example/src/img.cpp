@@ -200,7 +200,11 @@ void search_rightline()
 void process_image() {
     search_leftline();
     search_rightline();
-
+    int ipts2_num=min(ipts0_num,ipts1_num);
+    for (int i = 0; i < ipts2_num; i++) {
+        ipts2[i][0]=(ipts1[i][0]+ipts0[i][0])/2;
+        ipts2[i][1]=(ipts1[i][1]+ipts0[i][1])/2;
+    }
     // ===================== 左右边线照常逆透视（完全不动！）=====================
     for (int i = 0; i < ipts0_num; i++) {
         rpts0[i][0] = mapx[ipts0[i][1]][ipts0[i][0]];
@@ -213,31 +217,45 @@ void process_image() {
         rpts1[i][1] = mapy[ipts1[i][1]][ipts1[i][0]];
     }
     rpts1_num = ipts1_num;
-
+    for (int i = 0; i < ipts2_num; i++) {
+        rpts2[i][0] = mapx[ipts2[i][1]][ipts2[i][0]];
+        rpts2[i][1] = mapy[ipts2[i][1]][ipts2[i][0]];
+    }
+    rpts2_num = ipts2_num;
     // 边线滤波（不变）
     blur_points(rpts0, rpts0_num, rpts0b, (int)round(line_blur_kernel));
     rpts0b_num = rpts0_num;
     blur_points(rpts1, rpts1_num, rpts1b, (int)round(line_blur_kernel));
     rpts1b_num = rpts1_num;
-
+    blur_points(rpts2, rpts2_num, rpts2b, (int)round(line_blur_kernel));
+    rpts2b_num = rpts2_num;
     // 等距采样（不变）
     rpts0s_num = sizeof(rpts0s) / sizeof(rpts0s[0]);
     resample_points(rpts0b, rpts0b_num, rpts0s, &rpts0s_num, sample_dist * pixel_per_meter);
     rpts1s_num = sizeof(rpts1s) / sizeof(rpts1s[0]);
     resample_points(rpts1b, rpts1b_num, rpts1s, &rpts1s_num, sample_dist * pixel_per_meter);
-    
+        rpts2s_num = sizeof(rpts2s) / sizeof(rpts2s[0]);
+    resample_points(rpts2b, rpts2b_num, rpts2s, &rpts2s_num, sample_dist * pixel_per_meter);
+     /*   int rpts2s_num=min(rpts0s_num,rpts1s_num);
+    for (int i = 0; i < ipts2_num; i++) {
+        rpts2s[i][0]=(rpts1s[i][0]+rpts0s[i][0])/2;
+        rpts2s[i][1]=(rpts1s[i][1]+rpts0s[i][1])/2;
+    }
+        */
     // 边线局部角度变化率
     local_angle_points(rpts0s, rpts0s_num, rpts0a, (int)round(angle_dist / sample_dist));
     rpts0a_num = rpts0s_num;
     local_angle_points(rpts1s, rpts1s_num, rpts1a, (int)round(angle_dist / sample_dist));
     rpts1a_num = rpts1s_num;
-
+  local_angle_points(rpts2s, rpts2s_num, rpts2a, (int)round(angle_dist / sample_dist));
+    rpts2a_num = rpts2s_num;
     // 角度变化率非极大抑制
     nms_angle(rpts0a, rpts0a_num, rpts0an, (int)round(angle_dist / sample_dist) * 2 + 1);
     rpts0an_num = rpts0a_num;
     nms_angle(rpts1a, rpts1a_num, rpts1an, (int)round(angle_dist / sample_dist) * 2 + 1);
     rpts1an_num = rpts1a_num;
-
+   nms_angle(rpts2a, rpts2a_num, rpts2an, (int)round(angle_dist / sample_dist) * 2 + 1);
+    rpts2an_num = rpts2a_num;
     // ===================== 【中线选择逻辑：只改中线，不改线】=====================
     int approx = (int)round(angle_dist / sample_dist);
 /*
@@ -289,6 +307,7 @@ void process_image() {
 
         track_rightline(rpts1s, rpts1s_num, rptsc1, approx,  pixel_per_meter * ROAD_WIDTH / 2);
         rptsc1_num = rpts1s_num;
+        
    // }
 }
 
