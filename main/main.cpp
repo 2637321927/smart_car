@@ -338,6 +338,7 @@ int main()
 input_speed_rps();
 //test polor
  float error=0;
+ 
 start_camera();
 save_per_map();
      img_line.width = IMG_W;
@@ -380,24 +381,14 @@ while (1)
 // std::lock_guard<std::mutex> lock(g_mutex);
  //cv::Mat frame = cam.get_raw_frame();
 //latest_error=img_test(frame);
+ /*
  cv::Mat frame = cam.get_raw_frame();
        cv::flip(frame, frame, -1); //颠倒上下左右
  // 检测红色块和目标板
  //detectRedPlate(frame);
 
- // 如果找到了，就在原图上画框
- /*if (have_target)
- {
-     cv::Mat aframe=frame;
-     // 红色块：画红色框
-     cv::rectangle(aframe, red_block_rect, cv::Scalar(0, 0, 255), 2);
-     // 目标板区域：画青蓝色框
-     cv::rectangle(aframe, plate_rect, cv::Scalar(255, 255, 0), 2);
-     cv::imshow("AAA", aframe);
-     cv::waitKey(1);
- }
- */
- cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+
+ cv::cvtColor(frame， frame, cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
             continue;
@@ -479,6 +470,7 @@ img0.step=frame.step;
             }
         }
       //  */
+ /*
         // 车轮对应点(纯跟踪起始点)
         float cx = mapx[(int) (IMG_H * 0.78f)][IMG_W / 2];
         float cy = mapy[(int) (IMG_H * 0.78f)][IMG_W / 2];
@@ -589,6 +581,7 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 // 7. 显示最终鸟瞰图（就是你要的效果）
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
+*/
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
