@@ -30,6 +30,11 @@ void calculate_differential_for_motor(
     // 真正的增量式 PID
     float p_term1 = P * (error_current1 - error_last1);
     float p_term2 = P * (error_current2 - error_last2);
+  if(p_term1>80)  p_term1=80;
+if(p_term1<-80) p_term1=-80;
+if(p_term2>80)  p_term2=80;
+if(p_term2<-80) p_term2=-80;
+    
 
     float i_term1 = I * error_current1;
     float i_term2 = I * error_current2;
@@ -86,28 +91,29 @@ void close_circle_control(
     current_pwm2 += pwm2_plusduty;
 
     const int MAX_PWM = 5000;
-
+        const int MIN_PWM = 0;
     // 内部状态双向限幅，防止 windup
     if (current_pwm1 > MAX_PWM) current_pwm1 = MAX_PWM;
-    if (current_pwm1 < -MAX_PWM) current_pwm1 = -MAX_PWM;
+    if (current_pwm1 < MIN_PWM) current_pwm1 = MIN_PWM;
     if (current_pwm2 > MAX_PWM) current_pwm2 = MAX_PWM;
-    if (current_pwm2 < -MAX_PWM) current_pwm2 = -MAX_PWM;
+    if (current_pwm2 < MIN_PWM) current_pwm2 = MIN_PWM;
 
     
 
-    //pwm1.atim_pwm_set_duty(3000);
-
-    //pwm2.atim_pwm_set_duty(3000);
+   
     // motor1 输出
+    
     if (current_pwm1 >= 0)
     {
         polar_pwm1.gpio_level_set(GPIO_LOW);   // 正转
         pwm1.atim_pwm_set_duty(current_pwm1);
+        std::cout<<"toward"<<std::endl;
     }
     else
     {
         polar_pwm1.gpio_level_set(GPIO_HIGH);    // 反转
         pwm1.atim_pwm_set_duty(-current_pwm1);
+        std::cout<<"back"<<std::endl;
     }
 
     // motor2 输出
@@ -121,4 +127,5 @@ void close_circle_control(
         polar_pwm2.gpio_level_set(GPIO_HIGH);   // 反转
         pwm2.atim_pwm_set_duty(-current_pwm2);
     }
+        
 }

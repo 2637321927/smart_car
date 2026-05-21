@@ -205,7 +205,7 @@ void reset_terminal() {
     tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
 }
 
-// 判断：有没有按键输入？
+// 判断：有没有按键输入
 bool has_input() {
     fd_set fds;
     FD_ZERO(&fds);
@@ -338,6 +338,7 @@ int main()
 input_speed_rps();
 //test polor
  float error=0;
+ 
 start_camera();
 save_per_map();
      img_line.width = IMG_W;
@@ -355,8 +356,7 @@ vofa_recv_init();
 
    speed_timer.set_seconds_ms(5, []() {
      test_enc_and_motor_rps();   
-     //   test_count++;   
-     //  std::cout<<"fuck you"<<std::endl;  // 直接调用你封装好的速度函数
+
     });
 
     dir_timer.set_seconds_ms(10, []() {
@@ -380,24 +380,18 @@ while (1)
 // std::lock_guard<std::mutex> lock(g_mutex);
  //cv::Mat frame = cam.get_raw_frame();
 //latest_error=img_test(frame);
+<<<<<<< HEAD
  cv::Mat frame = cam.get_frame_raw();
+=======
+ /*
+ cv::Mat frame = cam.get_raw_frame();
+>>>>>>> efdc75075fbff89d03039640de2396f545154b2d
        cv::flip(frame, frame, -1); //颠倒上下左右
  // 检测红色块和目标板
  //detectRedPlate(frame);
 
- // 如果找到了，就在原图上画框
- /*if (have_target)
- {
-     cv::Mat aframe=frame;
-     // 红色块：画红色框
-     cv::rectangle(aframe, red_block_rect, cv::Scalar(0, 0, 255), 2);
-     // 目标板区域：画青蓝色框
-     cv::rectangle(aframe, plate_rect, cv::Scalar(255, 255, 0), 2);
-     cv::imshow("AAA", aframe);
-     cv::waitKey(1);
- }
- */
- cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+
+ cv::cvtColor(frame， frame, cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
             continue;
@@ -479,6 +473,7 @@ img0.step=frame.step;
             }
         }
       //  */
+ /*
         // 车轮对应点(纯跟踪起始点)
         float cx = mapx[(int) (IMG_H * 0.78f)][IMG_W / 2];
         float cy = mapy[(int) (IMG_H * 0.78f)][IMG_W / 2];
@@ -589,23 +584,30 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 // 7. 显示最终鸟瞰图（就是你要的效果）
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
+*/
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
 char encoder_str[384];
+/*snprintf(encoder_str, sizeof(encoder_str),
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
+         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
+         safe_float(P2_motor),    
+         safe_float(I1_motor),    
+         safe_float(I2_motor));*/
 snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"encoder_1\":%.2f,\"encoder_2\":%.2f,\"mid\":%d,\"road-wide\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
-         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps, safe_float(encoder_1), safe_float(encoder_2), mid,Road_Wide[25], current_pwm1, current_pwm2, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
+         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
          safe_float(P2_motor),    
          safe_float(I1_motor),    
          safe_float(I2_motor));
 
 // 发送函数
 udp_client.udp_send_string(encoder_str);
- ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+/** ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
-      }
+      }*/
      // std::this_thread::yield(); // 必须加！让定时器能跑
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
 }
