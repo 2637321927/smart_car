@@ -160,9 +160,9 @@ void save_per_map(void) {
 const uint16_t    CAM_WIDTH    = 320;     // 宽
 const uint16_t    CAM_HEIGHT   = 240;     // 高
 const uint16_t    CAM_FPS      = 60;     // 帧率
-const uint8_t     JPEG_QUALITY = 100;
+const uint8_t     JPEG_QUALITY = 50;
 static struct termios old_tio;
-    lq_camera cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
+    lq_camera_ex cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
  volatile  int mid;
 
  // 安全函数：把inf/nan变成0，不破坏JSON
@@ -380,7 +380,7 @@ while (1)
 // std::lock_guard<std::mutex> lock(g_mutex);
  //cv::Mat frame = cam.get_raw_frame();
 //latest_error=img_test(frame);
- cv::Mat frame = cam.get_raw_frame();
+ cv::Mat frame = cam.get_frame_raw();
        cv::flip(frame, frame, -1); //颠倒上下左右
  // 检测红色块和目标板
  //detectRedPlate(frame);
@@ -405,12 +405,12 @@ while (1)
        // cv::flip(frame, frame, -1);  
         // 等待摄像头采集完毕
 img_raw.data = frame.data;
-img_raw.width = cam.get_width();
-img_raw.height = cam.get_height();
+img_raw.width = cam.get_camera_width();
+img_raw.height = cam.get_camera_height();
 img_raw.step=frame.step;
 img0.data = frame.data;
-img0.width = cam.get_width();
-img0.height = cam.get_height();
+img0.width = cam.get_camera_width();
+img0.height = cam.get_camera_height();
 img0.step=frame.step;
         // 开始处理摄像头图像
         process_image();    // 边线提取&处理
