@@ -42,7 +42,7 @@ volatile extern float D;
 volatile extern float alpha_flit;   // 可调，0.7~0.85都可以先试
  volatile extern float encoder1_speed_avg ;
 volatile extern float encoder2_speed_avg ;//demo for encoder ave
- extern lq_camera cam;
+ extern lq_camera_ex cam;
 void start_camera(void); // start camera
 void lq_gpio_output_demo(void);     // GPIO 输出模式测试
 void lq_gpio_input_demo(void);      // GPIO 输入模式测试
