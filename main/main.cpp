@@ -205,7 +205,7 @@ void reset_terminal() {
     tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
 }
 
-// 判断：有没有按键输入？
+// 判断：有没有按键输入
 bool has_input() {
     fd_set fds;
     FD_ZERO(&fds);
@@ -601,10 +601,10 @@ snprintf(encoder_str, sizeof(encoder_str),
 
 // 发送函数
 udp_client.udp_send_string(encoder_str);
- ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+/** ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
-      }
+      }*/
      // std::this_thread::yield(); // 必须加！让定时器能跑
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
 }
