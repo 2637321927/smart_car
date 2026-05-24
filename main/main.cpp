@@ -43,18 +43,18 @@ volatile int test_count = 0;
  image_t img_thres;
 image_t img_line;
 cv::Mat M = (cv::Mat_<float>(3, 3) <<
-    -1.926069941510014, -3.371753034082217, 468.5182139603127,
-    0.01304919847285211, -6.564635749345294, 571.4708741748802,
-    0.0001131073803662276, -0.02128472622767542, 1);
+    -2.653954737265413, -4.409609884144983, 603.4928625441594,
+    0.07045934630221244, -8.731467507244254, 686.154964174129,
+    0.0001477744192457056, -0.02660850397626028, 1);
 
 cv::Mat M_Reverse = (cv::Mat_<float>(3, 3) <<
-    -0.5213095398517877, 0.6145633088870834, -106.9620168336765,
-    -0.004803300317385806, 0.1842669595441624, -103.0527667664332,
-    -4.327297583230408e-05, 0.00385256014076622, -1.181351734105273);
+    -0.3696439178499316, 0.4519978666534659, -87.06311389509833,
+    -0.001200450795551031, 0.1064427707506476, -72.31177206405509,
+    2.268171552125653e-05, 0.002765489166517753, -0.911242373403266);
 
 // Auxiliary calibration values
 // ground_width_m = 0.6
-#define M2PIX 274.7333333333333 // 米转像素
+#define M2PIX 297.0000000000001 // 米转像素
 
  bool line_show_sample;
 bool line_show_blur;
@@ -65,12 +65,12 @@ float angle;
 float mapy[IMG_H][IMG_W];
 
 float thres = 95;            // 固定二值化阈值（判断黑线/背景）
-float block_size = 7;         // 自适应阈值的窗口大小
+float block_size = 5;         // 自适应阈值的窗口大小
 float clip_value = 2;         // 自适应阈值减去的偏移量
 float track_min_y = 70;   // 越小 → 巡得越远
-float track_max_y = 238;  // 越大 → 巡到最底部
+float track_max_y = 220;  // 越大 → 巡到最底部
 float begin_x = 40;           // 巡线起始点 水平偏移
-float begin_y = 238;          // 巡线起始点 垂直位置（靠近车底）
+float begin_y = 220;          // 巡线起始点 垂直位置（靠近车底）
 float line_blur_kernel = 5;   // 边线滤波平滑程度7-5
 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
 float sample_dist = 0.02;     // 点集等距采样步长（米）
@@ -380,18 +380,15 @@ while (1)
 // std::lock_guard<std::mutex> lock(g_mutex);
  //cv::Mat frame = cam.get_raw_frame();
 //latest_error=img_test(frame);
-<<<<<<< HEAD
+
  cv::Mat frame = cam.get_frame_raw();
-=======
- /*
- cv::Mat frame = cam.get_raw_frame();
->>>>>>> efdc75075fbff89d03039640de2396f545154b2d
+
        cv::flip(frame, frame, -1); //颠倒上下左右
  // 检测红色块和目标板
  //detectRedPlate(frame);
 
 
- cv::cvtColor(frame， frame, cv::COLOR_BGR2GRAY);
+ cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
             continue;
@@ -411,7 +408,7 @@ img0.step=frame.step;
         find_corners();     // 角点提取&筛选
 
         // 预瞄距离,动态效果更佳
-        aim_distance = 0.18;
+        aim_distance = 0.25;
 
         // 单侧线少，切换巡线方向  切外向圆
 
@@ -473,7 +470,7 @@ img0.step=frame.step;
             }
         }
       //  */
- /*
+ 
         // 车轮对应点(纯跟踪起始点)
         float cx = mapx[(int) (IMG_H * 0.78f)][IMG_W / 2];
         float cy = mapy[(int) (IMG_H * 0.78f)][IMG_W / 2];
@@ -584,7 +581,7 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 // 7. 显示最终鸟瞰图（就是你要的效果）
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
-*/
+
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
@@ -604,10 +601,10 @@ snprintf(encoder_str, sizeof(encoder_str),
 
 // 发送函数
 udp_client.udp_send_string(encoder_str);
-/** ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
-      }*/
+      }
      // std::this_thread::yield(); // 必须加！让定时器能跑
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
 }
