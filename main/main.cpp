@@ -336,7 +336,7 @@ void encoder_sample_1ms_thread()
 }
 int main()
 {
-    auto start = high_resolution_clock::now();
+   
    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等线程就绪
 input_speed_rps();
 //test polor
@@ -369,7 +369,7 @@ vofa_recv_init();
   
 while (1)
 {
-    
+     auto start = high_resolution_clock::now();
          if (has_input()) {
             char c = getchar();
             if (c == 'q') {
