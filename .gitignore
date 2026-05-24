@@ -4,7 +4,7 @@ bin-release/
 [Oo]bj/
 [Bb]in/
 ./main/build
-
+**/build/
 # Other files and folders
 .settings/
 

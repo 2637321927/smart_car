@@ -47,19 +47,18 @@ volatile int test_count = 0;
  image_t img_thres;
 image_t img_line;
 cv::Mat M = (cv::Mat_<float>(3, 3) <<
-    -2.653954737265413, -4.409609884144983, 603.4928625441594,
-    0.07045934630221244, -8.731467507244254, 686.154964174129,
-    0.0001477744192457056, -0.02660850397626028, 1);
+-1.863744207302929,-3.916573045375683,469.1710281321801,
+-0.03872799453894288,-6.76418869213661,515.2138929659729,
+-0.0003245997363083029,-0.02317625907516634,1);
 
 cv::Mat M_Reverse = (cv::Mat_<float>(3, 3) <<
-    -0.3696439178499316, 0.4519978666534659, -87.06311389509833,
-    -0.001200450795551031, 0.1064427707506476, -72.31177206405509,
-    2.268171552125653e-05, 0.002765489166517753, -0.911242373403266);
+-0.5307393930001288,0.7132915822987191,-118.4901862518622,
+0.01317587660141583,0.1754713263214365,-96.5870047095989,
+0.0001330896626405649,0.004298303178613763,-1.276987327656451);
 
 // Auxiliary calibration values
 // ground_width_m = 0.6
-#define M2PIX 297.0000000000001 // 米转像素
-
+#define M2PIX 234.8666666666667 // 米转像素
  bool line_show_sample;
 bool line_show_blur;
  bool track_left;
@@ -282,6 +281,12 @@ void vofa_recv_cmd(void)
     printf("[VOFA] P = %.3f\n", P);
 }
 
+if (sscanf(buf, "#I=%f;", &ftmp) == 1)
+{
+    I = ftmp;
+    printf("[VOFA] I = %.3f\n", I);
+}
+
 if (sscanf(buf, "#D=%f;", &ftmp) == 1)
 {
     D = ftmp;
@@ -340,9 +345,10 @@ void udp_send(void){
     char encoder_str[384];
 
 snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
          safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
          safe_float(P2_motor),    
+         safe_float(I),
          safe_float(I1_motor),    
          safe_float(I2_motor));
 
