@@ -381,7 +381,7 @@ vofa_recv_init();
 
     });
 
-     udp_timer.set_seconds_ms(30, []() {
+     udp_timer.set_seconds_ms(5, []() {
     udp_send();
 
     });

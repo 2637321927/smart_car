@@ -1,13 +1,13 @@
 #include "lq_all_demo.hpp"
 
-volatile float P = 40.0f;
-volatile float I = 2.0f;
+volatile float P = 0.0f;
+volatile float I = 1.2f;
 volatile float D = 0.0f;
 volatile int current_pwm1 = 0;
 volatile int current_pwm2 = 0;
 
-/********************************************************************************
- * @brief   电机转速PD闭环控制
+/************a********************************************************************
+ * @brief   电机转速PD闭环控制S
  * @param   目标转速RPS，当前测速值RPS
  * @return  PWM调整量
  * @note    PD算法，带抗噪微分，固定周期调用
