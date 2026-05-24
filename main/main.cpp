@@ -357,10 +357,127 @@ snprintf(encoder_str, sizeof(encoder_str),
 
 // 发送函数
 udp_client.udp_send_string(encoder_str);
-/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
-      }*/
+      }
+}
+#define RECOG_TOP      140   // 识别区域 距离顶部 125像素
+#define RECOG_BOTTOM   40   // 识别区域 距离底部 100像素
+#define RECOG_LEFT     65    // 识别区域 距离左边 30像素
+#define RECOG_RIGHT    65  // 识别区域 距离右边 30像素
+
+#define MIN_AREA       150   // 红色块最小面积
+#define SAVE_SIZE      96  // 统一 96*96
+
+// 功能：在图像帧中检测红色色块，并根据红色色块定位上方的车牌区域
+// 参数：frame - 输入的图像帧（引用传递，避免拷贝）
+void detectRedPlate(cv::Mat& frame)
+{
+    // 初始化标志位：默认无目标
+    have_target = false;
+    // 初始化红色色块矩形区域
+    red_block_rect = cv::Rect(0, 0, 0, 0);
+    // 初始化车牌矩形区域
+    plate_rect = cv::Rect(0, 0, 0, 0);
+
+    // ===================== 1. 定义有效识别区域 =====================
+    // 识别区域左上角X坐标
+    int rx = RECOG_LEFT;
+    // 识别区域左上角Y坐标
+    int ry = RECOG_TOP;
+    // 识别区域宽度 = 总宽度 - 左右边距
+    int rw = frame.cols - RECOG_LEFT - RECOG_RIGHT;
+    // 识别区域高度 = 总高度 - 上下边距
+    int rh = frame.rows - RECOG_TOP - RECOG_BOTTOM;
+    // 构建识别区域矩形（只在这个区域内检测，排除边缘干扰）
+    cv::Rect recog_rect(rx, ry, rw, rh);
+
+    // ===================== 2. 颜色空间转换与红色提取 =====================
+    cv::Mat hsv, mask1, mask2, mask;
+    // 将BGR图像转换为HSV颜色空间（HSV更适合颜色识别）
+    cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
+
+    // 红色在HSV中分为两段：0~10 和 160~179
+    // 提取第一段红色区域（低色相）
+    cv::inRange(hsv, cv::Scalar(0, 120, 100), cv::Scalar(10, 255, 255), mask1);
+    // 提取第二段红色区域（高色相）
+    cv::inRange(hsv, cv::Scalar(160, 120, 100), cv::Scalar(179, 255, 255), mask2);
+    // 合并两个红色掩码，得到完整红色区域
+    mask = mask1 | mask2;
+
+    // ===================== 3. 形态学操作去噪 =====================
+    // 创建3x3矩形结构元素
+    cv::Mat k = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+    // 开运算：先腐蚀后膨胀，去除小噪点，保留红色区域轮廓
+    cv::morphologyEx(mask, mask, cv::MORPH_OPEN, k);
+
+    // ===================== 4. 查找轮廓，筛选最大红色色块 =====================
+    std::vector<std::vector<cv::Point>> contours;
+    // 查找所有外轮廓
+    cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+    int maxArea = 0;          // 记录最大轮廓面积
+    cv::Rect bestRect;        // 记录最优红色色块矩形
+
+    // 遍历所有轮廓
+    for (auto& cnt : contours)
+    {
+        // 计算当前轮廓面积
+        int area = cv::contourArea(cnt);
+        // 面积过小，视为噪点，跳过
+        if (area < MIN_AREA) continue;
+
+        // 获取轮廓的外接矩形
+        cv::Rect r = cv::boundingRect(cnt);
+        // 判断矩形是否完全在有效识别区域内
+        bool inside = (r.x >= recog_rect.x) &&
+            (r.y >= recog_rect.y) &&
+            (r.x + r.width <= recog_rect.x + recog_rect.width) &&
+            (r.y + r.height <= recog_rect.y + recog_rect.height);
+        // (r.y >= recog_rect.y) &&
+        // 不在有效区域内，跳过
+        //if (r.y < recog_rect.y&&r.height > 10&& r.y + r.height <= recog_rect.y + recog_rect.height)inside = 1;
+        if (!inside) continue;
+        
+
+        // 更新最大面积和最优矩形
+        if (area > maxArea)
+        {
+            maxArea = area;
+            bestRect = r;
+        }
+    }
+
+    // 未找到有效红色色块，直接返回
+    if (maxArea <= 0) return;
+    // 保存找到的最大红色色块区域
+    red_block_rect = bestRect;
+    if (red_block_rect.y <= recog_rect.y) {
+        int hy = red_block_rect.y + red_block_rect.height - recog_rect.y;
+        red_block_rect.y = recog_rect.y;
+        red_block_rect.height = hy;
+    }
+    // ===================== 5. 根据红色色块定位上方车牌区域 =====================
+    // 车牌边长 = 红色色块宽度（假设车牌是正方形）
+    int side = red_block_rect.width;
+    // 车牌左上角X坐标 = 红色色块X坐标
+    int px = red_block_rect.x;
+    // 车牌左上角Y坐标 = 红色色块上方（间隔2个像素）
+    int py = red_block_rect.y - side - 2;
+    // 车牌宽度 = 红色色块宽度
+    int pw = side;
+    // 车牌高度 = 红色色块宽度
+    int ph = side;
+
+    // 判断计算出的车牌区域是否在图像范围内
+    if (py >= 0 && px >= 0 && px + pw <= frame.cols && py + ph <= frame.rows)
+    {
+        // 保存车牌区域
+        plate_rect = cv::Rect(px, py, pw, ph);
+        // 标记检测到目标
+        have_target = true;
+    }
 }
 int main()
 {
@@ -375,9 +492,34 @@ save_per_map();
      img_line.width = IMG_W;
     img_line.height = IMG_H;
     img_line.data = new uint8_t[img_line.width * img_line.height];
-
+ std::string model_param = "tiny_classifier_fp32.ncnn.param";
 //set_terminal_nonblock();
+  std::string model_bin   = "tiny_classifier_fp32.ncnn.bin";
+    int input_width    = 96;
+    int input_height   = 96;
+    /*
+    // 类别标签（顺序必须与训练时一致）
+    std::vector<std::string> labels = {"supplies", "vehicle", "weapon"};
+    
+    // 归一化参数（ImageNet标准）
+    float mean_vals[3] = {123.675f, 116.28f, 103.53f};
+    float norm_vals[3] = {0.01712475f, 0.017507f, 0.01742919f};
+    // =================================================
 
+    // 创建NCNN对象并配置
+    LQ_NCNN ncnn;
+    ncnn.SetModelPath(model_param, model_bin);
+    ncnn.SetInputSize(input_width, input_height);
+    ncnn.SetLabels(labels);
+    ncnn.SetNormalize(mean_vals, norm_vals);
+
+    // 初始化模型
+    printf( "正在加载模型...\n");
+    if (!ncnn.Init()) {
+        printf(" 模型加载失败!\n");
+    }
+    printf("模型加载成功!\n\n");
+    */
 vofa_recv_init();
 
 
@@ -431,9 +573,19 @@ while (1)
 
        cv::flip(frame, frame, -1); //颠倒上下左右
  // 检测红色块和目标板
- //detectRedPlate(frame);
+ /*
+ detectRedPlate(frame);
 
+ if (have_target)
+ {
 
+    cv::Mat roi = frame(plate_rect);
+
+resize(roi, roi, cv::Size(SAVE_SIZE, SAVE_SIZE), cv::INTER_AREA);
+std::string result = ncnn.Infer(roi);
+ printf("推理结果: %s\n", result.c_str());
+ }
+*/
  cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
@@ -632,7 +784,7 @@ cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
-
+/*
       auto end = high_resolution_clock::now();
 auto p1 = duration_cast<milliseconds>(t1 - start).count();
 auto p2 = duration_cast<milliseconds>(t2 - t1).count();
@@ -640,6 +792,7 @@ auto p3 = duration_cast<milliseconds>(t3 - t2).count();
 auto p4 = duration_cast<milliseconds>(end - t3).count();
 printf("process=%3d ms |corner=%3d ms| warp=%3d ms | udp=%3d ms | total=%3d ms\n", 
        p1, p2, p3, p4,p1+p2+p3+p4);
+       */
      // std::this_thread::yield(); // 必须加！让定时器能跑
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
 }
