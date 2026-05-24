@@ -164,7 +164,7 @@ void save_per_map(void) {
 const uint16_t    CAM_WIDTH    = 320;     // 宽
 const uint16_t    CAM_HEIGHT   = 240;     // 高
 const uint16_t    CAM_FPS      = 60;     // 帧率
-const uint8_t     JPEG_QUALITY = 50;
+const uint8_t     JPEG_QUALITY = 30;
 static struct termios old_tio;
     lq_camera_ex cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
  volatile  int mid;
@@ -348,10 +348,10 @@ snprintf(encoder_str, sizeof(encoder_str),
 
 // 发送函数
 udp_client.udp_send_string(encoder_str);
-ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
-      }
+      }*/
 }
 int main()
 {
@@ -381,7 +381,7 @@ vofa_recv_init();
 
     });
 
-     udp_timer.set_seconds_ms(20, []() {
+     udp_timer.set_seconds_ms(30, []() {
     udp_send();
 
     });
