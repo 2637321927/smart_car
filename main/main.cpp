@@ -609,16 +609,17 @@ ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
-     // std::this_thread::yield(); // 必须加！让定时器能跑
-        std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
-}
-auto end = high_resolution_clock::now();
+      auto end = high_resolution_clock::now();
 auto p1 = duration_cast<milliseconds>(t1 - start).count();
 auto p2 = duration_cast<milliseconds>(t2 - t1).count();
 auto p3 = duration_cast<milliseconds>(t3 - t2).count();
 auto p4 = duration_cast<milliseconds>(end - t3).count();
 printf("process=%3d ms |corner=%3d ms| warp=%3d ms | udp=%3d ms | total=%3d ms\n", 
        p1, p2, p3, p4,p1+p2+p3+p4);
+     // std::this_thread::yield(); // 必须加！让定时器能跑
+        std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
+}
+
      std::cout<<"caonissma"<<std::endl;
      reset_terminal(); // 必须恢复终端！
      std::cout<<"caonimssa"<<std::endl;
