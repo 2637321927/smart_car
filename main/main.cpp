@@ -3,6 +3,8 @@
 #include <math.h>
 #include "img.hpp"
 #include "circle.hpp"
+#include <chrono>
+using namespace std::chrono;
 bool need_exit = false;
 // 全局互斥锁（解决多线程冲突）
 //std::mutex g_mutex;
@@ -334,6 +336,7 @@ void encoder_sample_1ms_thread()
 }
 int main()
 {
+    auto start = high_resolution_clock::now();
    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等线程就绪
 input_speed_rps();
 //test polor
@@ -405,8 +408,9 @@ img0.height = cam.get_camera_height();
 img0.step=frame.step;
         // 开始处理摄像头图像
         process_image();    // 边线提取&处理
+        auto t1 = high_resolution_clock::now();
         find_corners();     // 角点提取&筛选
-
+auto t2 = high_resolution_clock::now();
         // 预瞄距离,动态效果更佳
         aim_distance = 0.25;
 
@@ -527,7 +531,7 @@ latest_error=-error;
 
 // 1. 直接用 OpenCV 官方 warpPerspective → 绝对正确！
 cv::warpPerspective(frame, birdview, M, cv::Size(IMG_W, IMG_H));
-
+auto t3 = high_resolution_clock::now();
 
 // 2. 转彩色，用于画彩色线
 cv::Mat bgr_bird;
@@ -608,6 +612,13 @@ ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
      // std::this_thread::yield(); // 必须加！让定时器能跑
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
 }
+auto end = high_resolution_clock::now();
+auto p1 = duration_cast<milliseconds>(t1 - start).count();
+auto p2 = duration_cast<milliseconds>(t2 - t1).count();
+auto p3 = duration_cast<milliseconds>(t3 - t2).count();
+auto p4 = duration_cast<milliseconds>(end - t3).count();
+printf("process=%3d ms |corner=%3d ms| warp=%3d ms | udp=%3d ms | total=%3d ms\n", 
+       p1, p2, p3, p4,p1+p2+p3+p4);
      std::cout<<"caonissma"<<std::endl;
      reset_terminal(); // 必须恢复终端！
      std::cout<<"caonimssa"<<std::endl;
