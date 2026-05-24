@@ -3,6 +3,7 @@
 #include <math.h>
 #include "img.hpp"
 #include "circle.hpp"
+#include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
 #include <chrono>
 using namespace std::chrono;
 bool need_exit = false;
@@ -365,7 +366,7 @@ int main()
 {
    
    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等线程就绪
-input_speed_rps();
+front_ui_init();  // 初始化前端，并默认保持停车，等待 K2 发车
 //test polor
  float error=0;
  
@@ -385,8 +386,12 @@ vofa_recv_init();
     });
 
    speed_timer.set_seconds_ms(5, []() {
-     test_enc_and_motor_rps();   
-
+     // 发车后才允许速度环驱动电机；停车时持续清零输出。
+     if (front_ui_is_running()) {
+       test_enc_and_motor_rps();
+     } else {
+       front_ui_hold_stop();
+     }
     });
 
      udp_timer.set_seconds_ms(5, []() {
@@ -395,7 +400,12 @@ vofa_recv_init();
     });
 
     dir_timer.set_seconds_ms(10, []() {
-      PID_control_test(latest_error);   // 直接调用你封装好的方向函数
+      // 发车后才让方向环根据图像误差修正左右轮目标速度。
+      if (front_ui_is_running()) {
+        PID_control_test(latest_error);
+      } else {
+        front_ui_hold_stop();
+      }
     });
 //std::cout<<"fuck you2"s<<std::endl; 
   
@@ -411,6 +421,7 @@ while (1)
                 break;
             } 
         }
+           front_ui_poll();  // 扫描 K0/K1/K2，并在 TFT18 上刷新状态
            vofa_recv_cmd()   ;
 // std::lock_guard<std::mutex> lock(g_mutex);
  //cv::Mat frame = cam.get_raw_frame();
