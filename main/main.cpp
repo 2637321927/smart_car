@@ -281,6 +281,12 @@ void vofa_recv_cmd(void)
     printf("[VOFA] P = %.3f\n", P);
 }
 
+if (sscanf(buf, "#I=%f;", &ftmp) == 1)
+{
+    I = ftmp;
+    printf("[VOFA] I = %.3f\n", I);
+}
+
 if (sscanf(buf, "#D=%f;", &ftmp) == 1)
 {
     D = ftmp;
@@ -339,9 +345,10 @@ void udp_send(void){
     char encoder_str[384];
 
 snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
          safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
          safe_float(P2_motor),    
+         safe_float(I),
          safe_float(I1_motor),    
          safe_float(I2_motor));
 
