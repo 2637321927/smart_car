@@ -92,6 +92,8 @@ void lq_udp_client::udp_client_init(const std::string _ip, uint16_t _port)
         lq_log_error("socket create failed");
         return;
     }
+        int flags = fcntl(this->socket_fd_, F_GETFL, 0);
+    fcntl(this->socket_fd_, F_SETFL, flags | O_NONBLOCK);
     // 设置端口复用
     int val = 1;
     if (setsockopt(this->socket_fd_, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) == -1) {
