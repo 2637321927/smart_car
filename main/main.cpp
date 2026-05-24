@@ -12,6 +12,7 @@ bool need_exit = false;
 lq_timer speed_timer;
 lq_timer dir_timer;
 lq_timer encoder_ave_timer;
+lq_timer udp_timer;
 volatile  int pwm1_duty_rps=0;
  volatile  int pwm2_duty_rps=0;
  volatile  int latest_error = 0;
@@ -34,6 +35,7 @@ ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
  volatile int set_speed_of_motor2_rps=0;
 lq_udp_client udp_client;
 lq_udp_client udp_client_img;
+cv::Mat bgr_bird;
 volatile int test_count = 0;
 
  cv::Rect red_block_rect;   // 红色标记块外接矩形
@@ -334,6 +336,23 @@ void encoder_sample_1ms_thread()
         usleep(1000);  // 1ms 采样周期
     }
 }
+void udp_send(void){
+    char encoder_str[384];
+
+snprintf(encoder_str, sizeof(encoder_str),
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
+         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
+         safe_float(P2_motor),    
+         safe_float(I1_motor),    
+         safe_float(I2_motor));
+
+// 发送函数
+udp_client.udp_send_string(encoder_str);
+ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+  if (sent < 0) {
+          printf("ERROR: Failed to send image\r\n");
+      }
+}
 int main()
 {
    
@@ -359,6 +378,11 @@ vofa_recv_init();
 
    speed_timer.set_seconds_ms(5, []() {
      test_enc_and_motor_rps();   
+
+    });
+
+     udp_timer.set_seconds_ms(20, []() {
+    udp_send();
 
     });
 
@@ -534,7 +558,7 @@ cv::warpPerspective(frame, birdview, M, cv::Size(IMG_W, IMG_H));
 auto t3 = high_resolution_clock::now();
 
 // 2. 转彩色，用于画彩色线
-cv::Mat bgr_bird;
+
 cv::cvtColor(birdview, bgr_bird, cv::COLOR_GRAY2BGR);
 
 // 3. 在鸟瞰图上画：左线(蓝)、右线(绿)、中线(白)
@@ -589,26 +613,7 @@ cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
-char encoder_str[384];
-/*snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
-         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
-         safe_float(P2_motor),    
-         safe_float(I1_motor),    
-         safe_float(I2_motor));*/
-snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
-         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
-         safe_float(P2_motor),    
-         safe_float(I1_motor),    
-         safe_float(I2_motor));
 
-// 发送函数
-udp_client.udp_send_string(encoder_str);
-ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
-  if (sent < 0) {
-          printf("ERROR: Failed to send image\r\n");
-      }
       auto end = high_resolution_clock::now();
 auto p1 = duration_cast<milliseconds>(t1 - start).count();
 auto p2 = duration_cast<milliseconds>(t2 - t1).count();
