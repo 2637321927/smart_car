@@ -299,8 +299,10 @@ if (sscanf(buf, "#alpha=%f;", &ftmp) == 1)
     printf("[VOFA] alpha = %.3f\n", alpha_flit);
 }
 
-if (sscanf(buf, "#spd=%d;", &set_speed_of_motor1_rps) == 1)
+if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
 {
+    set_speed_of_motor1_rps = ftmp;
+    set_speed_of_motor2_rps=set_speed_of_motor1_rps;
     printf("[VOFA] spd = %d\n", set_speed_of_motor1_rps);
 }
 
