@@ -133,13 +133,13 @@ ssize_t lq_udp_client::udp_send(const void *_buf, size_t _len)
     std::lock_guard<std::mutex> lock(this->mtx_);
     // 检查参数是否有效
     if (_buf == nullptr || _len == 0) {
-        lq_log_error("Invalid param");
+        //lq_log_error("Invalid param");
         return -2;
     }
     // 发送数据
     ssize_t ret = sendto(this->socket_fd_, _buf, _len, 0, (struct sockaddr*)&this->addr_, sizeof(this->addr_));
     if (ret < 0) {
-        lq_log_error("sendto failed");
+        //lq_log_error("sendto failed");
     }
     return ret;
 }
