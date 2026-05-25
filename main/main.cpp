@@ -306,7 +306,11 @@ if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
     set_speed_of_motor2_rps=set_speed_of_motor1_rps;
     printf("[VOFA] spd = %d\n", set_speed_of_motor1_rps);
 }
-
+if (sscanf(buf, "#error_on=%d;", &ftmp) == 1)
+{
+    error_on=ftmp;
+    printf("[VOFA] error_on= %d\n", error_on);
+}
 }
 // 全局变量，保存原来的终端模式
 void encoder_sample_1ms_thread()
@@ -357,11 +361,13 @@ snprintf(encoder_str, sizeof(encoder_str),
 
 // 发送函数
 udp_client.udp_send_string(encoder_str);
-ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
-}
+*/
+
+      }
 #define RECOG_TOP      140   // 识别区域 距离顶部 125像素
 #define RECOG_BOTTOM   40   // 识别区域 距离底部 100像素
 #define RECOG_LEFT     65    // 识别区域 距离左边 30像素
@@ -725,6 +731,7 @@ latest_error=-error;
                cv::Mat birdview;
 
 // 1. 直接用 OpenCV 官方 warpPerspective → 绝对正确！
+/*
 cv::warpPerspective(frame, birdview, M, cv::Size(IMG_W, IMG_H));
 auto t3 = high_resolution_clock::now();
 
@@ -780,7 +787,7 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 // 7. 显示最终鸟瞰图（就是你要的效果）
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
-
+*/
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();

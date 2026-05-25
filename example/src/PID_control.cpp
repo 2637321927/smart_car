@@ -1,6 +1,6 @@
 #include "lq_all_demo.hpp"
 
-
+volatile int error_on=1;
 /********************************************************************************
  * @brief   PID 控制测试.
  * @param   none.
@@ -35,8 +35,15 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
 //below we test the speed circle ,no error!!!!!
 void PID_control_test(int error)
 {
+    const int max_error=70;
+    if(error>max_error) error=max_error;
+    if(error<-max_error) error=-max_error;
+     
+    int diffrential = calculate_diffrential(error, 0);
 
-    int diffrential = calculate_diffrential(0, 0);
+    const int max_dif=15;
+    if(diffrential>max_dif) diffrential=max_dif;
+    if(diffrential<-max_dif) diffrential=-max_dif;
     //int diffrential = calculate_diffrential(0, 0);
     set_speed_of_motor2_rps=set_speed_of_motor1_rps;//for test esay
     pwm1_duty_rps = set_speed_of_motor1_rps + diffrential;
