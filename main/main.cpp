@@ -6,6 +6,7 @@
 #include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
 #include <chrono>
 using namespace std::chrono;
+#define AIM 0.30
 bool need_exit = false;
 // 全局互斥锁（解决多线程冲突）
 //std::mutex g_mutex;
@@ -50,18 +51,18 @@ volatile int test_count = 0;
  image_t img_thres;
 image_t img_line;
 cv::Mat M = (cv::Mat_<float>(3, 3) <<
--1.863744207302929,-3.916573045375683,469.1710281321801,
--0.03872799453894288,-6.76418869213661,515.2138929659729,
--0.0003245997363083029,-0.02317625907516634,1);
+-2.887710525491654,-5.371110049567488,618.1098564696885,
+-0.195283534331899,-10.17013886799252,716.7658965946473,
+-0.0007107342983566135,-0.03252037953416573,1);
 
 cv::Mat M_Reverse = (cv::Mat_<float>(3, 3) <<
--0.5307393930001288,0.7132915822987191,-118.4901862518622,
-0.01317587660141583,0.1754713263214365,-96.5870047095989,
-0.0001330896626405649,0.004298303178613763,-1.276987327656451);
+-0.3570692872526229,0.4002973456045271,-66.21143993323358,
+0.00853710466675691,0.066536570470589,-52.96801312992049,
+2.384849454564317e-05,0.002448299577667568,-0.7695986314598161);
 
 // Auxiliary calibration values
 // ground_width_m = 0.6
-#define M2PIX 234.8666666666667 // 米转像素
+#define M2PIX 235.8333333333333 // 米转像素
  bool line_show_sample;
 bool line_show_blur;
  bool track_left;
@@ -73,10 +74,10 @@ float mapy[IMG_H][IMG_W];
 float thres = 95;            // 固定二值化阈值（判断黑线/背景）
 float block_size = 5;         // 自适应阈值的窗口大小
 float clip_value = 2;         // 自适应阈值减去的偏移量
-float track_min_y = 70;   // 越小 → 巡得越远
-float track_max_y = 220;  // 越大 → 巡到最底部
+float track_min_y = 65;   // 越小 → 巡得越远
+float track_max_y = 215;  // 越大 → 巡到最底部
 float begin_x = 40;           // 巡线起始点 水平偏移
-float begin_y = 220;          // 巡线起始点 垂直位置（靠近车底）
+float begin_y = 215;          // 巡线起始点 垂直位置（靠近车底）
 float line_blur_kernel = 5;   // 边线滤波平滑程度7-5
 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
 float sample_dist = 0.02;     // 点集等距采样步长（米）
@@ -339,8 +340,8 @@ void encoder_sample_1ms_thread()
     static float sum1 = 0.0f;
     static float sum2 = 0.0f;
 
-    while (1)
-    {
+ //   while (1)
+ //   {
         float s1 = -enc1.encoder_get_count();
         float s2 = enc2.encoder_get_count();
 
@@ -363,8 +364,8 @@ void encoder_sample_1ms_thread()
         encoder1_speed_avg = sum1 / 5.0f;
         encoder2_speed_avg = sum2 / 5.0f;
 
-        usleep(1000);  // 1ms 采样周期
-    }
+        //usleep(1000);  // 1ms 采样周期
+   // }
 }
 
 void udp_send(void){
@@ -635,7 +636,7 @@ img0.step=frame.step;
         find_corners();     // 角点提取&筛选
 auto t2 = high_resolution_clock::now();
         // 预瞄距离,动态效果更佳
-        aim_distance = 0.25;
+        aim_distance = AIM;
 
         // 单侧线少，切换巡线方向  切外向圆
 
@@ -729,9 +730,9 @@ auto t2 = high_resolution_clock::now();
       //  if (garage_type == GARAGE_IN_LEFT || garage_type == GARAGE_IN_RIGHT || cross_type == CROSS_IN) begin_id = 0;
 
        if (cross_type == CROSS_BEGIN) {
-        aim_distance=0.1;}
+        aim_distance=0.15;}
         else{
-            aim_distance=0.25;
+            aim_distance=AIM;
         }
         // 中线有点，同时最近点不是最后几个点
         if (begin_id >= 0 && rpts_num - begin_id >= 3) {
@@ -764,7 +765,7 @@ auto t2 = high_resolution_clock::now();
 
         }
 latest_error=-error;
-/*
+
                clear_image(&img_line);
                cv::Mat birdview;
 
@@ -825,11 +826,12 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 // 7. 显示最终鸟瞰图（就是你要的效果）
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
+
 ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
-      */
+      
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();

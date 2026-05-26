@@ -22,7 +22,7 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
 
        // 直道小误差区容易左右摆头：abs(error) < 7 时削弱方向环 PD。
        // VOFA 调的 dir_P/dir_D 仍然是原始值，这里只改变实际参与计算的增益。
-       float dir_gain = abs_error < 7 ? 0.5f : 1.0f;
+       float dir_gain = abs_error < 7 ? 0.3f : 1.0f;
        float actual_dir_P = dir_P * dir_gain;
        float actual_dir_D = dir_D * dir_gain;
 
