@@ -40,6 +40,8 @@ volatile extern float filtered_rps2;
 volatile extern float P;
 volatile extern float I;
 volatile extern float D;
+volatile extern float dir_P;
+volatile extern float dir_D;
 volatile extern float alpha_flit;   // 可调，0.7~0.85都可以先试
  volatile extern float encoder1_speed_avg ;
 volatile extern float encoder2_speed_avg ;//demo for encoder ave

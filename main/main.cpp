@@ -294,6 +294,18 @@ if (sscanf(buf, "#D=%f;", &ftmp) == 1)
     printf("[VOFA] D = %.3f\n", D);
 }
 
+if (sscanf(buf, "#dirP=%f;", &ftmp) == 1)
+{
+    dir_P = ftmp;
+    printf("[VOFA] dirP = %.3f\n", dir_P);
+}
+
+if (sscanf(buf, "#dirD=%f;", &ftmp) == 1)
+{
+    dir_D = ftmp;
+    printf("[VOFA] dirD = %.3f\n", dir_D);
+}
+
 if (sscanf(buf, "#alpha=%f;", &ftmp) == 1)
 {
     alpha_flit = ftmp;
