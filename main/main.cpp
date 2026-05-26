@@ -275,6 +275,7 @@ void vofa_recv_cmd(void)
 
     // ==================== 解析指令 ====================
     float ftmp = 0;
+    int itmp = 0;
 
    if (sscanf(buf, "#P=%f;", &ftmp) == 1)
 {
@@ -318,11 +319,15 @@ if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
     set_speed_of_motor2_rps=set_speed_of_motor1_rps;
     printf("[VOFA] spd = %d\n", set_speed_of_motor1_rps);
 }
-if (sscanf(buf, "#error_on=%d;", &ftmp) == 1)
+
+if (sscanf(buf, "#spd_slow_ratio=%d;", &itmp) == 1)
 {
-    error_on=ftmp;
-    printf("[VOFA] error_on= %d\n", error_on);
+    if (itmp < 0) itmp = 0;
+    if (itmp > 30) itmp = 30;
+    spd_slow_ratio = itmp;
+    printf("[VOFA] spd_slow_ratio = %d\n", spd_slow_ratio);
 }
+
 }
 // 全局变量，保存原来的终端模式
 void encoder_sample_1ms_thread()
@@ -364,12 +369,13 @@ void udp_send(void){
     char encoder_str[384];
 
 snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f}",
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f,\"spd_slow_ratio\":%d}",
          safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
          safe_float(P2_motor),    
          safe_float(I),
          safe_float(I1_motor),    
-         safe_float(I2_motor));
+         safe_float(I2_motor),
+         spd_slow_ratio);
 
 // 发送函数
 udp_client.udp_send_string(encoder_str);

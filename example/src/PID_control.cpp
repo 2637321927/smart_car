@@ -1,8 +1,8 @@
 #include "lq_all_demo.hpp"
 
-volatile int error_on=1;
 volatile float dir_P = 0.25f;
 volatile float dir_D = 0.1f;
+volatile int spd_slow_ratio = 0;
 /********************************************************************************
  * @brief   PID 控制测试.
  * @param   none.
@@ -38,6 +38,8 @@ void PID_control_test(int error)
     const int max_error=70;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;
+    int abs_error = error;
+    if (abs_error < 0) abs_error = -abs_error;
      
     int diffrential = calculate_diffrential(error, 0);
 
@@ -45,9 +47,21 @@ void PID_control_test(int error)
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     //int diffrential = calculate_diffrential(0, 0);
-    set_speed_of_motor2_rps=set_speed_of_motor1_rps;//for test esay
-    pwm1_duty_rps = set_speed_of_motor1_rps + diffrential;
-    pwm2_duty_rps = set_speed_of_motor2_rps - diffrential;
+    int target_spd1 = set_speed_of_motor1_rps;
+    set_speed_of_motor2_rps=target_spd1;//for test esay
+
+    int slow_ratio_percent = spd_slow_ratio;
+    if (slow_ratio_percent < 0) slow_ratio_percent = 0;
+    if (slow_ratio_percent > 30) slow_ratio_percent = 30;
+
+    // spd_slow_ratio 表示最大减速百分比，30 表示 error 达到 max_error 时最多降速 30%。
+    // 这里仍保留 0.7 的下限保护，避免基准速度被降得太低。
+    float slow_ratio = 1.0f - (slow_ratio_percent / 100.0f) * abs_error / max_error;
+    if (slow_ratio < 0.7f) slow_ratio = 0.7f;
+    int set_spd1 = static_cast<int>(target_spd1 * slow_ratio + 0.5f);
+
+    pwm1_duty_rps = set_spd1 + diffrential;
+    pwm2_duty_rps = set_spd1 - diffrential;
     if (pwm1_duty_rps < 0)
     {
         pwm1_duty_rps = 0;
