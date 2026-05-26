@@ -2,6 +2,7 @@
 #include "img.hpp"
 #include <algorithm>
 #include<cmath>
+#include <chrono>
 #include <iostream>
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -22,14 +23,49 @@ int64_t circle_encoder;
 int none_left_line = 0, none_right_line = 0;
 int have_left_line = 0, have_right_line = 0;
 
+namespace {
+
+// 识别到一次环岛后，20 秒内不允许再次从 CIRCLE_NONE 进入环岛。
+constexpr auto kCircleEnterCooldown = std::chrono::seconds(20);
+bool circle_enter_cooldown = false;
+std::chrono::steady_clock::time_point last_circle_enter_time;
+
+bool circle_entry_is_blocked()
+{
+    if (!circle_enter_cooldown) {
+        return false;
+    }
+
+    if (std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown) {
+        circle_enter_cooldown = false;
+        return false;
+    }
+
+    return true;
+}
+
+void start_circle_enter_cooldown()
+{
+    circle_enter_cooldown = true;
+    last_circle_enter_time = std::chrono::steady_clock::now();
+}
+
+} // namespace
+
 void check_circle() {
+    if (circle_type != CIRCLE_NONE || circle_entry_is_blocked()) {
+        return;
+    }
+
     // 非圆环模式下，单边L角点, 单边长直道
     if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found) {
         circle_type = CIRCLE_LEFT_BEGIN;
+        start_circle_enter_cooldown();
         std::cout << "begin" << std::endl;
     }
     if (circle_type == CIRCLE_NONE && !Lpt0_found && Lpt1_found) {
         circle_type = CIRCLE_RIGHT_BEGIN;
+        start_circle_enter_cooldown();
         std::cout << "begin" << std::endl;
     }
 }

@@ -43,7 +43,7 @@ void PID_control_test(int error)
      
     int diffrential = calculate_diffrential(error, 0);
 
-    const int max_dif=15;
+    const int max_dif=10;
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     //int diffrential = calculate_diffrential(0, 0);
