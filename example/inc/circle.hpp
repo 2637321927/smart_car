@@ -18,8 +18,8 @@ enum circle_type_e {
 };
 
 extern const char *circle_type_name[CIRCLE_NUM];
-
-
+extern int L_count;
+extern int R_count;
 
 
 void check_circle();

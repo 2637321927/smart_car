@@ -25,12 +25,16 @@ int have_left_line = 0, have_right_line = 0;
 void check_circle() {
     // 非圆环模式下，单边L角点, 单边长直道
     if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found) {
+    
         circle_type = CIRCLE_LEFT_BEGIN;
         std::cout << "begin" << std::endl;
+        
     }
     if (circle_type == CIRCLE_NONE && !Lpt0_found && Lpt1_found) {
+      
         circle_type = CIRCLE_RIGHT_BEGIN;
         std::cout << "begin" << std::endl;
+        
     }
 }
 
@@ -240,7 +244,7 @@ void find_corners() {
         float conf = fabs(rpts0a[i]) - (fabs(rpts0a[im1]) + fabs(rpts0a[ip1])) / 2;
 
         //L角点阈值
-        if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.8 / sample_dist) {
+        if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.4 / sample_dist) {
             Lpt0_rpts0s_id = i;
             Lpt0_found = true;
         }
@@ -253,7 +257,7 @@ void find_corners() {
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         float conf = fabs(rpts1a[i]) - (fabs(rpts1a[im1]) + fabs(rpts1a[ip1])) / 2;
-        if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.8 / sample_dist) {
+        if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.4 / sample_dist) {
             Lpt1_rpts1s_id = i;
             Lpt1_found = true;
         }
@@ -289,7 +293,9 @@ void find_corners() {
 //双L角点,切十字模式
 void check_cross() {
     bool Xfound = Lpt0_found && Lpt1_found;
-    if (cross_type == CROSS_NONE && Xfound) cross_type = CROSS_BEGIN;
+    if (cross_type == CROSS_NONE && Xfound) {cross_type = CROSS_BEGIN;
+        std::cout<<"cross"<<std::endl;
+    }
 }
 
 void run_cross() {
@@ -308,8 +314,9 @@ void run_cross() {
 
         aim_distance = 0.4;
         //近角点过少，进入远线控制
-        if ((Xfound && (Lpt0_rpts0s_id < 0.1 / sample_dist || Lpt1_rpts1s_id < 0.1 / sample_dist))/* || (rpts1_num <30 && rpts0_num<30)*/) {
+        if ((Xfound && (Lpt0_rpts0s_id < 0.15 / sample_dist || Lpt1_rpts1s_id < 0.15 / sample_dist))|| (rpts1_num <40 && rpts0_num<40)) {
             cross_type = CROSS_IN;
+            std::cout<<"in"<<std::endl;
             cross_encoder = current_encoder;
         }
     }
@@ -370,7 +377,7 @@ void cross_farline() {
     far_y1 = 0, far_y2 = 0;
 
 
-    int x1 = img_raw.width / 2 - begin_x, y1 = begin_y;
+    int x1 = img_raw.width / 2 - begin_x, y1 = 180;
     bool white_found = false;
     far_ipts0_num = sizeof(far_ipts0) / sizeof(far_ipts0[0]);
 
@@ -397,7 +404,7 @@ void cross_farline() {
         findline_lefthand_adaptive(&img_raw, block_size, clip_value, far_x1, far_y1 + 1, far_ipts0, &far_ipts0_num);
     else far_ipts0_num = 0;
 
-    int x2 = img_raw.width / 2 + begin_x, y2 = begin_y;
+    int x2 = img_raw.width / 2 + begin_x, y2 = 180;
     white_found = false;
     far_ipts1_num = sizeof(far_ipts1) / sizeof(far_ipts1[0]);
 

@@ -26,6 +26,8 @@ volatile  int pwm1_duty_rps=0;
  volatile float alpha_flit = 0.0f;   // 可调，0.7~0.85都可以先试
  volatile float encoder1_speed_avg = 0.0f;
 volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
+int L_count=0;
+int R_count=0;
 ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0);
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 17000, 0); 
 ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
@@ -164,7 +166,7 @@ void save_per_map(void) {
 const uint16_t    CAM_WIDTH    = 320;     // 宽
 const uint16_t    CAM_HEIGHT   = 240;     // 高
 const uint16_t    CAM_FPS      = 60;     // 帧率
-const uint8_t     JPEG_QUALITY = 30;
+const uint8_t     JPEG_QUALITY = 40;
 static struct termios old_tio;
     lq_camera_ex cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
  volatile  int mid;
@@ -364,6 +366,7 @@ void encoder_sample_1ms_thread()
         usleep(1000);  // 1ms 采样周期
     }
 }
+
 void udp_send(void){
     char encoder_str[384];
 
@@ -377,13 +380,14 @@ snprintf(encoder_str, sizeof(encoder_str),
          spd_slow_ratio);
 
 // 发送函数
+/*
 udp_client.udp_send_string(encoder_str);
-/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
-*/
 
+*/
       }
 #define RECOG_TOP      140   // 识别区域 距离顶部 125像素
 #define RECOG_BOTTOM   40   // 识别区域 距离底部 100像素
@@ -572,6 +576,7 @@ vofa_recv_init();
         front_ui_hold_stop();
       }
     });
+    
 //std::cout<<"fuck you2"s<<std::endl; 
   
 while (1)
@@ -649,12 +654,13 @@ auto t2 = high_resolution_clock::now();
 
         // 分别检查十字 三叉 和圆环, 十字优先级最高
             check_cross();
-        if (cross_type == CROSS_NONE)
+        if (cross_type == CROSS_NONE){
             check_circle();
+        }
         if (cross_type != CROSS_NONE) {
             circle_type = CIRCLE_NONE;
         }
-
+        
         //车库 ,十字清Aprltag标志
         //if (garage_type != GARAGE_NONE || cross_type != CROSS_NONE) apriltag_type = APRILTAG_NONE;
 
@@ -662,6 +668,10 @@ auto t2 = high_resolution_clock::now();
         //if (yroad_type != YROAD_NONE) run_yroad();
         if (cross_type != CROSS_NONE) run_cross();
       if (circle_type != CIRCLE_NONE) run_circle();
+      if(cross_type != CROSS_BEGIN){
+        L_count=0;
+        R_count=0;
+      }
        // if (garage_type != GARAGE_NONE) run_garage();
 
         // 中线跟踪
@@ -679,7 +689,12 @@ auto t2 = high_resolution_clock::now();
                 rpts = rpts2s;
                 rpts_num = rpts2s_num;
             }
-        } else {
+        }
+        else if( cross_type == CROSS_BEGIN) {
+                            rpts = rpts2s;
+                rpts_num = rpts2s_num;
+        }
+        else {
             //十字根据远线控制
             if (track_type == TRACK_LEFT) {
                 track_leftline(far_rpts0s + far_Lpt0_rpts0s_id, far_rpts0s_num - far_Lpt0_rpts0s_id, rpts,
@@ -713,6 +728,11 @@ auto t2 = high_resolution_clock::now();
         // 特殊模式下，不找最近点(由于边线会绕一圈回来，导致最近点为边线最后一个点，从而中线无法正常生成)
       //  if (garage_type == GARAGE_IN_LEFT || garage_type == GARAGE_IN_RIGHT || cross_type == CROSS_IN) begin_id = 0;
 
+       if (cross_type == CROSS_BEGIN) {
+        aim_distance=0.1;}
+        else{
+            aim_distance=0.25;
+        }
         // 中线有点，同时最近点不是最后几个点
         if (begin_id >= 0 && rpts_num - begin_id >= 3) {
             // 归一化中线，如果是根据左右track寻仙则需要这么干
@@ -744,11 +764,12 @@ auto t2 = high_resolution_clock::now();
 
         }
 latest_error=-error;
+/*
                clear_image(&img_line);
                cv::Mat birdview;
 
 // 1. 直接用 OpenCV 官方 warpPerspective → 绝对正确！
-/*
+
 cv::warpPerspective(frame, birdview, M, cv::Size(IMG_W, IMG_H));
 auto t3 = high_resolution_clock::now();
 
@@ -804,7 +825,11 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 // 7. 显示最终鸟瞰图（就是你要的效果）
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
-*/
+ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+  if (sent < 0) {
+          printf("ERROR: Failed to send image\r\n");
+      }
+      */
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
