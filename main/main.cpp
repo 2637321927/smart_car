@@ -320,11 +320,10 @@ if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
     printf("[VOFA] spd = %d\n", set_speed_of_motor1_rps);
 }
 
-if (sscanf(buf, "#spd_slow_ratio=%d;", &itmp) == 1)
+if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
 {
-    if (itmp < 0) itmp = 0;
-    if (itmp > 30) itmp = 30;
-    spd_slow_ratio = itmp;
+    
+    spd_slow_ratio = ftmp;
     printf("[VOFA] spd_slow_ratio = %d\n", spd_slow_ratio);
 }
 
