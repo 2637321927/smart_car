@@ -34,7 +34,7 @@ ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 17000, 0);
 ls_gpio polar_pwm1(PIN_22, GPIO_MODE_OUT);
 ls_gpio polar_pwm2(PIN_21, GPIO_MODE_OUT);
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
-ls_encoder_pwm enc1(ENC_PWM3_PIN67, PIN_75);
+ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
  volatile int set_speed_of_motor1_rps=0;
  volatile int set_speed_of_motor2_rps=0;
 lq_udp_client udp_client;
@@ -377,9 +377,9 @@ snprintf(encoder_str, sizeof(encoder_str),
          spd_slow_ratio);
 
 // 发送函数
-/*
+
 udp_client.udp_send_string(encoder_str);
-ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
@@ -822,10 +822,10 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
 
-ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
-      }
+      }*/
       
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
