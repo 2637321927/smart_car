@@ -1,3 +1,0 @@
-/home/fdc/smart_car/main/build/CMakeFiles/main.dir
-/home/fdc/smart_car/main/build/CMakeFiles/edit_cache.dir
-/home/fdc/smart_car/main/build/CMakeFiles/rebuild_cache.dir
