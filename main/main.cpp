@@ -630,7 +630,7 @@ img0.step=frame.step;
         find_corners();     // 角点提取&筛选
 auto t2 = high_resolution_clock::now();
         // 预瞄距离,动态效果更佳
-        aim_distance = 0.25;
+        aim_distance = 0.30;
 
         // 单侧线少，切换巡线方向  切外向圆
 
