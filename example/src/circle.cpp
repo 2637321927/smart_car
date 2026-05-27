@@ -2,6 +2,7 @@
 #include "img.hpp"
 #include <algorithm>
 #include<cmath>
+#include <chrono>
 #include <iostream>
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -22,15 +23,55 @@ int64_t circle_encoder;
 int none_left_line = 0, none_right_line = 0;
 int have_left_line = 0, have_right_line = 0;
 
+namespace {
+
+// 识别到一次环岛后，20 秒内不允许再次从 CIRCLE_NONE 进入环岛。
+constexpr auto kCircleEnterCooldown = std::chrono::seconds(5);
+bool circle_enter_cooldown = false;
+std::chrono::steady_clock::time_point last_circle_enter_time;
+
+
+bool circle_entry_is_blocked()
+{
+    if (!circle_enter_cooldown) {
+        return false;
+    }
+
+    if (std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown) {
+        circle_enter_cooldown = false;
+        return false;
+    }
+
+    return true;
+}
+
+void start_circle_enter_cooldown()
+{
+    circle_enter_cooldown = true;
+    last_circle_enter_time = std::chrono::steady_clock::now();
+}
+
+} // namespace
+
 void check_circle() {
+    if (circle_type != CIRCLE_NONE || circle_entry_is_blocked()) {
+        return;
+    }
+
     // 非圆环模式下，单边L角点, 单边长直道
     if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found) {
+        if(Lpt0_rpts0s_id<rpts0s_num*0.6){
         circle_type = CIRCLE_LEFT_BEGIN;
+        start_circle_enter_cooldown();
         std::cout << "begin" << std::endl;
+        }
     }
     if (circle_type == CIRCLE_NONE && !Lpt0_found && Lpt1_found) {
+        if(Lpt1_rpts1s_id<rpts1s_num*0.6){
         circle_type = CIRCLE_RIGHT_BEGIN;
+        start_circle_enter_cooldown();
         std::cout << "begin" << std::endl;
+        }
     }
 }
 
@@ -39,7 +80,9 @@ void run_circle() {
     // 左环开始，寻外直道右线
     if (circle_type == CIRCLE_LEFT_BEGIN) {
         track_type = TRACK_RIGHT;
-
+        if(std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown){
+            circle_type=CIRCLE_NONE;
+        }
         //先丢左线后有线
         if (rpts0s_num < 0.2 / sample_dist) { none_left_line++; }
         if (rpts0s_num > 0.5 / sample_dist && none_left_line > 2) {
@@ -79,7 +122,7 @@ void run_circle() {
 
         if (Lpt1_found) rpts1s_num = rptsc1_num = Lpt1_rpts1s_id;
         //外环拐点(右L点)
-        if (Lpt1_found && Lpt1_rpts1s_id < 0.4 / sample_dist) {
+        if (Lpt1_found && Lpt1_rpts1s_id < 0.6 / sample_dist) {
             circle_type = CIRCLE_LEFT_OUT;
         }
     }
@@ -115,7 +158,9 @@ void run_circle() {
     //右环控制，前期寻左直道
     else if (circle_type == CIRCLE_RIGHT_BEGIN) {
         track_type = TRACK_LEFT;
-
+                if(std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown){
+            circle_type=CIRCLE_NONE;
+        }
         //先丢右线后有线
         if (rpts1s_num < 0.2 / sample_dist) { none_right_line++; }
         if (rpts1s_num > 0.5 / sample_dist && none_right_line > 2) {//这里可以调
@@ -153,7 +198,7 @@ void run_circle() {
 
         //外环存在拐点,可再加拐点距离判据(左L点)
         if (Lpt0_found) rpts0s_num = rptsc0_num = Lpt0_rpts0s_id;
-        if (Lpt0_found && Lpt0_rpts0s_id < 0.4 / sample_dist) {
+        if (Lpt0_found && Lpt0_rpts0s_id < 0.6 / sample_dist) {
             circle_type = CIRCLE_RIGHT_OUT;
         }
     }
@@ -233,7 +278,7 @@ void find_corners() {
      Lpt0_found = Lpt1_found = false;
     is_straight0 = rpts0s_num > 0.5 / sample_dist;
     is_straight1 = rpts1s_num > 0.5 / sample_dist;
-    for (int i = 0; i < rpts0s_num*0.6; i++) {//不要找的太远
+    for (int i = rpts0s_num*0.15; i < rpts0s_num*0.8; i++) {//不要找的太远
         if (rpts0an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
@@ -248,7 +293,7 @@ void find_corners() {
         if (conf > 15. / 180. * PI && 0.1 / sample_dist <i < 0.4 / sample_dist) is_straight0 = false;
         if ( Lpt0_found == true && is_straight0 == false) break;
     }
-    for (int i = 0; i < rpts1s_num*0.6; i++) {
+    for (int i = rpts1s_num*0.15; i < rpts1s_num*0.8; i++) {
         if (rpts1an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
@@ -289,7 +334,9 @@ void find_corners() {
 //双L角点,切十字模式
 void check_cross() {
     bool Xfound = Lpt0_found && Lpt1_found;
-    if (cross_type == CROSS_NONE && Xfound) cross_type = CROSS_BEGIN;
+    if (cross_type == CROSS_NONE && Xfound) {cross_type = CROSS_BEGIN;
+        std::cout<<"cross"<<std::endl;
+    }
 }
 
 void run_cross() {
@@ -306,10 +353,11 @@ void run_cross() {
             rptsc1_num = rpts1s_num = Lpt1_rpts1s_id;
         }
 
-        aim_distance = 0.4;
+        //aim_distance = 0.4;
         //近角点过少，进入远线控制
-        if ((Xfound && (Lpt0_rpts0s_id < 0.1 / sample_dist || Lpt1_rpts1s_id < 0.1 / sample_dist))/* || (rpts1_num <30 && rpts0_num<30)*/) {
+        if ((Xfound && (Lpt0_rpts0s_id < 0.15 / sample_dist || Lpt1_rpts1s_id < 0.15 / sample_dist))|| (rpts1_num <40 && rpts0_num<40)) {
             cross_type = CROSS_IN;
+            std::cout<<"in"<<std::endl;
             cross_encoder = current_encoder;
         }
     }
@@ -370,7 +418,7 @@ void cross_farline() {
     far_y1 = 0, far_y2 = 0;
 
 
-    int x1 = img_raw.width / 2 - begin_x, y1 = begin_y;
+    int x1 = img_raw.width / 2 - begin_x, y1 = 200;
     bool white_found = false;
     far_ipts0_num = sizeof(far_ipts0) / sizeof(far_ipts0[0]);
 
@@ -397,7 +445,7 @@ void cross_farline() {
         findline_lefthand_adaptive(&img_raw, block_size, clip_value, far_x1, far_y1 + 1, far_ipts0, &far_ipts0_num);
     else far_ipts0_num = 0;
 
-    int x2 = img_raw.width / 2 + begin_x, y2 = begin_y;
+    int x2 = img_raw.width / 2 + begin_x, y2 = 200;
     white_found = false;
     far_ipts1_num = sizeof(far_ipts1) / sizeof(far_ipts1[0]);
 

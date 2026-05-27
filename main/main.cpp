@@ -6,6 +6,7 @@
 #include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
 #include <chrono>
 using namespace std::chrono;
+#define AIM 0.30
 bool need_exit = false;
 // 全局互斥锁（解决多线程冲突）
 //std::mutex g_mutex;
@@ -26,6 +27,8 @@ volatile  int pwm1_duty_rps=0;
  volatile float alpha_flit = 0.0f;   // 可调，0.7~0.85都可以先试
  volatile float encoder1_speed_avg = 0.0f;
 volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
+int L_count=0;
+int R_count=0;
 ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0);
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 17000, 0); 
 ls_gpio polar_pwm1(PIN_22, GPIO_MODE_OUT);
@@ -48,18 +51,18 @@ volatile int test_count = 0;
  image_t img_thres;
 image_t img_line;
 cv::Mat M = (cv::Mat_<float>(3, 3) <<
--1.863744207302929,-3.916573045375683,469.1710281321801,
--0.03872799453894288,-6.76418869213661,515.2138929659729,
--0.0003245997363083029,-0.02317625907516634,1);
+-2.887710525491654,-5.371110049567488,618.1098564696885,
+-0.195283534331899,-10.17013886799252,716.7658965946473,
+-0.0007107342983566135,-0.03252037953416573,1);
 
 cv::Mat M_Reverse = (cv::Mat_<float>(3, 3) <<
--0.5307393930001288,0.7132915822987191,-118.4901862518622,
-0.01317587660141583,0.1754713263214365,-96.5870047095989,
-0.0001330896626405649,0.004298303178613763,-1.276987327656451);
+-0.3570692872526229,0.4002973456045271,-66.21143993323358,
+0.00853710466675691,0.066536570470589,-52.96801312992049,
+2.384849454564317e-05,0.002448299577667568,-0.7695986314598161);
 
 // Auxiliary calibration values
 // ground_width_m = 0.6
-#define M2PIX 234.8666666666667 // 米转像素
+#define M2PIX 235.8333333333333 // 米转像素
  bool line_show_sample;
 bool line_show_blur;
  bool track_left;
@@ -71,10 +74,10 @@ float mapy[IMG_H][IMG_W];
 float thres = 95;            // 固定二值化阈值（判断黑线/背景）
 float block_size = 5;         // 自适应阈值的窗口大小
 float clip_value = 2;         // 自适应阈值减去的偏移量
-float track_min_y = 70;   // 越小 → 巡得越远
-float track_max_y = 220;  // 越大 → 巡到最底部
+float track_min_y = 65;   // 越小 → 巡得越远
+float track_max_y = 215;  // 越大 → 巡到最底部
 float begin_x = 40;           // 巡线起始点 水平偏移
-float begin_y = 220;          // 巡线起始点 垂直位置（靠近车底）
+float begin_y = 215;          // 巡线起始点 垂直位置（靠近车底）
 float line_blur_kernel = 5;   // 边线滤波平滑程度7-5
 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
 float sample_dist = 0.02;     // 点集等距采样步长（米）
@@ -164,7 +167,7 @@ void save_per_map(void) {
 const uint16_t    CAM_WIDTH    = 320;     // 宽
 const uint16_t    CAM_HEIGHT   = 240;     // 高
 const uint16_t    CAM_FPS      = 60;     // 帧率
-const uint8_t     JPEG_QUALITY = 30;
+const uint8_t     JPEG_QUALITY = 40;
 static struct termios old_tio;
     lq_camera_ex cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
  volatile  int mid;
@@ -333,8 +336,8 @@ void encoder_sample_1ms_thread()
     static float sum1 = 0.0f;
     static float sum2 = 0.0f;
 
-    while (1)
-    {
+ //   while (1)
+ //   {
         float s1 = -enc1.encoder_get_count();
         float s2 = enc2.encoder_get_count();
 
@@ -357,9 +360,10 @@ void encoder_sample_1ms_thread()
         encoder1_speed_avg = sum1 / 5.0f;
         encoder2_speed_avg = sum2 / 5.0f;
 
-        usleep(1000);  // 1ms 采样周期
-    }
+        //usleep(1000);  // 1ms 采样周期
+   // }
 }
+
 void udp_send(void){
     char encoder_str[384];
 
@@ -373,11 +377,16 @@ snprintf(encoder_str, sizeof(encoder_str),
          spd_slow_ratio);
 
 // 发送函数
+/*
 udp_client.udp_send_string(encoder_str);
-/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
+<<<<<<< HEAD
+=======
+
+>>>>>>> refs/remotes/origin/main
 */
       }
 #define RECOG_TOP      140   // 识别区域 距离顶部 125像素
@@ -567,6 +576,7 @@ vofa_recv_init();
         front_ui_hold_stop();
       }
     });
+    
 //std::cout<<"fuck you2"s<<std::endl; 
   
 while (1)
@@ -625,7 +635,11 @@ img0.step=frame.step;
         find_corners();     // 角点提取&筛选
 auto t2 = high_resolution_clock::now();
         // 预瞄距离,动态效果更佳
+<<<<<<< HEAD
         aim_distance = 0.30;
+=======
+        aim_distance = AIM;
+>>>>>>> refs/remotes/origin/main
 
         // 单侧线少，切换巡线方向  切外向圆
 
@@ -644,12 +658,13 @@ auto t2 = high_resolution_clock::now();
 
         // 分别检查十字 三叉 和圆环, 十字优先级最高
             check_cross();
-        if (cross_type == CROSS_NONE)
+        if (cross_type == CROSS_NONE){
             check_circle();
+        }
         if (cross_type != CROSS_NONE) {
             circle_type = CIRCLE_NONE;
         }
-
+        
         //车库 ,十字清Aprltag标志
         //if (garage_type != GARAGE_NONE || cross_type != CROSS_NONE) apriltag_type = APRILTAG_NONE;
 
@@ -657,6 +672,10 @@ auto t2 = high_resolution_clock::now();
         //if (yroad_type != YROAD_NONE) run_yroad();
         if (cross_type != CROSS_NONE) run_cross();
       if (circle_type != CIRCLE_NONE) run_circle();
+      if(cross_type != CROSS_BEGIN){
+        L_count=0;
+        R_count=0;
+      }
        // if (garage_type != GARAGE_NONE) run_garage();
 
         // 中线跟踪
@@ -674,7 +693,12 @@ auto t2 = high_resolution_clock::now();
                 rpts = rpts2s;
                 rpts_num = rpts2s_num;
             }
-        } else {
+        }
+        else if( cross_type == CROSS_BEGIN) {
+                            rpts = rpts2s;
+                rpts_num = rpts2s_num;
+        }
+        else {
             //十字根据远线控制
             if (track_type == TRACK_LEFT) {
                 track_leftline(far_rpts0s + far_Lpt0_rpts0s_id, far_rpts0s_num - far_Lpt0_rpts0s_id, rpts,
@@ -708,6 +732,11 @@ auto t2 = high_resolution_clock::now();
         // 特殊模式下，不找最近点(由于边线会绕一圈回来，导致最近点为边线最后一个点，从而中线无法正常生成)
       //  if (garage_type == GARAGE_IN_LEFT || garage_type == GARAGE_IN_RIGHT || cross_type == CROSS_IN) begin_id = 0;
 
+       if (cross_type == CROSS_BEGIN) {
+        aim_distance=0.15;}
+        else{
+            aim_distance=AIM;
+        }
         // 中线有点，同时最近点不是最后几个点
         if (begin_id >= 0 && rpts_num - begin_id >= 3) {
             // 归一化中线，如果是根据左右track寻仙则需要这么干
@@ -739,11 +768,12 @@ auto t2 = high_resolution_clock::now();
 
         }
 latest_error=-error;
+
                clear_image(&img_line);
                cv::Mat birdview;
 
 // 1. 直接用 OpenCV 官方 warpPerspective → 绝对正确！
-/*
+
 cv::warpPerspective(frame, birdview, M, cv::Size(IMG_W, IMG_H));
 auto t3 = high_resolution_clock::now();
 
@@ -799,7 +829,12 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 // 7. 显示最终鸟瞰图（就是你要的效果）
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
-*/
+
+ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+  if (sent < 0) {
+          printf("ERROR: Failed to send image\r\n");
+      }
+      
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();

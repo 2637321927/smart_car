@@ -17,10 +17,19 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
        volatile static int error_current,error_last;// 当前误差和上一次误差
        error_current=error-expect_error;//当前误差
 
-       Diffrential=error_current*dir_P+ (error_current-error_last)*dir_D;//PD控制算法
+       int abs_error = error_current;
+       if (abs_error < 0) abs_error = -abs_error;
+
+       // 直道小误差区容易左右摆头：abs(error) < 7 时削弱方向环 PD。
+       // VOFA 调的 dir_P/dir_D 仍然是原始值，这里只改变实际参与计算的增益。
+       float dir_gain = abs_error < 7 ? 0.3f : 1.0f;
+       float actual_dir_P = dir_P * dir_gain;
+       float actual_dir_D = dir_D * dir_gain;
+
+       Diffrential=error_current*actual_dir_P+ (error_current-error_last)*actual_dir_D;//PD控制算法
        error_last=error_current;//更新一下误差
      
-      // printf("Df_P:%f Df_D %f\n",error_current*dir_P,(error_current-error_last)*dir_D);
+      // printf("Df_P:%f Df_D %f\n",error_current*actual_dir_P,(error_current-error_last)*actual_dir_D);
          return Diffrential;//返回差分输入
         }
          
