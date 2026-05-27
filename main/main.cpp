@@ -383,10 +383,6 @@ ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
-<<<<<<< HEAD
-=======
-
->>>>>>> refs/remotes/origin/main
 */
       }
 #define RECOG_TOP      140   // 识别区域 距离顶部 125像素
@@ -635,11 +631,7 @@ img0.step=frame.step;
         find_corners();     // 角点提取&筛选
 auto t2 = high_resolution_clock::now();
         // 预瞄距离,动态效果更佳
-<<<<<<< HEAD
-        aim_distance = 0.30;
-=======
         aim_distance = AIM;
->>>>>>> refs/remotes/origin/main
 
         // 单侧线少，切换巡线方向  切外向圆
 
