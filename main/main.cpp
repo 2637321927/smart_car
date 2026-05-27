@@ -28,10 +28,10 @@ volatile  int pwm1_duty_rps=0;
 volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
 ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0);
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 17000, 0); 
-ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
-ls_gpio polar_pwm2(PIN_22, GPIO_MODE_OUT);
+ls_gpio polar_pwm1(PIN_22, GPIO_MODE_OUT);
+ls_gpio polar_pwm2(PIN_21, GPIO_MODE_OUT);
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
-ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
+ls_encoder_pwm enc1(ENC_PWM3_PIN67, PIN_75);
  volatile int set_speed_of_motor1_rps=0;
  volatile int set_speed_of_motor2_rps=0;
 lq_udp_client udp_client;
@@ -307,11 +307,7 @@ if (sscanf(buf, "#dirD=%f;", &ftmp) == 1)
     printf("[VOFA] dirD = %.3f\n", dir_D);
 }
 
-if (sscanf(buf, "#alpha=%f;", &ftmp) == 1)
-{
-    alpha_flit = ftmp;
-    printf("[VOFA] alpha = %.3f\n", alpha_flit);
-}
+
 
 if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
 {
@@ -383,7 +379,6 @@ udp_client.udp_send_string(encoder_str);
           printf("ERROR: Failed to send image\r\n");
       }
 */
-
       }
 #define RECOG_TOP      140   // 识别区域 距离顶部 125像素
 #define RECOG_BOTTOM   40   // 识别区域 距离底部 100像素
