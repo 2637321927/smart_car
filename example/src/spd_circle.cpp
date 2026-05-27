@@ -92,7 +92,7 @@ void close_circle_control(
     current_pwm2 += pwm2_plusduty;
 
     const int MAX_PWM = 5000;
-        const int MIN_PWM = 0;
+        const int MIN_PWM = -2000;
     // 内部状态双向限幅，防止 windup
     if (current_pwm1 > MAX_PWM) current_pwm1 = MAX_PWM;
     if (current_pwm1 < MIN_PWM) current_pwm1 = MIN_PWM;
@@ -134,5 +134,5 @@ void close_circle_control(
 
         polar_pwm2.gpio_level_set(GPIO_HIGH);   // 反转
         pwm2.atim_pwm_set_duty(set_speed_of_motor1_rps);*/
-        
+    
 }

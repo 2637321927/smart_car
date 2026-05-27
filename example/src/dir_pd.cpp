@@ -1,8 +1,8 @@
 #include "lq_all_demo.hpp"
 
-volatile float dir_P = 0.25f;
-volatile float dir_D = 0.1f;
-volatile int spd_slow_ratio = 30;
+volatile float dir_P = 0.13f;
+volatile float dir_D = 0.14f;
+volatile int spd_slow_ratio = 10;
 /********************************************************************************
  * @brief   PID 控制测试.
  * @param   none.
@@ -17,19 +17,10 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
        volatile static int error_current,error_last;// 当前误差和上一次误差
        error_current=error-expect_error;//当前误差
 
-       int abs_error = error_current;
-       if (abs_error < 0) abs_error = -abs_error;
-
-       // 直道小误差区容易左右摆头：abs(error) < 7 时削弱方向环 PD。
-       // VOFA 调的 dir_P/dir_D 仍然是原始值，这里只改变实际参与计算的增益。
-       float dir_gain = abs_error < 7 ? 0.3f : 1.0f;
-       float actual_dir_P = dir_P * dir_gain;
-       float actual_dir_D = dir_D * dir_gain;
-
-       Diffrential=error_current*actual_dir_P+ (error_current-error_last)*actual_dir_D;//PD控制算法
+       Diffrential=error_current*dir_P+ (error_current-error_last)*dir_D;//PD控制算法
        error_last=error_current;//更新一下误差
      
-      // printf("Df_P:%f Df_D %f\n",error_current*actual_dir_P,(error_current-error_last)*actual_dir_D);
+      // printf("Df_P:%f Df_D %f\n",error_current*dir_P,(error_current-error_last)*dir_D);
          return Diffrential;//返回差分输入
         }
          
@@ -48,7 +39,7 @@ void PID_control_test(int error)
     const int dead_error=2;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
-    if((error<dead_error)&&(error>-dead_error)) error=0;
+    if((error<dead_error)&&(error>-dead_error)) error=3;
     int diffrential = calculate_diffrential(error, 0);
 
     const int max_dif=10;
@@ -59,14 +50,14 @@ void PID_control_test(int error)
 
     int slow_ratio_percent = spd_slow_ratio;
     if (slow_ratio_percent < 0) slow_ratio_percent = 0;
-    if (slow_ratio_percent > 30) slow_ratio_percent = 30;
+    if (slow_ratio_percent > 50) slow_ratio_percent = 50;
 
     // spd_slow_ratio 表示最大减速百分比，30 表示 error 达到 max_error 时最多降速 30%。
     // 这里仍保留 0.7 的下限保护，避免基准速度被降得太低。
     int abs_error = error;
     if (abs_error < 0) abs_error = -abs_error;
     float slow_ratio = 1.0f - (slow_ratio_percent / 100.0f) * abs_error / max_error;
-    if (slow_ratio < 0.7f) slow_ratio = 0.7f;
+    if (slow_ratio < 0.5f) slow_ratio = 0.5f;
     int set_spd1 = static_cast<int>(target_spd1 * slow_ratio + 0.5f);
 
     pwm1_duty_rps = set_spd1 + diffrential;
