@@ -1,6 +1,6 @@
 #ifndef CIRCLE_HPP
 #define CIRCLE_HPP
-
+#include "img.hpp"
 enum cross_type_e {
     CROSS_NONE = 0,     // 非十字模式
     CROSS_BEGIN,        // 找到左右两个L角点

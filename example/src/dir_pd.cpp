@@ -1,7 +1,7 @@
 #include "lq_all_demo.hpp"
 
-volatile float dir_P = 0.13f;
-volatile float dir_D = 0.14f;
+volatile float dir_P = 0.09f;
+volatile float dir_D = 0.009f;
 volatile int spd_slow_ratio = 10;
 /********************************************************************************
  * @brief   PID 控制测试.
@@ -35,8 +35,8 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
 //below we test the speed circle ,no error!!!!!
 void PID_control_test(int error)
 {
-    const int max_error=30;
-    const int dead_error=2;
+    const int max_error=40;
+    const int dead_error=3;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
     if((error<dead_error)&&(error>-dead_error)) error=0;
