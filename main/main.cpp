@@ -642,6 +642,7 @@ img0.step=frame.step;
             current_pwm2 = 0;
             pwm1.atim_pwm_set_duty(0);
             pwm2.atim_pwm_set_duty(0);
+            return 0;
         }
     }
 }
