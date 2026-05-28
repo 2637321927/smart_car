@@ -43,14 +43,15 @@ extern float mapy[IMG_H][IMG_W];
 #define POINTS_MAX_LEN  (240)//图像高度
 
 #define FAR_POINTS_MAX_LEN  (POINTS_MAX_LEN)
-extern  float thres;            // 固定二值化阈值（判断黑线/背景）
-extern float block_size ;         // 自适应阈值的窗口大小
-extern float clip_value ;         // 自适应阈值减去的偏移量
-extern float begin_x ;           // 巡线起始点 水平偏移
-extern float begin_y ;          // 巡线起始点 垂直位置（靠近车底）
-extern float track_min_y ;   // 越小 → 巡得越远
-extern float track_max_y ;  // 越大 → 巡到最底部
-extern float line_blur_kernel ;   // 边线滤波平滑程度
+extern  int thres;            // 固定二值化阈值（判断黑线/背景）
+extern int block_size ;         // 自适应阈值的窗口大小
+extern int clip_value ;         // 自适应阈值减去的偏移量
+extern int begin_x ;           // 巡线起始点 水平偏移
+extern int begin_y ;          // 巡线起始点 垂直位置（靠近车底）
+extern int end_y ;          // 巡线起始点 垂直位置（靠近车底）
+extern int track_min_y ;   // 越小 → 巡得越远
+extern int track_max_y ;  // 越大 → 巡到最底部
+extern int line_blur_kernel ;   // 边线滤波平滑程度
 extern float pixel_per_meter ;  // 像素 → 实际距离换算比例
 extern float sample_dist ;     // 点集等距采样步长（米extern ）
 extern float angle_dist ;       // 计算弯道角度的窗口长度

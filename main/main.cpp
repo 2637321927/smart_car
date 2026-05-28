@@ -71,14 +71,15 @@ float angle;
  float mapx[IMG_H][IMG_W];
 float mapy[IMG_H][IMG_W];
 
-float thres = 95;            // 固定二值化阈值（判断黑线/背景）
-float block_size = 5;         // 自适应阈值的窗口大小
-float clip_value = 2;         // 自适应阈值减去的偏移量
-float track_min_y = 65;   // 越小 → 巡得越远
-float track_max_y = 215;  // 越大 → 巡到最底部
-float begin_x = 40;           // 巡线起始点 水平偏移
-float begin_y = 215;          // 巡线起始点 垂直位置（靠近车底）
-float line_blur_kernel = 5;   // 边线滤波平滑程度7-5
+int thres = 95;            // 固定二值化阈值（判断黑线/背景）
+int block_size = 5;         // 自适应阈值的窗口大小
+int clip_value = 2;         // 自适应阈值减去的偏移量
+int track_min_y = 65;   // 越小 → 巡得越远
+int track_max_y = 215;  // 越大 → 巡到最底部
+int begin_x = 40;           // 巡线起始点 水平偏移
+int begin_y = 215;  
+int end_y=100;        // 巡线起始点 垂直位置（靠近车底）
+int line_blur_kernel = 5;   // 边线滤波平滑程度7-5
 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
 float sample_dist = 0.02;     // 点集等距采样步长（米）
 float angle_dist = 0.2;       // 计算弯道角度的窗口长度

@@ -64,6 +64,7 @@ void search_leftline()
     // ==============================================
     // 原来逻辑：向左找突变点
     // ==============================================
+
     for (; x > 0; x--)
     {
         if (safe_AT(x - 1, y) < thres)
@@ -90,9 +91,10 @@ void search_leftline()
     if (!found_flag)
     {
         x = 2;
-        if (safe_AT(x, y) >= thres) {
+
+        //if (safe_AT(x, y) >= thres) {
             found_flag = true;
-        }
+        //}
     }
 
     // ==============================================
