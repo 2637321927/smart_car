@@ -4,6 +4,9 @@
 
 #include <chrono>
 #include <cstdio>
+int selected_strategy = 1;
+bool car_running = false;
+bool ui_ready = false;
 
 namespace {
 
@@ -17,7 +20,7 @@ struct SpeedStrategy {
 // TFT18 前端提供的速度档位。默认选中 MID，也就是 selected_strategy = 1。
 constexpr SpeedStrategy kStrategies[] = {
     {"LOW", 5},
-    {"MID", 10},
+    {"MID", 15},
     {"HIGH", 15},
     {"MAX", 15},
 };
@@ -41,9 +44,6 @@ ls_gpio key_next(PIN_45, GPIO_MODE_IN);
 ls_gpio key_start_stop(PIN_80, GPIO_MODE_IN);
 
 // selected_strategy 保存当前档位下标；car_running 是一键发车/停车状态。
-int selected_strategy = 1;
-bool car_running = false;
-bool ui_ready = false;
 
 // 每个按键都保存上一次状态和上一次有效触发时间，用于边沿检测和去抖。
 struct ButtonState {

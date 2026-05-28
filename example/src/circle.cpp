@@ -60,13 +60,13 @@ bool check_is_zebra(image_t *img_raw, int px, int py, int thres) {
     int zebra_cross_flag1[100];
     int zebra_cross_flag1_num = 0;
 
-    // ========== 第一步：判断起点是黑还是白 ==========
+    // 判断起点是黑还是白
     int zebra_cross_flag_begin = AT_IMAGE(img_raw, px, py) > thres;
 
-    // ========== 第二步：向左扫描（50像素） ==========
+    //向左扫描（80像素）
     memset(zebra_cross_flag0, 0, sizeof(zebra_cross_flag0));
     zebra_cross_flag0_num = 0;
-    for (int x = px - 1; x >= MAX(0, px - 50); x--) {
+    for (int x = px - 1; x >= MAX(0, px - 80); x--) {
         if (zebra_cross_flag_begin == 0) { // 偶数白，奇数黑
             if (zebra_cross_flag0_num % 2 == 0 && AT_IMAGE(img_raw, x, py) > thres) {
                 zebra_cross_flag0[zebra_cross_flag0_num]++;
@@ -90,10 +90,10 @@ bool check_is_zebra(image_t *img_raw, int px, int py, int thres) {
         }
     }
 
-    //向右扫描（50像素）
+    //向右扫描（80像素）
     memset(zebra_cross_flag1, 0, sizeof(zebra_cross_flag1));
     zebra_cross_flag1_num = 0;
-    for (int x = px + 1; x <= MIN(img_raw->width - 1, px + 50); x++) {
+    for (int x = px + 1; x <= MIN(img_raw->width - 1, px + 80); x++) {
         if (zebra_cross_flag_begin == 0) { // 偶数白，奇数黑
             if (zebra_cross_flag1_num % 2 == 0 && AT_IMAGE(img_raw, x, py) > thres) {
                 zebra_cross_flag1[zebra_cross_flag1_num]++;
@@ -117,24 +117,30 @@ bool check_is_zebra(image_t *img_raw, int px, int py, int thres) {
         }
     }
 
-    // 判断左边是否符合斑马线
-    int i0 = 1;
-    for (; i0 < zebra_cross_flag0_num - 1; i0++) {
-        if (zebra_cross_flag0[i0] < 2 || zebra_cross_flag0[i0] >= 20 || abs(zebra_cross_flag0[i0 + 1] - zebra_cross_flag0[i0]) >= 10)
-            break;
-    }
-    bool is_zebra0 = (i0 > 6);
+// ====================== 极简版：总合格段数 >6 就算斑马线 ======================
+int total_valid = 0;
 
-    //判断右边是否符合斑马线
-    int i1 = 1;
-    for (; i1 < zebra_cross_flag1_num - 1; i1++) {
-        if (zebra_cross_flag1[i1] < 2 || zebra_cross_flag1[i1] >= 20 || abs(zebra_cross_flag1[i1 + 1] - zebra_cross_flag1[i1]) >= 10)
-            break;
+// 统计左边合格段数
+for (int i = 1; i < zebra_cross_flag0_num - 1; i++) {
+    int w = zebra_cross_flag0[i];
+    int diff = abs(zebra_cross_flag0[i+1] - w);
+    if (w >= 2 && w < 40 && diff < 10) {
+        total_valid++;
     }
-    bool is_zebra1 = (i1 > 6);
+}
 
-    // 左右都满足 → 是斑马线
-    return (is_zebra0 && is_zebra1);
+// 统计右边合格段数
+for (int i = 1; i < zebra_cross_flag1_num - 1; i++) {
+    int w = zebra_cross_flag1[i];
+    int diff = abs(zebra_cross_flag1[i+1] - w);
+    if (w >= 2 && w < 40 && diff < 10) {
+        total_valid++;
+    }
+}
+//printf("ttl:%d\n",total_valid);
+// 只要总合格段数 >6 就返回 true（最宽松！）
+return total_valid > 10;
+// ==========================================================================
 }
 void check_circle() {
     if (circle_type != CIRCLE_NONE || circle_entry_is_blocked()) {

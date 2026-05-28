@@ -12,7 +12,9 @@ void front_ui_hold_stop();
 
 // 给主控制循环判断：当前是否允许速度环/方向环工作。
 bool front_ui_is_running();
-
+extern int selected_strategy;
+extern bool car_running;
+extern bool ui_ready;
 // 当前选中的速度策略目标值，单位 rps。
 int front_ui_selected_speed();
 

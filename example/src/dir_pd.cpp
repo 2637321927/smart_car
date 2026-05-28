@@ -36,7 +36,7 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
 void PID_control_test(int error)
 {
     const int max_error=40;
-    const int dead_error=3;
+    const int dead_error=8;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
     if((error<dead_error)&&(error>-dead_error)) error=0;
