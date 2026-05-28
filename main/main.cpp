@@ -29,8 +29,8 @@ volatile  int pwm1_duty_rps=0;
 volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
 int L_count=0;
 int R_count=0;
-ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0);
-ls_atim_pwm pwm1(ATIM_PWM1_PIN82, 17000, 0); 
+ls_atim_pwm pwm2(ATIM_PWM1_PIN82 ,17000, 0);
+ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 17000, 0); 
 ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
 ls_gpio polar_pwm2(PIN_22, GPIO_MODE_OUT);
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
@@ -311,11 +311,7 @@ if (sscanf(buf, "#dirD=%f;", &ftmp) == 1)
     printf("[VOFA] dirD = %.3f\n", dir_D);
 }
 
-if (sscanf(buf, "#alpha=%f;", &ftmp) == 1)
-{
-    alpha_flit = ftmp;
-    printf("[VOFA] alpha = %.3f\n", alpha_flit);
-}
+
 
 if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
 {
@@ -382,13 +378,12 @@ snprintf(encoder_str, sizeof(encoder_str),
          spd_slow_ratio);
 
 // 发送函数
-/*
+
 udp_client.udp_send_string(encoder_str);
-ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
-
 */
       }
 #define RECOG_TOP      140   // 识别区域 距离顶部 125像素
@@ -752,7 +747,8 @@ auto t2 = high_resolution_clock::now();
             float dx = rptsn[aim_idx][0] - cx;
             float dy = cy - rptsn[aim_idx][1] + 0.2 * pixel_per_meter;
             float dn = sqrt(dx * dx + dy * dy);
-            error = -atan2f(dx, dy) * 180 / PI;
+            //error = -atan2f(dx, dy) * 180 / PI;
+             error=dx;
             assert(!isnan(error));
 
             // 若考虑近点远点,可近似构造Stanley算法,避免撞路肩
@@ -828,10 +824,10 @@ cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv
 cv::resize(bgr_bird, bgr_bird, cv::Size(320, 240));
 //std::cout<<"fuck you"<<std::endl;
 
-ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
+/*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
-      }
+      }*/
       
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
