@@ -1,8 +1,8 @@
 #include "lq_all_demo.hpp"
 
-volatile float P = 250.0f;
-volatile float I = 7.0f;
-volatile float D = 0.0f;
+volatile float P = 656.0f;
+volatile float I = 29.54f;
+volatile float D = 1.0f;
 volatile int current_pwm1 = 0;
 volatile int current_pwm2 = 0;
 
@@ -30,7 +30,7 @@ void calculate_differential_for_motor(
     // 真正的增量式 PID
     float p_term1 = P * (error_current1 - error_last1);
     float p_term2 = P * (error_current2 - error_last2);
-    const int max_P=180;
+    const int max_P=700;
   if(p_term1>max_P)  p_term1=max_P;
 if(p_term1<-max_P) p_term1=-max_P;
 if(p_term2>max_P)  p_term2=max_P;
@@ -91,7 +91,7 @@ void close_circle_control(
     current_pwm1 += pwm1_plusduty;
     current_pwm2 += pwm2_plusduty;
 
-    const int MAX_PWM = 5000;
+    const int MAX_PWM = 6000;
         const int MIN_PWM = -2000;
     // 内部状态双向限幅，防止 windup
     if (current_pwm1 > MAX_PWM) current_pwm1 = MAX_PWM;

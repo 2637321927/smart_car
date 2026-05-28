@@ -766,7 +766,7 @@ auto t2 = high_resolution_clock::now();
             float dy = cy - rptsn[aim_idx][1] + 0.2 * pixel_per_meter;
             float dn = sqrt(dx * dx + dy * dy);
             //error = -atan2f(dx, dy) * 180 / PI;
-             error=dx;
+             error=-dx;
             assert(!isnan(error));
 
             // 若考虑近点远点,可近似构造Stanley算法,避免撞路肩
