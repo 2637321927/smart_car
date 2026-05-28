@@ -35,14 +35,14 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
 //below we test the speed circle ,no error!!!!!
 void PID_control_test(int error)
 {
-    const int max_error=70;
+    const int max_error=30;
     const int dead_error=2;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
-    if((error<dead_error)&&(error>-dead_error)) error=3;
+    if((error<dead_error)&&(error>-dead_error)) error=0;
     int diffrential = calculate_diffrential(error, 0);
 
-    const int max_dif=10;
+    const int max_dif=7;
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     int target_spd1 = set_speed_of_motor1_rps;

@@ -102,7 +102,7 @@ void close_circle_control(
     
 
    
-    // motor1 输出
+    // otor1 输出
     
     if (current_pwm1 >= 0)
     {
@@ -128,11 +128,8 @@ void close_circle_control(
         polar_pwm2.gpio_level_set(GPIO_HIGH);   // 反转
         pwm2.atim_pwm_set_duty(-current_pwm2);
     }
-          /*polar_pwm1.gpio_level_set(GPIO_LOW);   // 正转
-        pwm1.atim_pwm_set_duty(set_speed_of_motor1_rps);
-        //std::cout<<"toward"<<std::endl;
-
-        polar_pwm2.gpio_level_set(GPIO_HIGH);   // 反转
-        pwm2.atim_pwm_set_duty(set_speed_of_motor1_rps);*/
     
+      
+ 
+      
 }
