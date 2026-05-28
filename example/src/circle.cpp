@@ -52,7 +52,90 @@ void start_circle_enter_cooldown()
 }
 
 } // namespace
+// 功能：输入一个点(px, py)，向左右扫描，判断这个位置是不是斑马线
+// 返回值：true = 是斑马线，false = 不是
+bool check_is_zebra(image_t *img_raw, int px, int py, int thres) {
+    int zebra_cross_flag0[100];
+    int zebra_cross_flag0_num = 0;
+    int zebra_cross_flag1[100];
+    int zebra_cross_flag1_num = 0;
 
+    // ========== 第一步：判断起点是黑还是白 ==========
+    int zebra_cross_flag_begin = AT_IMAGE(img_raw, px, py) > thres;
+
+    // ========== 第二步：向左扫描（50像素） ==========
+    memset(zebra_cross_flag0, 0, sizeof(zebra_cross_flag0));
+    zebra_cross_flag0_num = 0;
+    for (int x = px - 1; x >= MAX(0, px - 50); x--) {
+        if (zebra_cross_flag_begin == 0) { // 偶数白，奇数黑
+            if (zebra_cross_flag0_num % 2 == 0 && AT_IMAGE(img_raw, x, py) > thres) {
+                zebra_cross_flag0[zebra_cross_flag0_num]++;
+            } else if (zebra_cross_flag0_num % 2 == 0 && AT_IMAGE(img_raw, x, py) < thres) {
+                zebra_cross_flag0[++zebra_cross_flag0_num]++;
+            } else if (zebra_cross_flag0_num % 2 == 1 && AT_IMAGE(img_raw, x, py) > thres) {
+                zebra_cross_flag0[++zebra_cross_flag0_num]++;
+            } else if (zebra_cross_flag0_num % 2 == 1 && AT_IMAGE(img_raw, x, py) < thres) {
+                zebra_cross_flag0[zebra_cross_flag0_num]++;
+            }
+        } else { // 偶数黑，奇数白
+            if (zebra_cross_flag0_num % 2 == 0 && AT_IMAGE(img_raw, x, py) > thres) {
+                zebra_cross_flag0[++zebra_cross_flag0_num]++;
+            } else if (zebra_cross_flag0_num % 2 == 0 && AT_IMAGE(img_raw, x, py) < thres) {
+                zebra_cross_flag0[zebra_cross_flag0_num]++;
+            } else if (zebra_cross_flag0_num % 2 == 1 && AT_IMAGE(img_raw, x, py) > thres) {
+                zebra_cross_flag0[zebra_cross_flag0_num]++;
+            } else if (zebra_cross_flag0_num % 2 == 1 && AT_IMAGE(img_raw, x, py) < thres) {
+                zebra_cross_flag0[++zebra_cross_flag0_num]++;
+            }
+        }
+    }
+
+    //向右扫描（50像素）
+    memset(zebra_cross_flag1, 0, sizeof(zebra_cross_flag1));
+    zebra_cross_flag1_num = 0;
+    for (int x = px + 1; x <= MIN(img_raw->width - 1, px + 50); x++) {
+        if (zebra_cross_flag_begin == 0) { // 偶数白，奇数黑
+            if (zebra_cross_flag1_num % 2 == 0 && AT_IMAGE(img_raw, x, py) > thres) {
+                zebra_cross_flag1[zebra_cross_flag1_num]++;
+            } else if (zebra_cross_flag1_num % 2 == 0 && AT_IMAGE(img_raw, x, py) < thres) {
+                zebra_cross_flag1[++zebra_cross_flag1_num]++;
+            } else if (zebra_cross_flag1_num % 2 == 1 && AT_IMAGE(img_raw, x, py) > thres) {
+                zebra_cross_flag1[++zebra_cross_flag1_num]++;
+            } else if (zebra_cross_flag1_num % 2 == 1 && AT_IMAGE(img_raw, x, py) < thres) {
+                zebra_cross_flag1[zebra_cross_flag1_num]++;
+            }
+        } else { // 偶数黑，奇数白
+            if (zebra_cross_flag1_num % 2 == 0 && AT_IMAGE(img_raw, x, py) > thres) {
+                zebra_cross_flag1[++zebra_cross_flag1_num]++;
+            } else if (zebra_cross_flag1_num % 2 == 0 && AT_IMAGE(img_raw, x, py) < thres) {
+                zebra_cross_flag1[zebra_cross_flag1_num]++;
+            } else if (zebra_cross_flag1_num % 2 == 1 && AT_IMAGE(img_raw, x, py) > thres) {
+                zebra_cross_flag1[zebra_cross_flag1_num]++;
+            } else if (zebra_cross_flag1_num % 2 == 1 && AT_IMAGE(img_raw, x, py) < thres) {
+                zebra_cross_flag1[++zebra_cross_flag1_num]++;
+            }
+        }
+    }
+
+    // 判断左边是否符合斑马线
+    int i0 = 1;
+    for (; i0 < zebra_cross_flag0_num - 1; i0++) {
+        if (zebra_cross_flag0[i0] < 2 || zebra_cross_flag0[i0] >= 20 || abs(zebra_cross_flag0[i0 + 1] - zebra_cross_flag0[i0]) >= 10)
+            break;
+    }
+    bool is_zebra0 = (i0 > 6);
+
+    //判断右边是否符合斑马线
+    int i1 = 1;
+    for (; i1 < zebra_cross_flag1_num - 1; i1++) {
+        if (zebra_cross_flag1[i1] < 2 || zebra_cross_flag1[i1] >= 20 || abs(zebra_cross_flag1[i1 + 1] - zebra_cross_flag1[i1]) >= 10)
+            break;
+    }
+    bool is_zebra1 = (i1 > 6);
+
+    // 左右都满足 → 是斑马线
+    return (is_zebra0 && is_zebra1);
+}
 void check_circle() {
     if (circle_type != CIRCLE_NONE || circle_entry_is_blocked()) {
         return;

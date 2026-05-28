@@ -40,5 +40,5 @@ void run_cross();
 void draw_cross();
 
 void cross_farline();
-
+bool check_is_zebra(image_t *img_raw, int px, int py, int thres);
 #endif // CORSS_H

@@ -627,6 +627,24 @@ img0.width = cam.get_camera_width();
 img0.height = cam.get_camera_height();
 img0.step=frame.step;
         // 开始处理摄像头图像
+
+    for (int y = 200; y <= 220; y++) {    // 车前方区域
+        for (int x = 115; x <=125; x++) { // 画面中间，不贴左右边
+        if (check_is_zebra(&img_raw, x, y, thres)) {
+            // 找到斑马线
+                // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
+             //car_running = false;
+             set_speed_of_motor1_rps = 0;
+            set_speed_of_motor2_rps = 0;
+             pwm1_duty_rps = 0;
+             pwm2_duty_rps = 0;
+             current_pwm1 = 0;
+            current_pwm2 = 0;
+            pwm1.atim_pwm_set_duty(0);
+            pwm2.atim_pwm_set_duty(0);
+        }
+    }
+}
         process_image();    // 边线提取&处理
         auto t1 = high_resolution_clock::now();
         find_corners();     // 角点提取&筛选
