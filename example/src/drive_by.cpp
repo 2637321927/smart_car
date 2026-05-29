@@ -8,19 +8,7 @@
 
 using DriveByClock = std::chrono::steady_clock;
 
-// 这些默认值来自你推车绕行时的编码器曲线：
-// 先单侧轮约 3rps 转出，再双轮约 6rps 前进，最后换另一侧轮约 3rps 转回。
-int drive_by_turn_speed_rps = 3;
-int drive_by_turn_inner_speed_rps = 0;
-int drive_by_forward_speed_rps = 6;
-int drive_by_exit_speed_rps = 0;
-int drive_by_turn_out_ms = 1300;
-int drive_by_forward_ms = 550;
-int drive_by_turn_back_ms = 450;
-int drive_by_exit_forward_ms = 150;
-int drive_by_stop_ms = 300;
-int drive_by_infer_timeout_ms = 1000;
-int drive_by_cooldown_ms = 1000;
+
 // ===================== drive_by 绕行动作调参区 =====================
 // 这些默认值来自你推车绕行时的编码器曲线。
 // 脚本通过“速度环闭环目标 RPS + 固定持续时间”复现轨迹，不直接打 PWM。

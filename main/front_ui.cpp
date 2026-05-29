@@ -108,8 +108,8 @@ void start_car()
     apply_speed_strategy();
     std::cout<<"run"<<std::endl;
     if(selected_strategy==0){
-        dir_P = 0.09f;
-        dir_D = 0.9f;
+        dir_P = 0.10f;
+        dir_D = 0.889f;
         AIM=0.3;
 
     }
