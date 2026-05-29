@@ -1,4 +1,5 @@
 #include "front_ui.hpp"
+#include "drive_by.hpp"
 #include "lq_all_demo.hpp"
 #include "lq_display_tft18.hpp"
 
@@ -86,6 +87,8 @@ void apply_speed_strategy()
 
 void stop_car()
 {
+    // K2 停车是最高优先级：如果目标板脚本正在接管，先取消脚本，再清零电机。
+    drive_by_cancel();
     // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
     car_running = false;
     set_speed_of_motor1_rps = 0;
@@ -148,7 +151,10 @@ void draw_ui()
              set_speed_of_motor1_rps, set_speed_of_motor2_rps);
     draw_line(4, line, U16WHITE);
 
-    draw_line(6, "K0 PREV K1 NEXT", U16WHITE);
+    snprintf(line, sizeof(line), "TARGET:%s", drive_by_is_enabled() ? "ON" : "OFF");
+    draw_line(5, line, drive_by_is_enabled() ? U16GREEN : U16RED);
+
+    draw_line(6, "K0 TARGET K1 SPD", U16WHITE);
     draw_line(7, "K2 START/STOP", U16WHITE);
 }
 
@@ -190,14 +196,11 @@ void front_ui_poll()
 
     bool dirty = false;
 
-    // K0：上一个速度策略。
+    // K0：目标板脚本模式开关。关闭时完全不检测目标板，不影响普通巡线。
     if (pressed_edge(key_prev, prev_state)) {
-        /*
-        select_prev_strategy();
+        drive_by_toggle_enable();
         dirty = true;
-        */
-       de_flag=de_flag?0:1;
-       std::cout<<"now flag:"<<de_flag<<std::endl;
+        std::cout<<"drive_by_enable:"<<drive_by_is_enabled()<<std::endl;
     }
 
     // K1：下一个速度策略。

@@ -4,10 +4,10 @@
 #include "img.hpp"
 #include "circle.hpp"
 #include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
+#include "drive_by.hpp"  // 目标板触发后的固定动作脚本
 #include <chrono>
 using namespace std::chrono;
 volatile float AIM =0.40;
-#define TAR 2
 int item_flag=1;
 bool need_exit = false;
 // 全局互斥锁（解决多线程冲突）
@@ -88,26 +88,6 @@ const int AVOID_FRAME_MAX = 160;    // 绕行总帧数(根据实际车速调)
  cv::Rect red_block_rect;   // 红色标记块外接矩形
  cv::Rect plate_rect;       // 目标板区域矩形
  bool have_target = false;
-int select_max_target(int tar[3])
-{
-    int max_val = tar[0];
-    int max_idx = 0;
-
-    // 先找最大值
-    for (int i = 1; i < 3; i++) {
-        if (tar[i] > max_val) {
-            max_val = tar[i];
-            max_idx = i;
-        }
-    }
-
-    // 规则：相等时优先返回 2
-    if (tar[2] == max_val) {
-        return 2;
-    }
-
-    return max_idx;
-}
  image_t img_raw;
  image_t img0;
  image_t img_thres;
@@ -578,11 +558,10 @@ void detectRedPlate(cv::Mat& frame)
         have_target = true;
     }
 }
-int de_flag=0;
 int main()
 {
-   int is_target=0;
    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等线程就绪
+drive_by_init();  // 初始化目标板脚本状态，默认 K0 目标板模式关闭
 front_ui_init();  // 初始化前端，并默认保持停车，等待 K2 发车
 //test polor
   float error=0;
@@ -621,7 +600,6 @@ save_per_map();
     printf("模型加载成功!\n\n");
     
 vofa_recv_init();
-int target_count=0;
 
    encoder_ave_timer.set_seconds_ms(1, []() {
          encoder_sample_1ms_thread();
@@ -649,17 +627,17 @@ int target_count=0;
 */
     dir_timer.set_seconds_ms(8, []() {
       // 发车后才让方向环根据图像误差修正左右轮目标速度。
-      if (front_ui_is_running()) {
+      // 目标板脚本执行时要暂停方向环，否则方向环会覆盖脚本给出的左右轮差速。
+      if (front_ui_is_running() && !drive_by_is_busy()) {
         PID_control_test(latest_error);
+      } else if (front_ui_is_running()) {
+        latest_error = 0;
       } else {
         front_ui_hold_stop();
       }
     });
     
 //std::cout<<"fuck you2"s<<std::endl; 
-  std::string result;
-  int tar_count=0;
-  int tar[3]={0,0,0};
 while (1)
 {
      auto start = high_resolution_clock::now();
@@ -679,66 +657,16 @@ while (1)
 //latest_error=img_test(frame);
 
  cv::Mat frame = cam.get_frame_raw();
-target_count++;
        cv::flip(frame, frame, -1); //颠倒上下左右
- // 检测红色块和目标板
- if((target_count==2||tar_count!=0)&&de_flag){
-    target_count=0;
- detectRedPlate(frame);
-
- if (have_target&&g_avoid_state==AV_NORMAL)
- {
-    
-    cv::Mat roi = frame(plate_rect);
-
-resize(roi, roi, cv::Size(SAVE_SIZE, SAVE_SIZE), cv::INTER_AREA);
- result = ncnn.Infer(roi);
- printf("推理结果: %s\n", result.c_str());
- is_target=1;
-if(result=="supplies"){
-    tar[0]++;
+ // 目标板逻辑统一交给 drive_by 状态机；没发车时不检测，避免停车待命也触发脚本。
+ if (front_ui_is_running() || drive_by_is_busy()) {
+    drive_by_update(frame, ncnn);
  }
- else if(result=="weapon"){
-tar[1]++;
- }
- else{
-tar[2]++;
- }
- tar_count++;
- if(tar_count==TAR){
-    int a=select_max_target(tar);
-    if(a==0){
-            g_avoid_state=AV_GO_RIGHT;
-    pixel_per_meter/=2;
-    track_type = TRACK_RIGHT;
-    std::cout<<"GO_RIGHT"<<std::endl;
-    }
-    else if(a==1){
-                    g_avoid_state=AV_GO_LEFT;
-            track_type = TRACK_LEFT;
-            std::cout<<"GO_LEFT"<<std::endl;
-   pixel_per_meter/=2;
-    }
-    else{
-         is_target=0;
-    }
-    tar[0] = tar[1] = tar[2] = 0;
-    avoid_tick = 0;
- }
-}
-else if(g_avoid_state!=AV_NORMAL&&avoid_tick<AVOID_FRAME_MAX){
-    avoid_tick++;
-}
- else{
-    avoid_tick=0;
-    is_target=0;
- }
- if(!is_target){
-    pixel_per_meter=M2PIX;
-    g_avoid_state=AV_NORMAL;
-         tar_count=0;
-         //std::cout<<"GO_NORMAL"<<std::endl;
- }
+ if (drive_by_is_busy()) {
+    encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number
+    encoder_2=enc2.encoder_get_count();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    continue;
  }
  cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
@@ -951,7 +879,6 @@ latest_error=100;
             if(diu!=0){
                 diu=0;
                 g_avoid_state=AV_NORMAL;
-                is_target=0;
                 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
             }
 latest_error =  -error; 
