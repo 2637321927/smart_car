@@ -30,6 +30,7 @@ constexpr auto kCircleEnterCooldown = std::chrono::seconds(3);
 constexpr auto kCircleOUTCooldown = std::chrono::seconds(8);
 bool circle_enter_cooldown = false;
 std::chrono::steady_clock::time_point last_circle_enter_time;
+std::chrono::steady_clock::time_point last_cross_time;
 
 
 bool circle_entry_is_blocked()
@@ -38,8 +39,9 @@ bool circle_entry_is_blocked()
         return false;
     }
 
-    if (std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown) {
+    if (std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown&&std::chrono::steady_clock::now() - last_cross_time >= kCircleOUTCooldown) {
         circle_enter_cooldown = false;
+        std::cout<<"not circle"<<std::endl;
         return false;
     }
 
@@ -50,6 +52,11 @@ void start_circle_enter_cooldown()
 {
     circle_enter_cooldown = true;
     last_circle_enter_time = std::chrono::steady_clock::now();
+}
+void start_cross_cooldown(){
+
+    circle_enter_cooldown = true;
+    last_cross_time = std::chrono::steady_clock::now();
 }
 
 } // namespace
@@ -460,6 +467,7 @@ void run_cross() {
         if (rpts1s_num < 5 && rpts0s_num < 5) { not_have_line++; }
         if (not_have_line > 2 && rpts1s_num > 20 && rpts0s_num > 20) {
             cross_type = CROSS_NONE;
+            start_cross_cooldown();
             not_have_line = 0;
         }
         if (far_Lpt1_found) { track_type = TRACK_RIGHT; }
