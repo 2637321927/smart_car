@@ -545,6 +545,7 @@ void detectRedPlate(cv::Mat& frame)
         have_target = true;
     }
 }
+int de_flag=0;
 int main()
 {
    int is_target=0;
@@ -642,7 +643,7 @@ while (1)
 target_count++;
        cv::flip(frame, frame, -1); //颠倒上下左右
  // 检测红色块和目标板
- if(target_count==2||tar_count!=0){
+ if((target_count==2||tar_count!=0)&&de_flag){
     target_count=0;
  detectRedPlate(frame);
 
@@ -882,7 +883,7 @@ auto t2 = high_resolution_clock::now();
                 latest_error=100;
                 diu++;
             }
-            else if(cross_type==CROSS_NONE){
+            else if(cross_type==CROSS_NONE&&circle_type==CIRCLE_NONE){
                 if(lost==RIGHT){
 latest_error=100;  
                 }

@@ -19,8 +19,6 @@ struct SpeedStrategy {
 
 // TFT18 前端提供的速度档位。默认选中 MID，也就是 selected_strategy = 1。
 constexpr SpeedStrategy kStrategies[] = {
-    {"LOW", 15},
-    {"MID", 10},
     {"HIGH", 15},
     {"MAX", 20},
 };
@@ -151,6 +149,7 @@ void select_next_strategy()
 {
     // 往后切档位，到 MAX 后再回 LOW。
     selected_strategy = (selected_strategy + 1) % kStrategyCount;
+    std::cout<<"v:"<< selected_strategy<<std::endl;
     if (car_running) {
         apply_speed_strategy();
     }
@@ -177,8 +176,12 @@ void front_ui_poll()
 
     // K0：上一个速度策略。
     if (pressed_edge(key_prev, prev_state)) {
+        /*
         select_prev_strategy();
         dirty = true;
+        */
+       de_flag=de_flag?0:1;
+       std::cout<<"now flag:"<<de_flag<<std::endl;
     }
 
     // K1：下一个速度策略。

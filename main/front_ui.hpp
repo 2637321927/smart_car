@@ -17,5 +17,5 @@ extern bool car_running;
 extern bool ui_ready;
 // 当前选中的速度策略目标值，单位 rps。
 int front_ui_selected_speed();
-
+extern int de_flag;
 #endif

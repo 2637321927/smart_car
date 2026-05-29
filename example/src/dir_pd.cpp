@@ -1,7 +1,7 @@
 #include "lq_all_demo.hpp"
 
-volatile float dir_P = 0.096f;
-volatile float dir_D = 0.91f;
+volatile float dir_P = 0.143f;
+volatile float dir_D = 3.0f;
 volatile int spd_slow_ratio = 20;
 /********************************************************************************
  * @brief   PID 控制测试.
@@ -36,13 +36,13 @@ float calculate_diffrential(float error,float expect_error)//给我误差值，�
 void PID_control_test(float error)
 {
     const float max_error=100;
-    const float dead_error=4;
+    const float dead_error=0;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
     if((error<dead_error)&&(error>-dead_error)) error=0;
     int diffrential = calculate_diffrential(error, 0);
 
-    const int max_dif=8;
+    const int max_dif=15;
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     int target_spd1 = set_speed_of_motor1_rps;

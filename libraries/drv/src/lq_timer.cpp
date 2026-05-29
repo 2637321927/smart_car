@@ -179,7 +179,7 @@ void lq_timer::timer_handler_thread()
         // 超时则警告, 每超则补时长
         if (used_ns > interval_ns)
         {
-          //  lq_log_warn("Timeout! Used: %llu ns, Target: %llu ns", used_ns, interval_ns);
+            lq_log_warn("Timeout! Used: %llu ns, Target: %llu ns", used_ns, interval_ns);
         } else {
             this->timer_sleep_ns(interval_ns - used_ns);
         }
