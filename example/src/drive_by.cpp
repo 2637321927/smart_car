@@ -8,19 +8,29 @@
 
 using DriveByClock = std::chrono::steady_clock;
 
-// 这些默认值来自你推车绕行时的编码器曲线：
-// 先单侧轮约 3rps 转出，再双轮约 6rps 前进，最后换另一侧轮约 3rps 转回。
-int drive_by_turn_speed_rps = 3;
-int drive_by_turn_inner_speed_rps = 0;
-int drive_by_forward_speed_rps = 6;
-int drive_by_exit_speed_rps = 0;
-int drive_by_turn_out_ms = 1300;
-int drive_by_forward_ms = 550;
-int drive_by_turn_back_ms = 450;
-int drive_by_exit_forward_ms = 150;
-int drive_by_stop_ms = 300;
-int drive_by_infer_timeout_ms = 1000;
-int drive_by_cooldown_ms = 3000;
+// ===================== drive_by 绕行动作调参区 =====================
+// 这些默认值来自你推车绕行时的编码器曲线。
+// 脚本通过“速度环闭环目标 RPS + 固定持续时间”复现轨迹，不直接打 PWM。
+//
+// 姿态调节优先改时间，再小幅改速度：
+// 1. 转出不够/太多：先调 drive_by_turn_out_ms，再调 drive_by_turn_speed_rps。
+// 2. 横向绕行距离不够/太远：调 drive_by_forward_ms。
+// 3. 回正不够/过头：先调 drive_by_turn_back_ms，再调 drive_by_turn_speed_rps。
+// 4. 结束时还想向前补一点：调 drive_by_exit_speed_rps 和 drive_by_exit_forward_ms。
+//
+// 左绕会镜像右绕：
+// 左绕转出 = 左轮 inner、右轮 outer；右绕转出 = 左轮 outer、右轮 inner。
+int drive_by_turn_speed_rps = 3;          // 外侧轮转向速度，越大转得越猛，单位 rps
+int drive_by_turn_inner_speed_rps = 0;    // 内侧轮转向速度，0 表示近似单轮转向
+int drive_by_forward_speed_rps = 6;       // 绕开目标板时双轮前进速度，单位 rps
+int drive_by_exit_speed_rps = 0;          // 脚本结束前补偿前进速度，0 表示不补前进
+int drive_by_turn_out_ms = 600;          // 第一次向外转的持续时间，影响绕行起始姿态
+int drive_by_forward_ms = 550;            // 绕过目标板时直行持续时间，影响横向/前向绕行距离
+int drive_by_turn_back_ms = 600;          // 往回转的持续时间，影响回正姿态
+int drive_by_exit_forward_ms = 150;       // 回正后补偿前进时间
+int drive_by_stop_ms = 200;               // 识别到目标后先停车等待时间
+int drive_by_infer_timeout_ms = 1000;     // 五帧推理最长等待时间，超时默认直行
+int drive_by_cooldown_ms = 0;             // 脚本完成后的再次触发冷却，0 表示目标离开画面即可解锁
 
 namespace {
 
