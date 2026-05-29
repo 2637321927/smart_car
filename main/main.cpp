@@ -373,8 +373,8 @@ if (sscanf(buf, "#is_udp_img=%f;", &ftmp) == 1)
 // 全局变量，保存原来的终端模式
 void encoder_sample_1ms_thread()
 {
-    static float buf1[5] = {0};
-    static float buf2[5] = {0};
+    static float buf1[3] = {0};
+    static float buf2[3] = {0};
     static int idx = 0;
     static float sum1 = 0.0f;
     static float sum2 = 0.0f;
@@ -397,11 +397,11 @@ void encoder_sample_1ms_thread()
         sum2 += buf2[idx];
 
         // 移动索引
-        idx = (idx + 1) % 5;
+        idx = (idx + 1) % 3;
 
         // 计算平均
-        encoder1_speed_avg = sum1 / 5.0f;
-        encoder2_speed_avg = sum2 / 5.0f;
+        encoder1_speed_avg = sum1 / 3.0f;
+        encoder2_speed_avg = sum2 / 3.0f;
 
         //usleep(1000);  // 1ms 采样周期
    // }
@@ -593,7 +593,7 @@ int target_count=0;
      encoder_sample_1ms_thread();
     });
 
-   speed_timer.set_seconds_ms(5, []() {
+   speed_timer.set_seconds_ms(3, []() {
      // 发车后才允许速度环驱动电机；停车时持续清零输出。
      if (front_ui_is_running()) {
        test_enc_and_motor_rps();
@@ -607,7 +607,7 @@ int target_count=0;
 
     });
 
-    dir_timer.set_seconds_ms(10, []() {
+    dir_timer.set_seconds_ms(5, []() {
       // 发车后才让方向环根据图像误差修正左右轮目标速度。
       if (front_ui_is_running()) {
         PID_control_test(latest_error);
