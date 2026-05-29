@@ -20,7 +20,7 @@ int drive_by_turn_back_ms = 450;
 int drive_by_exit_forward_ms = 150;
 int drive_by_stop_ms = 300;
 int drive_by_infer_timeout_ms = 1000;
-int drive_by_cooldown_ms = 3000;
+int drive_by_cooldown_ms = 1000;
 
 namespace {
 

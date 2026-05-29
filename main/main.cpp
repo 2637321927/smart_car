@@ -441,7 +441,7 @@ udp_client.udp_send_string(encoder_str);
       }
 */
       }
-#define RECOG_TOP      120   // 识别区域 距离顶部 125像素
+#define RECOG_TOP      110  // 识别区域 距离顶部 125像素
 #define RECOG_BOTTOM   40   // 识别区域 距离底部 100像素
 #define RECOG_LEFT     60    // 识别区域 距离左边 30像素
 #define RECOG_RIGHT    60  // 识别区域 距离右边 30像素

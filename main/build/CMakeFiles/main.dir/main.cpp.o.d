@@ -523,4 +523,5 @@ CMakeFiles/main.dir/main.cpp.o: \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/img.hpp \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/circle.hpp \
  /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/img.hpp \
- /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/front_ui.hpp
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/front_ui.hpp \
+ /home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/main/../example/inc/drive_by.hpp

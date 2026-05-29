@@ -35,6 +35,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_circle.cpp.o.d"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_pd.cpp.o"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_pd.cpp.o.d"
+  "CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.o"
+  "CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.o.d"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o.d"
   "CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img_test.cpp.o"

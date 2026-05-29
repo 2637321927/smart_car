@@ -561,6 +561,30 @@ home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_pd.cpp.
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_pd.cpp.s
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_pd.cpp.s
 
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.o
+
+# target to build an object file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.o
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.o
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.i: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.i
+
+# target to preprocess a source file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.i
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.i
+
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.s: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.s
+
+# target to generate assembly for a file
+home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.s
+.PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.cpp.s
+
 home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o: home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.cpp.o
 .PHONY : home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o
 
@@ -1416,6 +1440,9 @@ help:
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_pd.o"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_pd.i"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/dir_pd.s"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.o"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.i"
+	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/drive_by.s"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.o"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.i"
 	@echo "... home/suncongsun/Desktop/smart_car/Loongson_2K300_301_LIB/example/src/img.s"
