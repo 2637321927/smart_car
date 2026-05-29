@@ -7,6 +7,7 @@
 #include <chrono>
 using namespace std::chrono;
 #define AIM 0.30
+#define TAR 2
 bool need_exit = false;
 // 全局互斥锁（解决多线程冲突）
 //std::mutex g_mutex;
@@ -17,7 +18,7 @@ lq_timer encoder_ave_timer;
 lq_timer udp_timer;
 volatile  int pwm1_duty_rps=0;
  volatile  int pwm2_duty_rps=0;
- volatile  int latest_error = 0;
+ volatile  float latest_error = 0;
  volatile  float encoder_1=0;
  volatile  float encoder_2=0;
  volatile  float P1_motor=0;
@@ -41,11 +42,39 @@ lq_udp_client udp_client;
 lq_udp_client udp_client_img;
 cv::Mat bgr_bird;
 volatile int test_count = 0;
-
+enum AvoidState
+{
+    AV_NORMAL,    // 正常巡线
+    AV_GO_LEFT,   // 左绕(weapon)
+    AV_GO_RIGHT   // 右绕(supplies)
+};
+int diu=0;
+volatile AvoidState g_avoid_state = AV_NORMAL;
+volatile int avoid_tick = 0;       // 计时计数器(基于主循环帧)
+const int AVOID_FRAME_MAX = 80;    // 绕行总帧数(根据实际车速调)
  cv::Rect red_block_rect;   // 红色标记块外接矩形
  cv::Rect plate_rect;       // 目标板区域矩形
  bool have_target = false;
+int select_max_target(int tar[3])
+{
+    int max_val = tar[0];
+    int max_idx = 0;
 
+    // 先找最大值
+    for (int i = 1; i < 3; i++) {
+        if (tar[i] > max_val) {
+            max_val = tar[i];
+            max_idx = i;
+        }
+    }
+
+    // 规则：相等时优先返回 2
+    if (tar[2] == max_val) {
+        return 2;
+    }
+
+    return max_idx;
+}
  image_t img_raw;
  image_t img0;
  image_t img_thres;
@@ -141,6 +170,7 @@ bool is_straight0, is_straight1;
 
 
  enum track_type_e track_type;
+  enum lost_e lost;
  // 保存映射
 void save_per_map(void) {
 
@@ -326,7 +356,12 @@ if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
     spd_slow_ratio = ftmp;
     printf("[VOFA] spd_slow_ratio = %d\n", spd_slow_ratio);
 }
-
+if (sscanf(buf, "#begin_x=%f;", &ftmp) == 1)
+{
+    
+     begin_x = ftmp;
+    printf("[VOFA]  begin_x = %d\n",  begin_x);
+}
 }
 // 全局变量，保存原来的终端模式
 void encoder_sample_1ms_thread()
@@ -369,7 +404,7 @@ void udp_send(void){
     char encoder_str[384];
 
 snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f,\"spd_slow_ratio\":%d}",
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f,\"spd_slow_ratio\":%d}",
          safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
          safe_float(P2_motor),    
          safe_float(I),
@@ -386,12 +421,12 @@ udp_client.udp_send_string(encoder_str);
       }
 */
       }
-#define RECOG_TOP      140   // 识别区域 距离顶部 125像素
+#define RECOG_TOP      120   // 识别区域 距离顶部 125像素
 #define RECOG_BOTTOM   40   // 识别区域 距离底部 100像素
-#define RECOG_LEFT     65    // 识别区域 距离左边 30像素
-#define RECOG_RIGHT    65  // 识别区域 距离右边 30像素
+#define RECOG_LEFT     60    // 识别区域 距离左边 30像素
+#define RECOG_RIGHT    60  // 识别区域 距离右边 30像素
 
-#define MIN_AREA       150   // 红色块最小面积
+#define MIN_AREA       110   // 红色块最小面积
 #define SAVE_SIZE      96  // 统一 96*96
 
 // 功能：在图像帧中检测红色色块，并根据红色色块定位上方的车牌区域
@@ -505,11 +540,11 @@ void detectRedPlate(cv::Mat& frame)
 }
 int main()
 {
-   
+   int is_target=0;
    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等线程就绪
 front_ui_init();  // 初始化前端，并默认保持停车，等待 K2 发车
 //test polor
- float error=0;
+  float error=0;
  
 start_camera();
 save_per_map();
@@ -521,7 +556,7 @@ save_per_map();
   std::string model_bin   = "tiny_classifier_fp32.ncnn.bin";
     int input_width    = 96;
     int input_height   = 96;
-    /*
+    
     // 类别标签（顺序必须与训练时一致）
     std::vector<std::string> labels = {"supplies", "vehicle", "weapon"};
     
@@ -543,9 +578,9 @@ save_per_map();
         printf(" 模型加载失败!\n");
     }
     printf("模型加载成功!\n\n");
-    */
+    
 vofa_recv_init();
-
+int target_count=0;
 
    encoder_ave_timer.set_seconds_ms(1, []() {
      encoder_sample_1ms_thread();
@@ -575,7 +610,9 @@ vofa_recv_init();
     });
     
 //std::cout<<"fuck you2"s<<std::endl; 
-  
+  std::string result;
+  int tar_count=0;
+  int tar[3]={0,0,0};
 while (1)
 {
      auto start = high_resolution_clock::now();
@@ -595,22 +632,67 @@ while (1)
 //latest_error=img_test(frame);
 
  cv::Mat frame = cam.get_frame_raw();
-
+target_count++;
        cv::flip(frame, frame, -1); //颠倒上下左右
  // 检测红色块和目标板
- /*
+ if(target_count==2||tar_count!=0){
+    target_count=0;
  detectRedPlate(frame);
 
- if (have_target)
+ if (have_target&&g_avoid_state==AV_NORMAL)
  {
-
+    
     cv::Mat roi = frame(plate_rect);
 
 resize(roi, roi, cv::Size(SAVE_SIZE, SAVE_SIZE), cv::INTER_AREA);
-std::string result = ncnn.Infer(roi);
+ result = ncnn.Infer(roi);
  printf("推理结果: %s\n", result.c_str());
+ is_target=1;
+if(result=="supplies"){
+    tar[0]++;
  }
-*/
+ else if(result=="weapon"){
+tar[1]++;
+ }
+ else{
+tar[2]++;
+ }
+ tar_count++;
+ if(tar_count==TAR){
+    int a=select_max_target(tar);
+    if(a==0){
+            g_avoid_state=AV_GO_RIGHT;
+    pixel_per_meter/=2;
+    track_type = TRACK_RIGHT;
+    std::cout<<"GO_RIGHT"<<std::endl;
+    }
+    else if(a==1){
+                    g_avoid_state=AV_GO_LEFT;
+            track_type = TRACK_LEFT;
+            std::cout<<"GO_LEFT"<<std::endl;
+   pixel_per_meter/=2;
+    }
+    else{
+         is_target=0;
+    }
+    tar[0] = tar[1] = tar[2] = 0;
+    avoid_tick = 0;
+ }
+}
+else if(g_avoid_state!=AV_NORMAL&&avoid_tick<AVOID_FRAME_MAX){
+    avoid_tick++;
+}
+ else{
+    avoid_tick=0;
+    is_target=0;
+ }
+ if(!is_target){
+    pixel_per_meter=M2PIX;
+    g_avoid_state=AV_NORMAL;
+         tar_count=0;
+         std::cout<<"GO_NORMAL"<<std::endl;
+ }
+ }
  cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
@@ -654,7 +736,7 @@ auto t2 = high_resolution_clock::now();
         aim_distance = AIM;
 
         // 单侧线少，切换巡线方向  切外向圆
-
+ if(g_avoid_state==AV_NORMAL){
         if (rpts0s_num < rpts1s_num / 2 && rpts0s_num < 60) {
             track_type = TRACK_RIGHT;
         } else if (rpts1s_num < rpts0s_num / 2 && rpts1s_num < 60) {
@@ -667,7 +749,7 @@ auto t2 = high_resolution_clock::now();
         else{
             track_type=midd;
         }
-
+    }
         // 分别检查十字 三叉 和圆环, 十字优先级最高
             check_cross();
         if (cross_type == CROSS_NONE){
@@ -676,7 +758,10 @@ auto t2 = high_resolution_clock::now();
         if (cross_type != CROSS_NONE) {
             circle_type = CIRCLE_NONE;
         }
-        
+        if(g_avoid_state!=AV_NORMAL){
+            cross_type=CROSS_NONE;
+            circle_type = CIRCLE_NONE;
+        }
         //车库 ,十字清Aprltag标志
         //if (garage_type != GARAGE_NONE || cross_type != CROSS_NONE) apriltag_type = APRILTAG_NONE;
 
@@ -688,6 +773,7 @@ auto t2 = high_resolution_clock::now();
         L_count=0;
         R_count=0;
       }
+
        // if (garage_type != GARAGE_NONE) run_garage();
 
         // 中线跟踪
@@ -780,8 +866,36 @@ auto t2 = high_resolution_clock::now();
 
 
         }
-latest_error=-error;
+        if(check_line_lost()){
+            if(g_avoid_state==AV_GO_RIGHT){
+                 latest_error=100;
+                 diu++;
+            }
+            else if( g_avoid_state==AV_GO_LEFT){
+                latest_error=-100;
+                diu++;
+            }
+            else if(cross_type==CROSS_NONE){
+                if(lost==RIGHT){
 
+                }
+                else{
+
+                }
+            }
+            else{
+
+            }
+        }
+        else{
+            if(diu!=0){
+                diu=0;
+                g_avoid_state=AV_NORMAL;
+                is_target=0;
+            }
+        latest_error=-error;
+        }
+ /*
                clear_image(&img_line);
                cv::Mat birdview;
 
@@ -791,6 +905,7 @@ cv::warpPerspective(frame, birdview, M, cv::Size(IMG_W, IMG_H));
 auto t3 = high_resolution_clock::now();
 
 // 2. 转彩色，用于画彩色线
+
 
 cv::cvtColor(birdview, bgr_bird, cv::COLOR_GRAY2BGR);
 
@@ -836,7 +951,7 @@ if (Lpt1_found) {
 
 // 6. 显示角度
 char text[64];
-sprintf(text, "Angle: %.1f", error);
+sprintf(text, "Angle: %.1f", latest_error);
 cv::putText(bgr_bird, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
 
 // 7. 显示最终鸟瞰图（就是你要的效果）
@@ -847,7 +962,7 @@ ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
-      
+      */
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();

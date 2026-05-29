@@ -21,7 +21,7 @@ extern ls_encoder_pwm enc2;
  extern  lq_udp_client udp_client_img;
   extern  lq_udp_client udp_client_img2;
  volatile extern int mid;
-volatile extern int latest_error;
+volatile extern float latest_error;
 volatile extern float encoder_1;
 volatile extern float encoder_2;
 volatile extern float P1_motor;
@@ -66,13 +66,13 @@ void lq_udp_img_trans_demo(void);   // UDP 图像传输测试
 void lq_udp_wavefrom_demo(void);    // UDP 波形传输测试
 void lq_icm42688_demo(void);        // ICM42688 测试
 int img_test(cv::Mat& frame);
-void PID_control_test(int error);
-int calculate_diffrential(float error,float expect_error);
+void PID_control_test(float error);
+float calculate_diffrential(float error,float expect_error);
 float img_return(void);
 void lq_ncnn_photo_demo(cv::Mat& image,std::string& a);
 void cut(void);
 void close_circle_control(
-    float speed_of_motor1,
+    float speed_of_motor1,  
     float speed_of_motor2,
     int target_speed_of_motor1_RPS,
     int target_speed_of_motor2_RPS);

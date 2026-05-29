@@ -124,16 +124,17 @@ int total_valid = 0;
 for (int i = 1; i < zebra_cross_flag0_num - 1; i++) {
     int w = zebra_cross_flag0[i];
     int diff = abs(zebra_cross_flag0[i+1] - w);
-    if (w >= 2 && w < 40 && diff < 10) {
+    if (w >= 5 && w < 40 && diff < 10) {
         total_valid++;
     }
+
 }
 
 // 统计右边合格段数
 for (int i = 1; i < zebra_cross_flag1_num - 1; i++) {
     int w = zebra_cross_flag1[i];
     int diff = abs(zebra_cross_flag1[i+1] - w);
-    if (w >= 2 && w < 40 && diff < 10) {
+    if (w >= 5 && w < 40 && diff < 10) {
         total_valid++;
     }
 }

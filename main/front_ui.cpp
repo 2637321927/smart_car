@@ -21,8 +21,8 @@ struct SpeedStrategy {
 constexpr SpeedStrategy kStrategies[] = {
     {"LOW", 5},
     {"MID", 15},
-    {"HIGH", 15},
-    {"MAX", 15},
+    {"HIGH", 20},
+    {"MAX", 25},
 };
 
 constexpr int kStrategyCount = sizeof(kStrategies) / sizeof(kStrategies[0]);

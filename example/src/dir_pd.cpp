@@ -1,8 +1,8 @@
 #include "lq_all_demo.hpp"
 
-volatile float dir_P = 0.09f;
-volatile float dir_D = 0.009f;
-volatile int spd_slow_ratio = 10;
+volatile float dir_P = 0.096f;
+volatile float dir_D = 0.91f;
+volatile int spd_slow_ratio = 20;
 /********************************************************************************
  * @brief   PID 控制测试.
  * @param   none.
@@ -11,7 +11,7 @@ volatile int spd_slow_ratio = 10;
 
  ********************************************************************************/
 
-int calculate_diffrential(int error,int expect_error)//给我误差值，给你差分输入值
+float calculate_diffrential(float error,float expect_error)//给我误差值，给你差分输入值
         {
         float Diffrential=0;//diffrencial 差分输入，即输出轮胎的转速差
        volatile static int error_current,error_last;// 当前误差和上一次误差
@@ -33,16 +33,16 @@ int calculate_diffrential(int error,int expect_error)//给我误差值，给你�
 
 
 //below we test the speed circle ,no error!!!!!
-void PID_control_test(int error)
+void PID_control_test(float error)
 {
-    const int max_error=40;
-    const int dead_error=8;
+    const float max_error=100;
+    const float dead_error=4;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
     if((error<dead_error)&&(error>-dead_error)) error=0;
     int diffrential = calculate_diffrential(error, 0);
 
-    const int max_dif=7;
+    const int max_dif=8;
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     int target_spd1 = set_speed_of_motor1_rps;

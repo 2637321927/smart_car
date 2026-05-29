@@ -144,9 +144,14 @@ enum track_type_e {
     midd,
 };
 extern enum track_type_e track_type;
-
+enum lost_e {
+    LEFT,
+    RIGHT,
+    NONE
+};
+extern enum lost_e lost;
 int clip(int x, int low, int up);
-
+bool check_line_lost(void);
 float clipf(float x, float low, float up);
 void process_image () ;
 

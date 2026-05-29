@@ -27,7 +27,27 @@ bool cvMat2image_t(const cv::Mat &src, image_t *dst)
 
 #define AT                  AT_IMAGE
 #define AT_CLIP(img, x, y)  AT_IMAGE((img), clip((x), 0, (img)->width-1), clip((y), 0, (img)->height-1));
+bool check_line_lost(void)
+{
+    // 条件1：左右线都几乎没有点 → 严重丢线
+    if (rpts0s_num < 15 && rpts1s_num < 15){
+        return true;
+    }
+        
 
+    // 条件2：单侧线丢失过多（单侧小于另一侧1/4）
+    else if (rpts0s_num < 5 && rpts1s_num > 40){
+        lost=RIGHT;
+    }
+        
+    else if (rpts1s_num < 5 && rpts0s_num > 40){
+        lost=LEFT;
+    }
+    else{
+        lost=NONE;
+    }
+    return false;
+}
 int clip(int x, int low, int up)
 {
     if (x < low) return low;
