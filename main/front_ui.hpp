@@ -17,7 +17,6 @@ extern bool car_running;
 extern bool ui_ready;
 // 当前选中的速度策略目标值，单位 rps。
 int front_ui_selected_speed();
-extern int de_flag;
 extern volatile float AIM;
 extern std::chrono::steady_clock::time_point last_start_time;
 #endif
