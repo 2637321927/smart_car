@@ -1,7 +1,7 @@
 #include "lq_all_demo.hpp"
 
-volatile float dir_P = 0.143f;
-volatile float dir_D = 3.0f;
+volatile float dir_P = 0.09f;
+volatile float dir_D = 0.9f;
 volatile int spd_slow_ratio = 20;
 /********************************************************************************
  * @brief   PID 控制测试.

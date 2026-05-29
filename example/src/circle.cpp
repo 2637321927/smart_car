@@ -369,7 +369,7 @@ void find_corners() {
      Lpt0_found = Lpt1_found = false;
     is_straight0 = rpts0s_num > 0.5 / sample_dist;
     is_straight1 = rpts1s_num > 0.5 / sample_dist;
-    for (int i = rpts0s_num*0.15; i < rpts0s_num*0.8; i++) {//不要找的太远
+    for (int i = rpts0s_num*0.15; i < rpts0s_num*0.5; i++) {//不要找的太远
         if (rpts0an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
@@ -446,7 +446,7 @@ void run_cross() {
 
         //aim_distance = 0.4;
         //近角点过少，进入远线控制
-        if ((Xfound && (Lpt0_rpts0s_id < 0.08 / sample_dist || Lpt1_rpts1s_id < 0.08 / sample_dist))|| (rpts1_num <15 && rpts0_num<15)) {
+        if ((Xfound && (Lpt0_rpts0s_id < 0.03 / sample_dist || Lpt1_rpts1s_id < 0.03 / sample_dist))|| (rpts1_num <10 && rpts0_num<10)) {
             cross_type = CROSS_IN;
             std::cout<<"in"<<std::endl;
             cross_encoder = current_encoder;

@@ -1,6 +1,6 @@
 #ifndef __FRONT_UI_HPP
 #define __FRONT_UI_HPP
-
+#include <chrono>
 // 初始化车载前端：TFT18 屏幕、三颗实体按键、默认停车状态。
 void front_ui_init();
 
@@ -18,4 +18,6 @@ extern bool ui_ready;
 // 当前选中的速度策略目标值，单位 rps。
 int front_ui_selected_speed();
 extern int de_flag;
+extern volatile float AIM;
+extern std::chrono::steady_clock::time_point last_start_time;
 #endif

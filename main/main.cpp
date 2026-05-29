@@ -6,7 +6,7 @@
 #include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
 #include <chrono>
 using namespace std::chrono;
-#define AIM 0.30
+volatile float AIM =0.40;
 #define TAR 2
 bool need_exit = false;
 // 全局互斥锁（解决多线程冲突）
@@ -100,13 +100,13 @@ float angle;
  float mapx[IMG_H][IMG_W];
 float mapy[IMG_H][IMG_W];
 
-int thres = 95;            // 固定二值化阈值（判断黑线/背景）
-int block_size = 5;         // 自适应阈值的窗口大小
+int thres = 100;            // 固定二值化阈值（判断黑线/背景）
+int block_size = 7;         // 自适应阈值的窗口大小
 int clip_value = 2;         // 自适应阈值减去的偏移量
 int track_min_y = 65;   // 越小 → 巡得越远
-int track_max_y = 175;  // 越大 → 巡到最底部
+int track_max_y = 170;  // 越大 → 巡到最底部
 int begin_x = 5;           // 巡线起始点 水平偏移
-int begin_y = 175;  
+int begin_y = 170;  
 int end_y=100;        // 巡线起始点 垂直位置（靠近车底）
 int line_blur_kernel = 5;   // 边线滤波平滑程度7-5
 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
@@ -608,12 +608,12 @@ int target_count=0;
        front_ui_hold_stop();
      }
     });
-
+/*
      udp_timer.set_seconds_ms(10, []() {
     udp_send();
 
     });
-
+*/
     dir_timer.set_seconds_ms(8, []() {
       // 发车后才让方向环根据图像误差修正左右轮目标速度。
       if (front_ui_is_running()) {
@@ -723,12 +723,14 @@ img0.width = cam.get_camera_width();
 img0.height = cam.get_camera_height();
 img0.step=frame.step;
         // 开始处理摄像头图像
+if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)){
 
     for (int y = 160; y <= 180; y++) {    // 车前方区域
         for (int x = 115; x <=125; x++) { // 画面中间，不贴左右边
         if (check_is_zebra(&img_raw, x, y, thres)) {
             // 找到斑马线
                 // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
+                usleep(80000);
              car_running = false;
              set_speed_of_motor1_rps = 0;
             set_speed_of_motor2_rps = 0;
@@ -741,6 +743,7 @@ img0.step=frame.step;
             printf("stop\n");
         }
     }
+}
 }
         process_image();    // 边线提取&处理
         auto t1 = high_resolution_clock::now();

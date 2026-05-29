@@ -7,7 +7,7 @@
 int selected_strategy = 1;
 bool car_running = false;
 bool ui_ready = false;
-
+std::chrono::steady_clock::time_point last_start_time;
 namespace {
 
 // 一个速度策略由“屏幕显示名”和“目标速度 rps”组成。
@@ -103,6 +103,21 @@ void start_car()
     // 发车时不直接写死速度，而是使用当前屏幕上选中的速度策略。
     car_running = true;
     apply_speed_strategy();
+    if(selected_strategy==0){
+        dir_P = 0.09f;
+        dir_D = 0.9f;
+        AIM=0.3;
+
+    }
+    else{
+    dir_P = 0.143f;
+    dir_D = 3.0f;
+    AIM=0.4;
+    }
+
+    last_start_time = std::chrono::steady_clock::now();
+
+
 }
 
 void draw_line(uint8_t row, const char *text, lq_display_color_t color)
