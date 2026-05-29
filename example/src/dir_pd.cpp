@@ -62,17 +62,18 @@ void PID_control_test(float error)
 
     pwm1_duty_rps = set_spd1 + diffrential;
     pwm2_duty_rps = set_spd1 - diffrential;
-    if (pwm1_duty_rps < 0)
+    const int min_rps=-10;
+    if (pwm1_duty_rps < min_rps)
     {
-        pwm1_duty_rps = 0;
+        pwm1_duty_rps =min_rps;
     };
     if (pwm1_duty_rps > 200)
     {
         pwm1_duty_rps = 200;
     };
-    if (pwm2_duty_rps < 0)
+    if (pwm2_duty_rps < min_rps)
     {
-        pwm2_duty_rps = 0;
+        pwm2_duty_rps = min_rps;
     };
     if (pwm2_duty_rps > 200)
     {

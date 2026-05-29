@@ -92,7 +92,7 @@ void close_circle_control(
     current_pwm2 += pwm2_plusduty;
 
     const int MAX_PWM = 6000;
-        const int MIN_PWM = -2000;
+        const int MIN_PWM = -3000;
     // 内部状态双向限幅，防止 windup
     if (current_pwm1 > MAX_PWM) current_pwm1 = MAX_PWM;
     if (current_pwm1 < MIN_PWM) current_pwm1 = MIN_PWM;

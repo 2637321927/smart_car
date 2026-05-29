@@ -19,10 +19,10 @@ struct SpeedStrategy {
 
 // TFT18 前端提供的速度档位。默认选中 MID，也就是 selected_strategy = 1。
 constexpr SpeedStrategy kStrategies[] = {
-    {"LOW", 5},
-    {"MID", 15},
-    {"HIGH", 20},
-    {"MAX", 25},
+    {"LOW", 15},
+    {"MID", 10},
+    {"HIGH", 15},
+    {"MAX", 20},
 };
 
 constexpr int kStrategyCount = sizeof(kStrategies) / sizeof(kStrategies[0]);

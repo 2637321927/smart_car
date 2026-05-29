@@ -51,7 +51,7 @@ enum AvoidState
 int diu=0;
 volatile AvoidState g_avoid_state = AV_NORMAL;
 volatile int avoid_tick = 0;       // 计时计数器(基于主循环帧)
-const int AVOID_FRAME_MAX = 80;    // 绕行总帧数(根据实际车速调)
+const int AVOID_FRAME_MAX = 160;    // 绕行总帧数(根据实际车速调)
  cv::Rect red_block_rect;   // 红色标记块外接矩形
  cv::Rect plate_rect;       // 目标板区域矩形
  bool have_target = false;
@@ -104,9 +104,9 @@ int thres = 95;            // 固定二值化阈值（判断黑线/背景）
 int block_size = 5;         // 自适应阈值的窗口大小
 int clip_value = 2;         // 自适应阈值减去的偏移量
 int track_min_y = 65;   // 越小 → 巡得越远
-int track_max_y = 215;  // 越大 → 巡到最底部
-int begin_x = 40;           // 巡线起始点 水平偏移
-int begin_y = 215;  
+int track_max_y = 175;  // 越大 → 巡到最底部
+int begin_x = 5;           // 巡线起始点 水平偏移
+int begin_y = 175;  
 int end_y=100;        // 巡线起始点 垂直位置（靠近车底）
 int line_blur_kernel = 5;   // 边线滤波平滑程度7-5
 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
@@ -198,11 +198,11 @@ void save_per_map(void) {
 const uint16_t    CAM_WIDTH    = 320;     // 宽
 const uint16_t    CAM_HEIGHT   = 240;     // 高
 const uint16_t    CAM_FPS      = 60;     // 帧率
-const uint8_t     JPEG_QUALITY = 40;
+const uint8_t     JPEG_QUALITY = 60;
 static struct termios old_tio;
     lq_camera_ex cam(CAM_WIDTH, CAM_HEIGHT, CAM_FPS);
  volatile  int mid;
-
+ int is_udp_img=0;
  // 安全函数：把inf/nan变成0，不破坏JSON
 float safe_float(float val) {
     return (isnan(val) || isinf(val)) ? 0.0f : val;
@@ -362,6 +362,13 @@ if (sscanf(buf, "#begin_x=%f;", &ftmp) == 1)
      begin_x = ftmp;
     printf("[VOFA]  begin_x = %d\n",  begin_x);
 }
+if (sscanf(buf, "#is_udp_img=%f;", &ftmp) == 1)
+{
+    
+     is_udp_img = ftmp;
+    printf("[VOFA]  is_udp_img = %d\n",  is_udp_img);
+}
+
 }
 // 全局变量，保存原来的终端模式
 void encoder_sample_1ms_thread()
@@ -690,7 +697,7 @@ else if(g_avoid_state!=AV_NORMAL&&avoid_tick<AVOID_FRAME_MAX){
     pixel_per_meter=M2PIX;
     g_avoid_state=AV_NORMAL;
          tar_count=0;
-         std::cout<<"GO_NORMAL"<<std::endl;
+         //std::cout<<"GO_NORMAL"<<std::endl;
  }
  }
  cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
@@ -868,19 +875,19 @@ auto t2 = high_resolution_clock::now();
         }
         if(check_line_lost()){
             if(g_avoid_state==AV_GO_RIGHT){
-                 latest_error=100;
+                 latest_error=-100;
                  diu++;
             }
             else if( g_avoid_state==AV_GO_LEFT){
-                latest_error=-100;
+                latest_error=100;
                 diu++;
             }
             else if(cross_type==CROSS_NONE){
                 if(lost==RIGHT){
-
+latest_error=100;  
                 }
-                else{
-
+                else{   
+ latest_error=-100;
                 }
             }
             else{
@@ -892,10 +899,11 @@ auto t2 = high_resolution_clock::now();
                 diu=0;
                 g_avoid_state=AV_NORMAL;
                 is_target=0;
+                float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
             }
         latest_error=-error;
         }
- /*
+ if(is_udp_img==1){
                clear_image(&img_line);
                cv::Mat birdview;
 
@@ -962,7 +970,44 @@ ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
       }
-      */
+}
+else if(is_udp_img==2){
+        cv::Mat color_frame;
+    cv::cvtColor(frame, color_frame, cv::COLOR_GRAY2BGR);
+
+// 画左边线（原图）→ 蓝色
+for (int i = 0; i < ipts0_num; i++) {
+    int x = ipts0[i][0];  // 原图X
+    int y = ipts0[i][1];  // 原图Y
+    if (x >= 0 && x < 320 && y >=0 && y < 240) {
+        color_frame.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 0);
+    }
+}
+
+// 画右边线（原图）→ 绿色s
+for (int i = 0; i < ipts1_num; i++) {
+    int x = ipts1[i][0];
+    int y = ipts1[i][1];
+    if (x >= 0 && x < 320 && y >=0 && y < 240) {
+        color_frame.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
+    }
+}
+char angle_text[64];
+// 把角度保留1位小数，拼成字符串
+sprintf(angle_text, "Angle: %.1f deg", latest_error);  
+
+// 在图像左上角画出白色文字
+cv::putText(
+    color_frame,          // 要画的图（彩色原图）
+    angle_text,           // 文字内容
+    cv::Point(10, 30),    // 文字位置（x=10, y=30）
+    cv::FONT_HERSHEY_SIMPLEX,  // 字体
+    0.8,                  // 字体大小
+    cv::Scalar(255,255,255),    // 颜色：白色
+    1                    // 线条粗细
+);
+ssize_t sent =    udp_client_img.udp_send_image( color_frame, JPEG_QUALITY);
+}
 // 正确写法：字符串单独闭合，变量写在外面，逗号分隔
 encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number 
 encoder_2=enc2.encoder_get_count();
