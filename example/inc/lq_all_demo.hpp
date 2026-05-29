@@ -6,6 +6,8 @@
 #include "lq_common.hpp"
 typedef signed short       sint16;
 //#include <mutex> 
+extern bool have_target;
+
 //extern std::mutex g_mutex;  // 全局锁
 extern int marker_status;  
 const int LCDH   = 60 ;  // 图像高度（行）

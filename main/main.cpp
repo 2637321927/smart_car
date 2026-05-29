@@ -8,6 +8,7 @@
 using namespace std::chrono;
 volatile float AIM =0.40;
 #define TAR 2
+int item_flag=1;
 bool need_exit = false;
 // 全局互斥锁（解决多线程冲突）
 //std::mutex g_mutex;
@@ -30,6 +31,38 @@ volatile  int pwm1_duty_rps=0;
 volatile float encoder2_speed_avg = 0.0f;//demo for encoder ave
 int L_count=0;
 int R_count=0;
+// ====================== 误差滤波 全局变量 ======================
+volatile float error_filtered = 0.0f;    // 滤波后误差
+volatile float error_prev = 0.0f;        // 上一帧误差
+const float filter_alpha = 0.25f;        // 滤波系数(0~1) 越小越稳
+const float max_delta = 25.0f;           // 每帧最大变化量(调这个最有效)
+const float max_error = 120.0f;          // 最大误差限幅
+// 误差滤波 + 突变限制
+float filter_error(float new_error)
+{
+    // 1. 非法值保护
+    if (isnan(new_error) || isinf(new_error)) {
+        new_error = error_prev;
+    }
+
+    // 2. 限制突变：变化太大就只让它变一点点
+    float delta = new_error - error_prev;
+    if (delta > max_delta) delta = max_delta;
+    if (delta < -max_delta) delta = -max_delta;
+    new_error = error_prev + delta;
+
+    // 3. 最大误差限幅
+    if (new_error > max_error) new_error = max_error;
+    if (new_error < -max_error) new_error = -max_error;
+
+    // 4. 一阶低通滤波
+    float filtered = filter_alpha * new_error + (1 - filter_alpha) * error_prev;
+
+    // 保存上一帧
+    error_prev = filtered;
+
+    return filtered;
+}
 ls_atim_pwm pwm2(ATIM_PWM1_PIN82 ,17000, 0);
 ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 17000, 0); 
 ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
