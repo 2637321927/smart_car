@@ -591,7 +591,13 @@ vofa_recv_init();
 int target_count=0;
 
    encoder_ave_timer.set_seconds_ms(1, []() {
-     encoder_sample_1ms_thread();
+         encoder_sample_1ms_thread();
+
+        //encoder1_speed_avg = -enc1.encoder_get_count();
+        //encoder2_speed_avg = enc2.encoder_get_count();
+        
+
+
     });
 
    speed_timer.set_seconds_ms(3, []() {
@@ -603,12 +609,12 @@ int target_count=0;
      }
     });
 
-     udp_timer.set_seconds_ms(5, []() {
+     udp_timer.set_seconds_ms(10, []() {
     udp_send();
 
     });
 
-    dir_timer.set_seconds_ms(5, []() {
+    dir_timer.set_seconds_ms(8, []() {
       // 发车后才让方向环根据图像误差修正左右轮目标速度。
       if (front_ui_is_running()) {
         PID_control_test(latest_error);
@@ -874,7 +880,7 @@ auto t2 = high_resolution_clock::now();
 
 
         }
-        if(check_line_lost()){
+        if(check_line_lost()&&cross_type!=CROSS_IN){
             if(g_avoid_state==AV_GO_RIGHT){
                  latest_error=-100;
                  diu++;

@@ -26,7 +26,8 @@ int have_left_line = 0, have_right_line = 0;
 namespace {
 
 // 识别到一次环岛后，20 秒内不允许再次从 CIRCLE_NONE 进入环岛。
-constexpr auto kCircleEnterCooldown = std::chrono::seconds(5);
+constexpr auto kCircleEnterCooldown = std::chrono::seconds(3);
+constexpr auto kCircleOUTCooldown = std::chrono::seconds(8);
 bool circle_enter_cooldown = false;
 std::chrono::steady_clock::time_point last_circle_enter_time;
 
@@ -150,14 +151,14 @@ void check_circle() {
 
     // 非圆环模式下，单边L角点, 单边长直道
     if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found) {
-        if(Lpt0_rpts0s_id<rpts0s_num*0.6){
+        if(Lpt0_rpts0s_id<rpts0s_num*0.4){
         circle_type = CIRCLE_LEFT_BEGIN;
         start_circle_enter_cooldown();
         std::cout << "begin" << std::endl;
         }
     }
     if (circle_type == CIRCLE_NONE && !Lpt0_found && Lpt1_found) {
-        if(Lpt1_rpts1s_id<rpts1s_num*0.6){
+        if(Lpt1_rpts1s_id<rpts1s_num*0.4){
         circle_type = CIRCLE_RIGHT_BEGIN;
         start_circle_enter_cooldown();
         std::cout << "begin" << std::endl;
@@ -212,7 +213,7 @@ void run_circle() {
 
         if (Lpt1_found) rpts1s_num = rptsc1_num = Lpt1_rpts1s_id;
         //外环拐点(右L点)
-        if (Lpt1_found && Lpt1_rpts1s_id < 0.6 / sample_dist) {
+        if ((Lpt1_found && Lpt1_rpts1s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
             circle_type = CIRCLE_LEFT_OUT;
         }
     }
@@ -286,9 +287,9 @@ void run_circle() {
     else if (circle_type == CIRCLE_RIGHT_RUNNING) {
         track_type = TRACK_LEFT;
 
-        //外环存在拐点,可再加拐点距离判据(左L点)
+        //外环存在拐点,可再加拐点距离判据(左L点)s
         if (Lpt0_found) rpts0s_num = rptsc0_num = Lpt0_rpts0s_id;
-        if (Lpt0_found && Lpt0_rpts0s_id < 0.6 / sample_dist) {
+        if ((Lpt0_found && Lpt0_rpts0s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
             circle_type = CIRCLE_RIGHT_OUT;
         }
     }
@@ -445,7 +446,7 @@ void run_cross() {
 
         //aim_distance = 0.4;
         //近角点过少，进入远线控制
-        if ((Xfound && (Lpt0_rpts0s_id < 0.15 / sample_dist || Lpt1_rpts1s_id < 0.15 / sample_dist))|| (rpts1_num <40 && rpts0_num<40)) {
+        if ((Xfound && (Lpt0_rpts0s_id < 0.08 / sample_dist || Lpt1_rpts1s_id < 0.08 / sample_dist))|| (rpts1_num <15 && rpts0_num<15)) {
             cross_type = CROSS_IN;
             std::cout<<"in"<<std::endl;
             cross_encoder = current_encoder;
@@ -508,7 +509,7 @@ void cross_farline() {
     far_y1 = 0, far_y2 = 0;
 
 
-    int x1 = img_raw.width / 2 - begin_x, y1 = 200;
+    int x1 = img_raw.width / 2 - begin_x, y1 = begin_y;
     bool white_found = false;
     far_ipts0_num = sizeof(far_ipts0) / sizeof(far_ipts0[0]);
 
