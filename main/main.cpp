@@ -684,7 +684,7 @@ img0.width = cam.get_camera_width();
 img0.height = cam.get_camera_height();
 img0.step=frame.step;
         // 开始处理摄像头图像
-if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)){
+if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&&car_running==1){
 
     for (int y = 160; y <= 180; y++) {    // 车前方区域
         for (int x = 115; x <=125; x++) { // 画面中间，不贴左右边
@@ -809,6 +809,7 @@ auto t2 = high_resolution_clock::now();
       //  if (garage_type == GARAGE_IN_LEFT || garage_type == GARAGE_IN_RIGHT || cross_type == CROSS_IN) begin_id = 0;
 
        if (cross_type == CROSS_BEGIN) {
+        
         aim_distance=0.15;}
         else{
             aim_distance=AIM;
@@ -844,7 +845,16 @@ auto t2 = high_resolution_clock::now();
 
 
         }
-        if(check_line_lost()&&cross_type!=CROSS_IN){
+        if(cross_type==CROSS_BEGIN){
+                    float raw_err = -error;
+            if(abs(latest_error)<=15&&abs(raw_err-latest_error)>=30){
+
+            }
+            else{
+                latest_error=raw_err;
+            }
+        }
+        else if(check_line_lost()&&cross_type!=CROSS_IN){
             if(g_avoid_state==AV_GO_RIGHT){
                  latest_error=-100;
                  diu++;
@@ -871,7 +881,7 @@ latest_error=100;
                 g_avoid_state=AV_NORMAL;
                 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
             }
-        latest_error=-error;
+latest_error =  -error; 
         }
  if(is_udp_img==1){
                clear_image(&img_line);

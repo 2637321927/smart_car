@@ -106,6 +106,7 @@ void start_car()
     // 发车时不直接写死速度，而是使用当前屏幕上选中的速度策略。
     car_running = true;
     apply_speed_strategy();
+    std::cout<<"run"<<std::endl;
     if(selected_strategy==0){
         dir_P = 0.09f;
         dir_D = 0.9f;
