@@ -23,3 +23,6 @@ build/
 *.idx
 *.pack
 *.idx
+
+# Local archive; too large for GitHub and not needed in repo
+/Loongson_2K300_301_LIB.zip
