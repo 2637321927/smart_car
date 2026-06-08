@@ -5,6 +5,7 @@
 #include "circle.hpp"
 #include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
 #include "drive_by.hpp"  // 目标板触发后的固定动作脚本
+#include "gyro_yaw_rate_control.hpp"  // MPU6050 角速度环 demo
 #include <chrono>
 using namespace std::chrono;
 volatile float AIM =0.40;
@@ -17,8 +18,8 @@ lq_timer speed_timer;
 lq_timer dir_timer;
 lq_timer encoder_ave_timer;
 lq_timer udp_timer;
-volatile  int pwm1_duty_rps=0;
- volatile  int pwm2_duty_rps=0;
+volatile  float pwm1_duty_rps=0.0f;
+ volatile  float pwm2_duty_rps=0.0f;
  volatile  float latest_error = 0;
  volatile  float encoder_1=0;
  volatile  float encoder_2=0;
@@ -69,8 +70,8 @@ ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
 ls_gpio polar_pwm2(PIN_22, GPIO_MODE_OUT);
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
- volatile int set_speed_of_motor1_rps=0;
- volatile int set_speed_of_motor2_rps=0;
+ volatile float set_speed_of_motor1_rps=0.0f;
+ volatile float set_speed_of_motor2_rps=0.0f;
 lq_udp_client udp_client;
 lq_udp_client udp_client_img;
 cv::Mat bgr_bird;
@@ -360,7 +361,7 @@ if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
 {
     set_speed_of_motor1_rps = ftmp;
     set_speed_of_motor2_rps=set_speed_of_motor1_rps;
-    printf("[VOFA] spd = %d\n", set_speed_of_motor1_rps);
+    printf("[VOFA] spd = %.2f\n", set_speed_of_motor1_rps);
 }
 
 if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
@@ -369,6 +370,63 @@ if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
     spd_slow_ratio = ftmp;
     printf("[VOFA] spd_slow_ratio = %d\n", spd_slow_ratio);
 }
+
+// ==================== 角速度环在线调参 ====================
+// 推荐调参顺序：
+// 1. #gyro=0;      请求使用原来的视觉 PD。
+// 2. #gyro=1;      请求使用角速度反馈；实际是否进入 GYRO_RATE 看 MPU6050 ready。
+// 3. #gSign=-1;    如果手动右转时 gyro_z 正负反了，改它。
+// 4. #tSign=-1;    如果一闭环就越修越偏，改它。
+// 5. 先调 #gIP，再慢慢加 #gII。新手阶段 #gII 可以先设 0。
+if (sscanf(buf, "#gyro=%f;", &ftmp) == 1)
+{
+    gyro_yaw_rate_feedback_enabled = (ftmp != 0.0f) ? 1 : 0;
+    gyro_yaw_rate_control_reset();
+    printf("[VOFA] gyro_yaw_rate_feedback_enabled = %d, ready=%d, requested_mode=%s\n",
+           gyro_yaw_rate_feedback_enabled,
+           gyro_yaw_rate_control_is_ready() ? 1 : 0,
+           gyro_yaw_rate_feedback_enabled ? "GYRO_RATE" : "VISUAL_PD");
+}
+
+if (sscanf(buf, "#gOP=%f;", &ftmp) == 1)
+{
+    gyro_outer_kp = ftmp;
+    printf("[VOFA] gyro_outer_kp = %.3f\n", gyro_outer_kp);
+}
+
+if (sscanf(buf, "#gOD=%f;", &ftmp) == 1)
+{
+    gyro_outer_kd = ftmp;
+    printf("[VOFA] gyro_outer_kd = %.3f\n", gyro_outer_kd);
+}
+
+if (sscanf(buf, "#gIP=%f;", &ftmp) == 1)
+{
+    gyro_inner_kp = ftmp;
+    printf("[VOFA] gyro_inner_kp = %.3f\n", gyro_inner_kp);
+}
+
+if (sscanf(buf, "#gII=%f;", &ftmp) == 1)
+{
+    gyro_inner_ki = ftmp;
+    gyro_yaw_rate_control_reset();
+    printf("[VOFA] gyro_inner_ki = %.3f\n", gyro_inner_ki);
+}
+
+if (sscanf(buf, "#gSign=%f;", &ftmp) == 1)
+{
+    gyro_z_sign = (ftmp >= 0.0f) ? 1.0f : -1.0f;
+    gyro_yaw_rate_control_reset();
+    printf("[VOFA] gyro_z_sign = %.1f\n", gyro_z_sign);
+}
+
+if (sscanf(buf, "#tSign=%f;", &ftmp) == 1)
+{
+    gyro_turn_sign = (ftmp >= 0.0f) ? 1.0f : -1.0f;
+    gyro_yaw_rate_control_reset();
+    printf("[VOFA] gyro_turn_sign = %.1f\n", gyro_turn_sign);
+}
+
 if (sscanf(buf, "#begin_x=%f;", &ftmp) == 1)
 {
     
@@ -424,8 +482,8 @@ void udp_send(void){
     char encoder_str[384];
 
 snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"\":%d,\"ex_rps1\":%d,\"ex_rps2\":%d,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f,\"spd_slow_ratio\":%d}",
-         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg),latest_error, pwm1_duty_rps, pwm2_duty_rps,  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
+         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%.2f,\"ex_rps1\":%.2f,\"ex_rps2\":%.2f,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f,\"spd_slow_ratio\":%d}",
+         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg), safe_float(latest_error), safe_float(pwm1_duty_rps), safe_float(pwm2_duty_rps),  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
          safe_float(P2_motor),    
          safe_float(I),
          safe_float(I1_motor),    
@@ -600,6 +658,7 @@ save_per_map();
     printf("模型加载成功!\n\n");
     
 vofa_recv_init();
+gyro_yaw_rate_control_init();
 
    encoder_ave_timer.set_seconds_ms(1, []() {
          encoder_sample_1ms_thread();
@@ -631,8 +690,10 @@ vofa_recv_init();
       if (front_ui_is_running() && !drive_by_is_busy()) {
         PID_control_test(latest_error);
       } else if (front_ui_is_running()) {
+        gyro_yaw_rate_control_reset();
         latest_error = 0;
       } else {
+        gyro_yaw_rate_control_reset();
         front_ui_hold_stop();
       }
     });

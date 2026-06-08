@@ -49,10 +49,10 @@ enum DriveByState {
 };
 
 struct SavedControl {
-    int set_speed1 = 0;
-    int set_speed2 = 0;
-    int pwm_target1 = 0;
-    int pwm_target2 = 0;
+    float set_speed1 = 0.0f;
+    float set_speed2 = 0.0f;
+    float pwm_target1 = 0.0f;
+    float pwm_target2 = 0.0f;
     float p = 0.0f;
     float i = 0.0f;
     float d = 0.0f;

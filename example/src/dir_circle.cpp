@@ -4,19 +4,23 @@
 
 //fliter test
 void input_speed_rps(){
-    const int MAX_SPEED = 200;
-const int MIN_SPEED = 0;
+    const float MAX_SPEED = 200.0f;
+const float MIN_SPEED = 0.0f;
 printf("请输入电机1、电机2目标转速(rps，空格分隔)：");
-// 读取两个int型数据
-int res = scanf("%d %d", &set_speed_of_motor1_rps, &set_speed_of_motor2_rps);
+// 读取两个 float 型数据，避免小数 RPS 目标在进入速度环前被截断。
+float speed1 = 0.0f;
+float speed2 = 0.0f;
+int res = scanf("%f %f", &speed1, &speed2);
 
 // 合法性判断
 if (res == 2) 
 {
-    if (set_speed_of_motor1_rps >= MIN_SPEED && set_speed_of_motor1_rps <= MAX_SPEED &&
-        set_speed_of_motor2_rps >= MIN_SPEED && set_speed_of_motor2_rps <= MAX_SPEED)
+    if (speed1 >= MIN_SPEED && speed1 <= MAX_SPEED &&
+        speed2 >= MIN_SPEED && speed2 <= MAX_SPEED)
     {
-        printf("输入正确！电机1：%d，电机2：%d\n", set_speed_of_motor1_rps, set_speed_of_motor2_rps);
+        set_speed_of_motor1_rps = speed1;
+        set_speed_of_motor2_rps = speed2;
+        printf("输入正确！电机1：%.2f，电机2：%.2f\n", set_speed_of_motor1_rps, set_speed_of_motor2_rps);
         // 这里可以直接调用你的闭环控制函数
     }
     else
@@ -46,4 +50,3 @@ close_circle_control(
     pwm1_duty_rps,
     pwm2_duty_rps);
 }
-
