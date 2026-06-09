@@ -26,7 +26,7 @@ int have_left_line = 0, have_right_line = 0;
 namespace {
 
 // 识别到一次环岛后，20 秒内不允许再次从 CIRCLE_NONE 进入环岛。
-constexpr auto kCircleEnterCooldown = std::chrono::seconds(3);
+constexpr auto kCircleEnterCooldown = std::chrono::seconds(2);
 constexpr auto kCircleOUTCooldown = std::chrono::seconds(8);
 bool circle_enter_cooldown = false;
 std::chrono::steady_clock::time_point last_circle_enter_time;
@@ -160,13 +160,6 @@ void check_circle() {
     if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found) {
         if(Lpt0_rpts0s_id<rpts0s_num*0.4){
         circle_type = CIRCLE_LEFT_BEGIN;
-        start_circle_enter_cooldown();
-        std::cout << "begin" << std::endl;
-        }
-    }
-    if (circle_type == CIRCLE_NONE && !Lpt0_found && Lpt1_found) {
-        if(Lpt1_rpts1s_id<rpts1s_num*0.4){
-        circle_type = CIRCLE_RIGHT_BEGIN;
         start_circle_enter_cooldown();
         std::cout << "begin" << std::endl;
         }

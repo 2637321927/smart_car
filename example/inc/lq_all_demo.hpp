@@ -8,8 +8,6 @@ typedef signed short       sint16;
 //#include <mutex> 
 extern bool have_target;
 extern int item_flag;
-extern cv::Rect plate_rect;
-
 //extern std::mutex g_mutex;  // 全局锁
 extern int marker_status;  
 const int LCDH   = 60 ;  // 图像高度（行）
@@ -47,7 +45,6 @@ volatile extern float D;
 volatile extern float dir_P;
 volatile extern float dir_D;
 volatile extern int spd_slow_ratio;
-volatile extern float AIM;
 volatile extern float alpha_flit;   // 可调，0.7~0.85都可以先试
  volatile extern float encoder1_speed_avg ;
 volatile extern float encoder2_speed_avg ;//demo for encoder ave
@@ -71,7 +68,6 @@ void lq_udp_img_trans_demo(void);   // UDP 图像传输测试
 void lq_udp_wavefrom_demo(void);    // UDP 波形传输测试
 void lq_icm42688_demo(void);        // ICM42688 测试
 int img_test(cv::Mat& frame);
-void detectRedPlate(cv::Mat& frame);
 void PID_control_test(float error);
 float calculate_diffrential(float error,float expect_error);
 float img_return(void);

@@ -26,12 +26,12 @@ int drive_by_turn_inner_speed_rps = 0;    // 内侧轮转向速度，0 表示近
 int drive_by_forward_speed_rps = 6;       // 绕开目标板时双轮前进速度，单位 rps
 int drive_by_exit_speed_rps = 0;          // 脚本结束前补偿前进速度，0 表示不补前进
 int drive_by_turn_out_ms = 600;          // 第一次向外转的持续时间，影响绕行起始姿态
-int drive_by_forward_ms = 550;            // 绕过目标板时直行持续时间，影响横向/前向绕行距离
-int drive_by_turn_back_ms = 600;          // 往回转的持续时间，影响回正姿态
+int drive_by_forward_ms = 400;            // 绕过目标板时直行持续时间，影响横向/前向绕行距离
+int drive_by_turn_back_ms = 800;          // 往回转的持续时间，影响回正姿态
 int drive_by_exit_forward_ms = 150;       // 回正后补偿前进时间
 int drive_by_stop_ms = 200;               // 识别到目标后先停车等待时间
 int drive_by_infer_timeout_ms = 1000;     // 五帧推理最长等待时间，超时默认直行
-int drive_by_cooldown_ms = 0;             // 脚本完成后的再次触发冷却，0 表示目标离开画面即可解锁
+int drive_by_cooldown_ms =1000;             // 脚本完成后的再次触发冷却，0 表示目标离开画面即可解锁
 
 namespace {
 
