@@ -1,6 +1,7 @@
 #include "front_ui.hpp"
 #include "drive_by.hpp"
 #include "lq_all_demo.hpp"
+#include "gyro_yaw_rate_control.hpp"
 #include "lq_display_tft18.hpp"
 
 #include <chrono>
@@ -18,10 +19,11 @@ struct SpeedStrategy {
     int speed_rps;
 };
 
-// TFT18 前端提供的速度档位。默认选中 MID，也就是 selected_strategy = 1。
+// TFT18 前端提供的速度档位。默认 selected_strategy = 1，即 20 RPS。
 constexpr SpeedStrategy kStrategies[] = {
     {"HIGH", 15},
     {"MAX", 20},
+    {"R30", 30},
 };
 
 constexpr int kStrategyCount = sizeof(kStrategies) / sizeof(kStrategies[0]);
@@ -91,6 +93,7 @@ void stop_car()
     drive_by_cancel();
     // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
     car_running = false;
+    gyro_yaw_rate_control_reset();
     set_speed_of_motor1_rps = 0;
     set_speed_of_motor2_rps = 0;
     pwm1_duty_rps = 0;
@@ -105,6 +108,7 @@ void start_car()
 {
     // 发车时不直接写死速度，而是使用当前屏幕上选中的速度策略。
     car_running = true;
+    gyro_yaw_rate_control_reset();
     apply_speed_strategy();
     std::cout<<"run"<<std::endl;
     if(selected_strategy==0){
@@ -147,7 +151,7 @@ void draw_ui()
     snprintf(line, sizeof(line), "SPD  : %02d RPS", kStrategies[selected_strategy].speed_rps);
     draw_line(3, line, U16YELLOW);
 
-    snprintf(line, sizeof(line), "OUT  : %02d/%02d",
+    snprintf(line, sizeof(line), "OUT  : %04.1f/%04.1f",
              set_speed_of_motor1_rps, set_speed_of_motor2_rps);
     draw_line(4, line, U16WHITE);
 
@@ -165,16 +169,17 @@ void select_prev_strategy()
     if (car_running) {
         apply_speed_strategy();
     }
+    printf("target speed=%d RPS\n", kStrategies[selected_strategy].speed_rps);
 }
 
 void select_next_strategy()
 {
-    // 往后切档位，到 MAX 后再回 LOW。
+    // 往后切档位，到最后一个档位后再回到第一个档位。
     selected_strategy = (selected_strategy + 1) % kStrategyCount;
-    std::cout<<"v:"<< selected_strategy<<std::endl;
     if (car_running) {
         apply_speed_strategy();
     }
+    printf("target speed=%d RPS\n", kStrategies[selected_strategy].speed_rps);
 }
 
 } // namespace

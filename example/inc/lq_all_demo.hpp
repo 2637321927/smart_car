@@ -30,10 +30,10 @@ volatile extern float P1_motor;
  volatile extern float P2_motor;
   volatile extern float I1_motor;
  volatile extern float I2_motor;
-volatile extern int set_speed_of_motor1_rps;
-volatile extern int set_speed_of_motor2_rps;
-volatile extern int pwm1_duty_rps;
-volatile extern int pwm2_duty_rps;
+volatile extern float set_speed_of_motor1_rps;
+volatile extern float set_speed_of_motor2_rps;
+volatile extern float pwm1_duty_rps;
+volatile extern float pwm2_duty_rps;
 volatile extern int current_pwm1;
 volatile extern int current_pwm2;
 volatile  extern int test_count ;
@@ -76,9 +76,9 @@ void cut(void);
 void close_circle_control(
     float speed_of_motor1,  
     float speed_of_motor2,
-    int target_speed_of_motor1_RPS,
-    int target_speed_of_motor2_RPS);
-    void input_speed(int&set_speed_of_motor1_rps,int& set_speed_of_motor2_rps);
+    float target_speed_of_motor1_RPS,
+    float target_speed_of_motor2_RPS);
+    void input_speed(float&set_speed_of_motor1_rps,float& set_speed_of_motor2_rps);
     void test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_motor2_pwm);
     void input_speed_rps();
     void  test_enc_and_motor_rps();

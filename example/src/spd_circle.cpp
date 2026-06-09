@@ -14,7 +14,7 @@ volatile int current_pwm2 = 0;
  ********************************************************************************/
 void calculate_differential_for_motor(
     const float& speed_of_motor1, const float& speed_of_motor2,
-    const int target_speed_of_motor1_RPS, const int target_speed_of_motor2_RPS,
+    const float target_speed_of_motor1_RPS, const float target_speed_of_motor2_RPS,
     int& pwm1_plusduty, int& pwm2_plusduty)
 {
     // 历史误差
@@ -75,8 +75,8 @@ if(p_term2<-max_P) p_term2=-max_P;
 void close_circle_control(
     float speed_of_motor1,
     float speed_of_motor2,
-    int target_speed_of_motor1_RPS,
-    int target_speed_of_motor2_RPS)
+    float target_speed_of_motor1_RPS,
+    float target_speed_of_motor2_RPS)
 {
     int pwm1_plusduty = 0;
     int pwm2_plusduty = 0;
