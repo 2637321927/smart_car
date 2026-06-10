@@ -31,7 +31,7 @@ void calculate_differential_for_motor(
     // 真正的增量式 PID
     float p_term1 = P * (error_current1 - error_last1);
     float p_term2 = P * (error_current2 - error_last2);
-    const int max_P=1400;
+    const int max_P=2400;
   if(p_term1>max_P)  p_term1=max_P;
 if(p_term1<-max_P) p_term1=-max_P;
 if(p_term2>max_P)  p_term2=max_P;

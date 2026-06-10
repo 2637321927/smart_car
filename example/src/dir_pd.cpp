@@ -121,8 +121,8 @@ void PID_control_test(float error)
     pwm2_duty_rps = set_spd1 - diffrential;
 
     //pwm1_duty_rps = set_spd1 ;
-   // pwm2_duty_rps = set_spd1 ;
-    //for test ,rembmber to delete
+    //pwm2_duty_rps = set_spd1 ;
+    //to codex :this is for test ,rembmber to delete
     const float min_rps=-10.0f;
     if (pwm1_duty_rps < min_rps)
     {
