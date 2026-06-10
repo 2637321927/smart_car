@@ -35,8 +35,8 @@ int R_count=0;
 // ====================== 误差滤波 全局变量 ======================
 volatile float error_filtered = 0.0f;    // 滤波后误差
 volatile float error_prev = 0.0f;        // 上一帧误差
-const float filter_alpha = 0.25f;        // 滤波系数(0~1) 越小越稳
-const float max_delta = 25.0f;           // 每帧最大变化量(调这个最有效)
+const float filter_alpha = 0.6f;        // 滤波系数(0~1) 越小越稳
+const float max_delta = 40.0f;           // 每帧最大变化量(调这个最有效)
 const float max_error = 120.0f;          // 最大误差限幅
 // 误差滤波 + 突变限制
 float filter_error(float new_error)
@@ -906,43 +906,44 @@ auto t2 = high_resolution_clock::now();
 
 
         }
-        if(cross_type==CROSS_BEGIN){
-                    float raw_err = -error;
-            if(abs(latest_error)<=15&&abs(raw_err-latest_error)>=30){
-
+// ====================== 误差计算与滤波处理 ======================
+        if (cross_type == CROSS_BEGIN) {
+            float raw_err = -error;
+            if (abs(latest_error) <= 15 && abs(raw_err - latest_error) >= 30) {
+                // 特殊十字边界保护，维持上一帧不突变
+            } else {
+                // 使用你写好的 filter_error 保护函数进行滤波
+                latest_error = filter_error(raw_err);
             }
-            else{
-                latest_error=raw_err;
-            }
-        }
-        else if(check_line_lost()&&cross_type!=CROSS_IN){
-            if(g_avoid_state==AV_GO_RIGHT){
-                 latest_error=-100;
-                 diu++;
-            }
-            else if( g_avoid_state==AV_GO_LEFT){
-                latest_error=100;
+        } 
+        else if (check_line_lost() && cross_type != CROSS_IN) {
+            if (g_avoid_state == AV_GO_RIGHT) {
+                latest_error = filter_error(-100.0f); // 避障丢线，平滑过渡到最大打角
                 diu++;
-            }
-            else if(cross_type==CROSS_NONE&&circle_type==CIRCLE_NONE){
-                if(lost==RIGHT){
-latest_error=100;  
+            } 
+            else if (g_avoid_state == AV_GO_LEFT) {
+                latest_error = filter_error(100.0f);
+                diu++;
+            } 
+            else if (cross_type == CROSS_NONE && circle_type == CIRCLE_NONE) {
+                if (lost == RIGHT) {
+                    latest_error = filter_error(100.0f);  
+                } else {   
+                    latest_error = filter_error(-100.0f);
                 }
-                else{   
- latest_error=-100;
-                }
+            } 
+            else {
+                // 其他情况保持原样或维持上一帧
             }
-            else{
-
-            }
-        }
-        else{
-            if(diu!=0){
-                diu=0;
-                g_avoid_state=AV_NORMAL;
+        } 
+        else {
+            if (diu != 0) {
+                diu = 0;
+                g_avoid_state = AV_NORMAL;
                 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
             }
-latest_error =  -error; 
+            // 正常巡线状态：对计算出的视觉误差进行低通与突变限幅滤波
+            latest_error = filter_error(-error); 
         }
  if(is_udp_img==1){
                clear_image(&img_line);
