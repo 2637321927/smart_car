@@ -7,6 +7,7 @@
 typedef signed short       sint16;
 //#include <mutex> 
 extern bool have_target;
+ extern cv::Rect plate_rect;  
 extern int item_flag;
 //extern std::mutex g_mutex;  // 全局锁
 extern int marker_status;  
@@ -69,6 +70,7 @@ void lq_udp_wavefrom_demo(void);    // UDP 波形传输测试
 void lq_icm42688_demo(void);        // ICM42688 测试
 int img_test(cv::Mat& frame);
 void PID_control_test(float error);
+void detectRedPlate(cv::Mat& frame);
 float calculate_diffrential(float error,float expect_error);
 float img_return(void);
 void lq_ncnn_photo_demo(cv::Mat& image,std::string& a);

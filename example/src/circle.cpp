@@ -27,7 +27,7 @@ namespace {
 
 // 识别到一次环岛后，20 秒内不允许再次从 CIRCLE_NONE 进入环岛。
 constexpr auto kCircleEnterCooldown = std::chrono::seconds(2);
-constexpr auto kCircleOUTCooldown = std::chrono::seconds(8);
+constexpr auto kCircleOUTCooldown = std::chrono::seconds(0);
 bool circle_enter_cooldown = false;
 std::chrono::steady_clock::time_point last_circle_enter_time;
 std::chrono::steady_clock::time_point last_cross_time;

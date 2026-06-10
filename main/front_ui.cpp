@@ -24,6 +24,7 @@ constexpr SpeedStrategy kStrategies[] = {
     {"HIGH", 15},
     {"MAX", 20},
     {"R30", 30},
+    {"R35", 35},
 };
 
 constexpr int kStrategyCount = sizeof(kStrategies) / sizeof(kStrategies[0]);
