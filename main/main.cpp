@@ -64,10 +64,10 @@ float filter_error(float new_error)
 
     return filtered;
 }
-ls_atim_pwm pwm2(ATIM_PWM1_PIN82 ,17000, 0);
-ls_atim_pwm pwm1(ATIM_PWM0_PIN81, 17000, 0); 
-ls_gpio polar_pwm1(PIN_21, GPIO_MODE_OUT);
-ls_gpio polar_pwm2(PIN_22, GPIO_MODE_OUT);
+ls_atim_pwm pwm1(ATIM_PWM1_PIN82 ,17000, 0);
+ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0); 
+ls_gpio polar_pwm2(PIN_21, GPIO_MODE_OUT);
+ls_gpio polar_pwm1(PIN_22, GPIO_MODE_OUT);
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
  volatile float set_speed_of_motor1_rps=0.0f;
@@ -678,12 +678,12 @@ gyro_yaw_rate_control_init();
        front_ui_hold_stop();
      }
     });
-/*
+
      udp_timer.set_seconds_ms(10, []() {
     udp_send();
 
     });
-*/
+
     dir_timer.set_seconds_ms(8, []() {
       // 发车后才让方向环根据图像误差修正左右轮目标速度。
       // 目标板脚本执行时要暂停方向环，否则方向环会覆盖脚本给出的左右轮差速。
