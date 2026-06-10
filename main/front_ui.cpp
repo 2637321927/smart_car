@@ -21,7 +21,7 @@ struct SpeedStrategy {
 
 // TFT18 前端提供的速度档位。默认 selected_strategy = 1，即 20 RPS。
 constexpr SpeedStrategy kStrategies[] = {
-    {"HIGH", 15},
+    {"test", 0},
     {"MAX", 20},
     {"R30", 30},
     {"R35", 35},

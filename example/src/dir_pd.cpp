@@ -67,7 +67,7 @@ float calculate_diffrential(float error,float expect_error)//给我误差值，�
 void PID_control_test(float error)
 {
     const float max_error=100;
-    const float dead_error=0;
+    const float dead_error=2;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
     if((error<dead_error)&&(error>-dead_error)) error=0;
@@ -116,9 +116,13 @@ void PID_control_test(float error)
     float slow_ratio = 1.0f - (slow_ratio_percent / 100.0f) * abs_error / max_error;
     if (slow_ratio < 0.5f) slow_ratio = 0.5f;
     float set_spd1 = target_spd1 * slow_ratio;
-
+  
     pwm1_duty_rps = set_spd1 + diffrential;
     pwm2_duty_rps = set_spd1 - diffrential;
+
+    //pwm1_duty_rps = set_spd1 ;
+   // pwm2_duty_rps = set_spd1 ;
+    //for test ,rembmber to delete
     const float min_rps=-10.0f;
     if (pwm1_duty_rps < min_rps)
     {

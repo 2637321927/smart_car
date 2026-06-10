@@ -1,6 +1,7 @@
 #include "lq_all_demo.hpp"
 
 volatile float P = 1284.0f;
+//volatile float I = 80.0f;old static premeter
 volatile float I = 80.0f;
 volatile float D = 2.0f;
 volatile int current_pwm1 = 0;
@@ -30,19 +31,24 @@ void calculate_differential_for_motor(
     // 真正的增量式 PID
     float p_term1 = P * (error_current1 - error_last1);
     float p_term2 = P * (error_current2 - error_last2);
-    const int max_P=700;
+    const int max_P=1400;
   if(p_term1>max_P)  p_term1=max_P;
 if(p_term1<-max_P) p_term1=-max_P;
 if(p_term2>max_P)  p_term2=max_P;
 if(p_term2<-max_P) p_term2=-max_P;
     
-
     float i_term1 = I * error_current1;
     float i_term2 = I * error_current2;
 
     float d_term1 = D * (error_current1 - 2.0f * error_last1 + error_prev1);
     float d_term2 = D * (error_current2 - 2.0f * error_last2 + error_prev2);
 
+    const int max_D=200;
+
+     if(d_term1>max_D)  d_term1=max_D;
+if(d_term1<-max_D) d_term1=-max_D;
+if(d_term2>max_D)  d_term2=max_D;
+if(d_term2<-max_D) d_term2=-max_D;
     float delta_u1 = p_term1 + i_term1 + d_term1;
     float delta_u2 = p_term2 + i_term2 + d_term2;
 
@@ -91,28 +97,28 @@ void close_circle_control(
     current_pwm1 += pwm1_plusduty;
     current_pwm2 += pwm2_plusduty;
 
-    const int MAX_PWM = 6000;
-        const int MIN_PWM = -3000;
+    const int MAX_PWM = 8000;
+        const int MIN_PWM = -4000;
     // 内部状态双向限幅，防止 windup
     if (current_pwm1 > MAX_PWM) current_pwm1 = MAX_PWM;
     if (current_pwm1 < MIN_PWM) current_pwm1 = MIN_PWM;
     if (current_pwm2 > MAX_PWM) current_pwm2 = MAX_PWM;
     if (current_pwm2 < MIN_PWM) current_pwm2 = MIN_PWM;
-
-    
-
-   
+    //polar_pwm2.gpio_level_set(GPIO_HIGH);    // 正转
+    //polar_pwm1.gpio_level_set(GPIO_HIGH);   // 正转
+     //pwm1.atim_pwm_set_duty(set_speed_of_motor1_rps);
+     //pwm2.atim_pwm_set_duty(set_speed_of_motor1_rps);
     // otor1 输出
     
     if (current_pwm1 >= 0)
     {
-        polar_pwm1.gpio_level_set(GPIO_LOW);   // 正转
+        polar_pwm1.gpio_level_set(GPIO_HIGH);   // 正转
         pwm1.atim_pwm_set_duty(current_pwm1);
         //std::cout<<"toward"<<std::endl;
     }
     else
     {
-        polar_pwm1.gpio_level_set(GPIO_HIGH);    // 反转
+        polar_pwm1.gpio_level_set(GPIO_LOW);    // 反转
         pwm1.atim_pwm_set_duty(-current_pwm1);
        // std::cout<<"back"<<std::endl;
     }
@@ -120,12 +126,12 @@ void close_circle_control(
     // motor2 输出
     if (current_pwm2 >= 0)
     {
-        polar_pwm2.gpio_level_set(GPIO_LOW);    // 正转
+        polar_pwm2.gpio_level_set(GPIO_HIGH);    // 正转
         pwm2.atim_pwm_set_duty(current_pwm2);
     }
     else
     {
-        polar_pwm2.gpio_level_set(GPIO_HIGH);   // 反转
+        polar_pwm2.gpio_level_set(GPIO_LOW);   // 反转
         pwm2.atim_pwm_set_duty(-current_pwm2);
     }
     
