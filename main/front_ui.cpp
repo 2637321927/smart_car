@@ -112,17 +112,6 @@ void start_car()
     gyro_yaw_rate_control_reset();
     apply_speed_strategy();
     std::cout<<"run"<<std::endl;
-    if(selected_strategy==0){
-        dir_P = 0.10f;
-        dir_D = 0.889f;
-        AIM=0.3;
-
-    }
-    else{
-    dir_P = 0.143f;
-    dir_D = 3.0f;
-    AIM=0.4;
-    }
 
     last_start_time = std::chrono::steady_clock::now();
 
