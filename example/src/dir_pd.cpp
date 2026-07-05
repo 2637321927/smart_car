@@ -3,8 +3,8 @@
 
 #include <cstdio>
 
-volatile float dir_P = 0.09f;
-volatile float dir_D = 0.9f;
+volatile float dir_P = 0.128f;
+volatile float dir_D = 1.55f;
 volatile int spd_slow_ratio = 20;
 
 namespace
@@ -121,8 +121,8 @@ void PID_control_test(float error)
     pwm2_duty_rps = set_spd1 - diffrential;
 
     //pwm1_duty_rps = set_spd1 ;
-   // pwm2_duty_rps = set_spd1 ;
-    //for test ,rembmber to delete
+    //pwm2_duty_rps = set_spd1 ;
+    //to codex :this is for test ,rembmber to delete
     const float min_rps=-10.0f;
     if (pwm1_duty_rps < min_rps)
     {
