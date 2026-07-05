@@ -373,28 +373,44 @@ void find_corners() {
         if (rpts0an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
+        int ip2 = clip(i + 2 * (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         float conf = fabs(rpts0a[i]) - (fabs(rpts0a[im1]) + fabs(rpts0a[ip1])) / 2;
 
+        // 锥桶凹痕过滤：检查曲率方向是否一致（真角点两侧同号，凹痕会反号）
+        bool dir_consistent = (rpts0a[im1] * rpts0a[ip1] > 0);
+        // 弯曲持续性：角点后一段距离内弯曲方向应与峰值同向
+        bool sustained = (rpts0a[i] * rpts0a[ip2] > 0);
+
         //L角点阈值
-        if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.8 / sample_dist) {
+        if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI
+                && i < 0.8 / sample_dist && dir_consistent && sustained) {
             Lpt0_rpts0s_id = i;
             Lpt0_found = true;
         }
-        //长直道阈值
-        if (conf > 15. / 180. * PI && 0.1 / sample_dist <i < 0.4 / sample_dist) is_straight0 = false;
+        //长直道阈值（修复了 a<i<b 运算符优先级 bug）
+        if (conf > 15. / 180. * PI && i > 0.1 / sample_dist && i < 0.4 / sample_dist) is_straight0 = false;
         if ( Lpt0_found == true && is_straight0 == false) break;
     }
     for (int i = rpts1s_num*0.15; i < rpts1s_num*0.8; i++) {
         if (rpts1an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
+        int ip2 = clip(i + 2 * (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         float conf = fabs(rpts1a[i]) - (fabs(rpts1a[im1]) + fabs(rpts1a[ip1])) / 2;
-        if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.8 / sample_dist) {
+
+        // 锥桶凹痕过滤：检查曲率方向是否一致（真角点两侧同号，凹痕会反号）
+        bool dir_consistent = (rpts1a[im1] * rpts1a[ip1] > 0);
+        // 弯曲持续性：角点后一段距离内弯曲方向应与峰值同向
+        bool sustained = (rpts1a[i] * rpts1a[ip2] > 0);
+
+        if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI
+                && i < 0.8 / sample_dist && dir_consistent && sustained) {
             Lpt1_rpts1s_id = i;
             Lpt1_found = true;
         }
 
-        if (conf > 15. / 180. * PI && 0.1 / sample_dist <i < 0.4 / sample_dist) is_straight1 = false;
+        //长直道阈值（修复了 a<i<b 运算符优先级 bug）
+        if (conf > 15. / 180. * PI && i > 0.1 / sample_dist && i < 0.4 / sample_dist) is_straight1 = false;
 
         if ( Lpt1_found == true && is_straight1 == false) break;
     }
