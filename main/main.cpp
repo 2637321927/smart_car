@@ -35,8 +35,8 @@ int R_count=0;
 // ====================== 误差滤波 全局变量 ======================
 volatile float error_filtered = 0.0f;    // 滤波后误差
 volatile float error_prev = 0.0f;        // 上一帧误差
-const float filter_alpha = 0.6f;        // 滤波系数(0~1) 越小越稳
-const float max_delta = 40.0f;           // 每帧最大变化量(调这个最有效)
+const float filter_alpha = 0.8f;        // 滤波系数
+const float max_delta = 80.0f;           // 每帧最大变化量
 const float max_error = 120.0f;          // 最大误差限幅
 // 误差滤波 + 突变限制
 float filter_error(float new_error)
