@@ -3,8 +3,8 @@
 
 #include <cstdio>
 
-volatile float dir_P = 0.09f;
-volatile float dir_D = 0.9f;
+volatile float dir_P = 0.128f;
+volatile float dir_D = 1.55f;
 volatile int spd_slow_ratio = 20;
 
 namespace
