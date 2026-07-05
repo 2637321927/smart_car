@@ -1,8 +1,11 @@
 #include "gyro_yaw_rate_control.hpp"
 #include "lq_all_demo.hpp"
 
+#include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <mutex>
+#include <thread>
 #include <unistd.h>
 
 // ========================= 可调参数区 =========================
@@ -47,12 +50,37 @@ constexpr float kMpu6050GyroScale_2000Dps = 16.4f;
 // 零偏标定采样次数。500 次、每次 1ms，大约半秒。
 constexpr int kGyroOffsetSamples = 500;
 
+// Async gyro read policy:
+// - lq_timer calls gyro_yaw_rate_control_service() every 5 ms.
+// - A worker read should normally finish well below 20 ms.
+// - If it does not, the service invalidates that generation and starts a new one.
+// These constants are intentionally local: they are safety policy, not PID gains.
+constexpr int kGyroReadTimeoutMs = 20;
+constexpr int kGyroStaleFreezeMs = 30;
+constexpr int kGyroMaxWorkerCount = 3;
+constexpr int kGyroRestartPauseMs = 50;
+constexpr int kGyroNoSampleAgeMs = 1000000;
+
 bool g_gyro_ready = false;
 float g_gyro_z_offset_raw = 0.0f;
 float g_last_vision_error = 0.0f;
 float g_rate_integral = 0.0f;
 float g_gyro_z_lpf = 0.0f;
 GyroYawRateDebug g_debug = {};
+
+using Clock = std::chrono::steady_clock;
+
+std::mutex g_gyro_async_mutex;
+bool g_has_gyro_sample = false;
+int g_current_generation = 0;
+int g_current_read_generation = 0;
+bool g_current_read_pending = false;
+int g_worker_count = 0;
+int g_gyro_timeout_count = 0;
+int g_gyro_discard_count = 0;
+Clock::time_point g_current_read_start_time = Clock::now();
+Clock::time_point g_last_gyro_update_time = Clock::now();
+Clock::time_point g_restart_pause_until = Clock::now();
 
 float clampf(float value, float min_value, float max_value)
 {
@@ -81,6 +109,118 @@ bool read_gyro_z_raw(int16_t *gz_raw)
     }
 
     *gz_raw = gz;
+    return true;
+}
+
+bool read_gyro_z_raw_from_device(lq_i2c_mpu6050 &device, int16_t *gz_raw)
+{
+    int16_t gx = 0;
+    int16_t gy = 0;
+    int16_t gz = 0;
+
+    if (!device.get_mpu6050_ang(&gx, &gy, &gz)) {
+        return false;
+    }
+
+    *gz_raw = gz;
+    return true;
+}
+
+int elapsed_ms(Clock::time_point start, Clock::time_point end)
+{
+    return (int)std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+}
+
+int gyro_age_ms_locked(Clock::time_point now)
+{
+    if (!g_has_gyro_sample) {
+        return kGyroNoSampleAgeMs;
+    }
+    return elapsed_ms(g_last_gyro_update_time, now);
+}
+
+void update_worker_debug_locked(Clock::time_point now)
+{
+    g_debug.gyro_age_ms = (float)gyro_age_ms_locked(now);
+    g_debug.gyro_timeout_count = g_gyro_timeout_count;
+    g_debug.gyro_worker_count = g_worker_count;
+}
+
+void publish_worker_result(int generation, bool ok, int16_t gz_raw)
+{
+    const Clock::time_point now = Clock::now();
+
+    std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
+    if (g_worker_count > 0) {
+        --g_worker_count;
+    }
+
+    // generation_id is the key to "discard this timed-out read".
+    // A worker may return long after service() has started a newer read. In that
+    // case its value is old news and must not overwrite the current gyro cache.
+    if (generation != g_current_generation) {
+        ++g_gyro_discard_count;
+        update_worker_debug_locked(now);
+        return;
+    }
+
+    g_current_read_pending = false;
+
+    if (ok) {
+        float gyro_z_dps = ((float)gz_raw - g_gyro_z_offset_raw) / kMpu6050GyroScale_2000Dps;
+        gyro_z_dps *= gyro_z_sign;
+
+        if (std::fabs(gyro_z_dps) < 0.5f) {
+            gyro_z_dps = 0.0f;
+        }
+
+        // The async worker owns the real hardware read. The control loop only
+        // consumes this filtered cache, so a slow ioctl can no longer block dir_timer.
+        g_gyro_z_lpf = 0.75f * g_gyro_z_lpf + 0.25f * gyro_z_dps;
+        g_has_gyro_sample = true;
+        g_last_gyro_update_time = now;
+
+        g_debug.gyro_z_raw = (float)gz_raw;
+        g_debug.gyro_z_dps = gyro_z_dps;
+        g_debug.gyro_z_lpf = g_gyro_z_lpf;
+    }
+
+    update_worker_debug_locked(now);
+}
+
+void gyro_read_worker(int generation)
+{
+    int16_t gz_raw = 0;
+
+    // Each worker opens its own device handle. If an old ioctl is stuck inside
+    // the driver, a new worker is not forced to wait on the same user-space object.
+    lq_i2c_mpu6050 worker_mpu;
+    const bool ok = read_gyro_z_raw_from_device(worker_mpu, &gz_raw);
+    publish_worker_result(generation, ok, gz_raw);
+}
+
+bool start_gyro_read_worker_locked(Clock::time_point now, const char *reason)
+{
+    if (g_worker_count >= kGyroMaxWorkerCount) {
+        // If the I2C driver is globally stuck, blindly creating threads every
+        // 20 ms would trade a control problem for a thread-explosion problem.
+        g_restart_pause_until = now + std::chrono::milliseconds(kGyroRestartPauseMs);
+        update_worker_debug_locked(now);
+        printf("[GYRO] worker limit reached, pause restart %dms, workers=%d, reason=%s\n",
+               kGyroRestartPauseMs, g_worker_count, reason);
+        return false;
+    }
+
+    const int generation = ++g_current_generation;
+    g_current_read_generation = generation;
+    g_current_read_pending = true;
+    g_current_read_start_time = now;
+    ++g_worker_count;
+    update_worker_debug_locked(now);
+
+    // The worker is detached by design. C++ cannot safely kill a thread blocked
+    // in ioctl, so timeout means "ignore its future result" rather than "force stop".
+    std::thread(gyro_read_worker, generation).detach();
     return true;
 }
 
@@ -150,17 +290,39 @@ void gyro_yaw_rate_control_init(void)
 
     printf("[GYRO] MPU6050 ready: gz_offset_raw=%.2f, scale=16.4 LSB/(deg/s).\n",
            g_gyro_z_offset_raw);
+
+    {
+        std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
+        g_has_gyro_sample = false;
+        g_current_generation = 0;
+        g_current_read_generation = 0;
+        g_current_read_pending = false;
+        g_worker_count = 0;
+        g_gyro_timeout_count = 0;
+        g_gyro_discard_count = 0;
+        g_restart_pause_until = Clock::now();
+
+        // Start once immediately so the first cached gyro value arrives quickly.
+        start_gyro_read_worker_locked(Clock::now(), "init");
+    }
 }
 
 void gyro_yaw_rate_control_reset(void)
 {
-    // 积分和历史误差必须清。否则停车前残留的转向量，会在下一次发车瞬间继续输出。
+    // Reset only control state. Async gyro reading keeps running in background.
     g_last_vision_error = 0.0f;
     g_rate_integral = 0.0f;
-    g_gyro_z_lpf = 0.0f;
     g_debug.target_yaw_rate_dps = 0.0f;
     g_debug.yaw_rate_error = 0.0f;
     g_debug.turn_rps = 0.0f;
+    g_debug.integral_frozen = 0;
+
+    {
+        std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
+        g_gyro_z_lpf = 0.0f;
+        g_has_gyro_sample = false;
+        update_worker_debug_locked(Clock::now());
+    }
 }
 
 bool gyro_yaw_rate_control_is_ready(void)
@@ -170,30 +332,64 @@ bool gyro_yaw_rate_control_is_ready(void)
 
 float gyro_yaw_rate_control_get_gyro_z_dps(void)
 {
-    int16_t gz_raw = 0;
-    if (!read_gyro_z_raw(&gz_raw)) {
-        // 读取失败时返回上一次滤波值，避免控制输出突然跳变。
-        return g_gyro_z_lpf;
-    }
-
-    // raw -> deg/s：先扣零偏，再除以量程比例。
-    float gyro_z_dps = ((float)gz_raw - g_gyro_z_offset_raw) / kMpu6050GyroScale_2000Dps;
-
-    // 符号修正。实车调试时，如果车头向右转但这里显示负数，就把 gyro_z_sign 改成 -1。
-    gyro_z_dps *= gyro_z_sign;
-
-    // 静止小死区：MPU6050 零偏不可能完全为 0，小于 0.5 deg/s 当作 0。
-    if (std::fabs(gyro_z_dps) < 0.5f) {
-        gyro_z_dps = 0.0f;
-    }
-
-    // 一阶低通：降低陀螺仪噪声。0.75 越大越稳但越慢，0.25 越大越灵敏但越抖。
-    g_gyro_z_lpf = 0.75f * g_gyro_z_lpf + 0.25f * gyro_z_dps;
-
-    g_debug.gyro_z_raw = (float)gz_raw;
-    g_debug.gyro_z_dps = gyro_z_dps;
-    g_debug.gyro_z_lpf = g_gyro_z_lpf;
+    // This is now a cache read. Hardware ioctl is isolated in async workers.
+    std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
+    update_worker_debug_locked(Clock::now());
     return g_gyro_z_lpf;
+}
+
+bool gyro_yaw_rate_control_gyro_is_fresh(void)
+{
+    std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
+    return gyro_age_ms_locked(Clock::now()) <= kGyroStaleFreezeMs;
+}
+
+int gyro_yaw_rate_control_gyro_age_ms(void)
+{
+    std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
+    return gyro_age_ms_locked(Clock::now());
+}
+
+void gyro_yaw_rate_control_service(void)
+{
+    if (!g_gyro_ready) {
+        return;
+    }
+
+    const Clock::time_point now = Clock::now();
+    std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
+    update_worker_debug_locked(now);
+
+    if (now < g_restart_pause_until) {
+        return;
+    }
+
+    if (g_current_read_pending && g_current_read_generation == g_current_generation) {
+        const int read_age_ms = elapsed_ms(g_current_read_start_time, now);
+        if (read_age_ms > kGyroReadTimeoutMs) {
+            ++g_gyro_timeout_count;
+            g_current_read_pending = false;
+
+            // Incrementing generation means "discard the timed-out worker".
+            // If the old worker returns later, its result cannot update cache.
+            ++g_current_generation;
+
+            printf("[GYRO] async read timeout: used=%dms limit=%dms workers=%d timeout_count=%d\n",
+                   read_age_ms,
+                   kGyroReadTimeoutMs,
+                   g_worker_count,
+                   g_gyro_timeout_count);
+
+            start_gyro_read_worker_locked(now, "timeout");
+            return;
+        }
+    }
+
+    // Normal path: one worker reads one sample and exits; watchdog starts next.
+    // If only timed-out workers remain, this starts a new current worker.
+    if (!g_current_read_pending && g_worker_count < kGyroMaxWorkerCount) {
+        start_gyro_read_worker_locked(now, "periodic");
+    }
 }
 
 float gyro_yaw_rate_control_update(float vision_error)
@@ -202,19 +398,24 @@ float gyro_yaw_rate_control_update(float vision_error)
         return 0.0f;
     }
 
-    // 外环：视觉误差 -> 目标角速度。
+    // Outer loop: vision error -> target yaw rate.
     const float target_yaw_rate = calc_target_yaw_rate(vision_error);
 
-    // 反馈：MPU6050 实际 Z 轴角速度。
+    // Feedback now comes from the async cache, not a direct MPU6050 read.
     const float actual_yaw_rate = gyro_yaw_rate_control_get_gyro_z_dps();
+    const bool gyro_fresh = gyro_yaw_rate_control_gyro_is_fresh();
 
-    // 内环误差：目标角速度 - 实际角速度。
-    // 如果符号都对，误差为正时，输出应该让车“更正向地转”。
+    // Inner loop error: target yaw rate - actual yaw rate.
     const float rate_error = target_yaw_rate - actual_yaw_rate;
 
-    // 积分项：用于处理“长期转不够”的情况。
-    // 注意积分不是越大越好。新手调车时可以先把 gyro_inner_ki 设为 0，只调 P。
-    g_rate_integral += rate_error * kControlDt;
+    // Do not switch back to visual PD when gyro data is stale. Keep the control
+    // mode continuous, but freeze I so stale data cannot grow integral error.
+    if (gyro_fresh) {
+        g_rate_integral += rate_error * kControlDt;
+        g_debug.integral_frozen = 0;
+    } else {
+        g_debug.integral_frozen = 1;
+    }
 
     const float turn_limit = std::fabs((float)gyro_turn_max_rps);
     const float inner_ki = gyro_inner_ki;
@@ -225,18 +426,18 @@ float gyro_yaw_rate_control_update(float vision_error)
         g_rate_integral = 0.0f;
     }
 
-    // 位置式 PI：输出单位直接设计成 RPS 差速修正量。
-    // turn_rps > 0 时，方向环会让 motor1 目标速度增大、motor2 目标速度减小。
+    // Position PI. Output unit is RPS differential correction.
     float turn_rps = gyro_inner_kp * rate_error + inner_ki * g_rate_integral;
 
-    // 输出符号修正。若角速度环一启用就越修越偏，先把 gyro_turn_sign 改成 -1。
+    // Output sign correction. Flip gyro_turn_sign if feedback corrects backward.
     turn_rps *= gyro_turn_sign;
 
-    // 输出限幅：保护速度环和电机，避免一次给太大的左右轮速度差。
+    // Output limit protects speed loop and motors from a large one-shot command.
     turn_rps = clampf(turn_rps, -turn_limit, turn_limit);
 
     g_debug.yaw_rate_error = rate_error;
     g_debug.turn_rps = turn_rps;
+    g_debug.gyro_age_ms = (float)gyro_yaw_rate_control_gyro_age_ms();
     return turn_rps;
 }
 
@@ -256,11 +457,15 @@ void gyro_yaw_rate_control_print_debug(int interval_count)
     }
     count = 0;
 
-    printf("[GYRO] target_loop err=%.1f target_dps=%.1f gyro_dps=%.1f rate_err=%.1f turn_rps=%.2f ready=%d\n",
+    printf("[GYRO] target_loop err=%.1f target_dps=%.1f gyro_dps=%.1f rate_err=%.1f turn_rps=%.2f ready=%d age=%.0fms timeout=%d workers=%d I_freeze=%d\n",
            g_debug.vision_error,
            g_debug.target_yaw_rate_dps,
            g_debug.gyro_z_lpf,
            g_debug.yaw_rate_error,
            g_debug.turn_rps,
-           g_gyro_ready ? 1 : 0);
+           g_gyro_ready ? 1 : 0,
+           g_debug.gyro_age_ms,
+           g_debug.gyro_timeout_count,
+           g_debug.gyro_worker_count,
+           g_debug.integral_frozen);
 }

@@ -18,6 +18,7 @@ lq_timer speed_timer;
 lq_timer dir_timer;
 lq_timer encoder_ave_timer;
 lq_timer udp_timer;
+lq_timer gyro_watchdog_timer;
 volatile  float pwm1_duty_rps=0.0f;
  volatile  float pwm2_duty_rps=0.0f;
  volatile  float latest_error = 0;
@@ -659,6 +660,12 @@ save_per_map();
     
 vofa_recv_init();
 gyro_yaw_rate_control_init();
+
+   gyro_watchdog_timer.set_seconds_ms(5, []() {
+    // lq_timer only runs lightweight scheduling here.
+    // Blocking MPU6050 ioctl is isolated in gyro read workers.
+    gyro_yaw_rate_control_service();
+    });
 
    encoder_ave_timer.set_seconds_ms(1, []() {
          encoder_sample_1ms_thread();

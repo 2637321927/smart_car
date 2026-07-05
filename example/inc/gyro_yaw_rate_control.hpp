@@ -56,13 +56,17 @@ extern volatile float gyro_turn_max_rps;
 // 调试数据。刚开始调角速度环时，一定要看中间量，不要只看车跑没跑好。
 typedef struct
 {
-    float vision_error;          // 输入的视觉误差 latest_error
-    float target_yaw_rate_dps;   // 外环输出：希望车身达到的角速度，单位 deg/s
-    float gyro_z_raw;            // MPU6050 原始 gz
-    float gyro_z_dps;            // 扣零偏、换算后的 gz，单位 deg/s
-    float gyro_z_lpf;            // 低通滤波后的 gz，真正送进内环
-    float yaw_rate_error;        // 目标角速度 - 实际角速度
-    float turn_rps;              // 内环输出：左右轮目标速度差的一半，单位 RPS
+    float vision_error;          // input latest_error
+    float target_yaw_rate_dps;   // outer loop output, deg/s
+    float gyro_z_raw;            // raw MPU6050 gz
+    float gyro_z_dps;            // zero-offset corrected gz, deg/s
+    float gyro_z_lpf;            // filtered gz used by inner loop
+    float yaw_rate_error;        // target yaw rate - actual yaw rate
+    float turn_rps;              // inner loop output, RPS differential correction
+    float gyro_age_ms;           // age of latest valid async gyro sample, ms
+    int gyro_timeout_count;      // number of timed-out async reads
+    int gyro_worker_count;       // active or stuck read workers
+    int integral_frozen;         // 1 means I update is frozen because gyro is stale
 } GyroYawRateDebug;
 
 // 初始化 MPU6050，并在车静止时标定 gz 零偏。
@@ -76,8 +80,17 @@ void gyro_yaw_rate_control_reset(void);
 // 返回 MPU6050 是否初始化并完成零偏标定。
 bool gyro_yaw_rate_control_is_ready(void);
 
-// 读一次 MPU6050 gz，返回滤波后的角速度，单位 deg/s。
+// Read filtered MPU6050 gz from async cache. This function does not touch hardware.
 float gyro_yaw_rate_control_get_gyro_z_dps(void);
+
+// Lightweight service called by lq_timer. It checks timeout and starts read workers.
+void gyro_yaw_rate_control_service(void);
+
+// True when async gyro cache is fresh enough for integral update.
+bool gyro_yaw_rate_control_gyro_is_fresh(void);
+
+// Return latest valid gyro sample age in ms. No sample returns a very large value.
+int gyro_yaw_rate_control_gyro_age_ms(void);
 
 // 核心控制函数：输入视觉误差，输出左右轮差速修正 turn_rps。
 // 最后方向环会这样使用：
