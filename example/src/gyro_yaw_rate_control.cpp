@@ -52,14 +52,13 @@ constexpr int kGyroOffsetSamples = 500;
 
 // Async gyro read policy:
 // - lq_timer calls gyro_yaw_rate_control_service() every 5 ms.
-// - Only one read worker is allowed. The MPU6050 driver can take about 100 ms
-//   on this board, so starting more workers only increases I2C pressure.
-// - Timeout is now a diagnostic mark, not a request to spawn another worker.
+// - A single persistent reader thread samples MPU6050. Creating one detached
+//   thread per sample caused large scheduling spikes when CPU usage was high.
+// - Timeout is only a diagnostic mark; the reader thread keeps running.
 // These constants are intentionally local: they are safety policy, not PID gains.
-constexpr int kGyroReadTimeoutMs = 200;
-constexpr int kGyroStaleFreezeMs = 250;
-constexpr int kGyroMaxWorkerCount = 1;
-constexpr int kGyroRestartPauseMs = 50;
+constexpr int kGyroReaderPeriodMs = 5;
+constexpr int kGyroReadTimeoutMs = 50;
+constexpr int kGyroStaleFreezeMs = 30;
 constexpr int kGyroNoSampleAgeMs = 1000000;
 
 bool g_gyro_ready = false;
@@ -73,13 +72,11 @@ using Clock = std::chrono::steady_clock;
 
 std::mutex g_gyro_async_mutex;
 bool g_has_gyro_sample = false;
-int g_current_generation = 0;
-int g_current_read_generation = 0;
 bool g_current_read_pending = false;
 bool g_current_read_timeout_reported = false;
+bool g_reader_thread_started = false;
 int g_worker_count = 0;
 int g_gyro_timeout_count = 0;
-int g_gyro_discard_count = 0;
 int g_gyro_read_sample_count = 0;
 long long g_gyro_read_sum_us = 0;
 int g_gyro_read_last_us = 0;
@@ -87,7 +84,6 @@ int g_gyro_read_min_us = 0;
 int g_gyro_read_max_us = 0;
 Clock::time_point g_current_read_start_time = Clock::now();
 Clock::time_point g_last_gyro_update_time = Clock::now();
-Clock::time_point g_restart_pause_until = Clock::now();
 
 float clampf(float value, float min_value, float max_value)
 {
@@ -163,25 +159,13 @@ void update_read_time_debug_locked(int read_us)
     g_debug.gyro_read_sample_count = g_gyro_read_sample_count;
 }
 
-void publish_worker_result(int generation, bool ok, int16_t gz_raw, int read_us)
+void publish_gyro_sample(bool ok, int16_t gz_raw, int read_us)
 {
     const Clock::time_point now = Clock::now();
 
     std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
-    if (g_worker_count > 0) {
-        --g_worker_count;
-    }
-
-    // generation_id is the key to "discard this timed-out read".
-    // A worker may return long after service() has started a newer read. In that
-    // case its value is old news and must not overwrite the current gyro cache.
-    if (generation != g_current_generation) {
-        ++g_gyro_discard_count;
-        update_worker_debug_locked(now);
-        return;
-    }
-
     g_current_read_pending = false;
+    g_worker_count = 0;
 
     if (ok) {
         update_read_time_debug_locked(read_us);
@@ -207,44 +191,44 @@ void publish_worker_result(int generation, bool ok, int16_t gz_raw, int read_us)
     update_worker_debug_locked(now);
 }
 
-void gyro_read_worker(int generation)
+void gyro_reader_thread()
 {
-    int16_t gz_raw = 0;
+    while (true) {
+        if (!g_gyro_ready || gyro_yaw_rate_feedback_enabled == 0) {
+            usleep(kGyroReaderPeriodMs * 1000);
+            continue;
+        }
 
-    // Reuse the device handle opened during init. Opening/closing
-    // /dev/lq_i2c_mpu6050 for every sample was much slower on the car and
-    // created a stream of close logs. Single-worker mode keeps access ordered.
-    const Clock::time_point read_start = Clock::now();
-    const bool ok = read_gyro_z_raw(&gz_raw);
-    const int read_us = elapsed_us(read_start, Clock::now());
-    publish_worker_result(generation, ok, gz_raw, read_us);
+        {
+            std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
+            g_current_read_pending = true;
+            g_current_read_timeout_reported = false;
+            g_current_read_start_time = Clock::now();
+            g_worker_count = 1;
+            update_worker_debug_locked(g_current_read_start_time);
+        }
+
+        int16_t gz_raw = 0;
+
+        // Reuse the device handle opened during init. One persistent thread
+        // avoids the huge scheduling jitter caused by creating a thread for
+        // every 0.2ms MPU6050 read while the vision pipeline keeps CPU busy.
+        const Clock::time_point read_start = Clock::now();
+        const bool ok = read_gyro_z_raw(&gz_raw);
+        const int read_us = elapsed_us(read_start, Clock::now());
+        publish_gyro_sample(ok, gz_raw, read_us);
+
+        usleep(kGyroReaderPeriodMs * 1000);
+    }
 }
 
-bool start_gyro_read_worker_locked(Clock::time_point now, const char *reason)
+void ensure_gyro_reader_thread_started_locked()
 {
-    if (g_worker_count >= kGyroMaxWorkerCount) {
-        // If the I2C driver is globally stuck, blindly creating threads every
-        // 20 ms would trade a control problem for a thread-explosion problem.
-        g_restart_pause_until = now + std::chrono::milliseconds(kGyroRestartPauseMs);
-        update_worker_debug_locked(now);
-        printf("[GYRO] worker limit reached, pause restart %dms, workers=%d, reason=%s\n",
-               kGyroRestartPauseMs, g_worker_count, reason);
-        return false;
+    if (g_reader_thread_started) {
+        return;
     }
-
-    const int generation = ++g_current_generation;
-    g_current_read_generation = generation;
-    g_current_read_pending = true;
-    g_current_read_timeout_reported = false;
-    g_current_read_start_time = now;
-    ++g_worker_count;
-    update_worker_debug_locked(now);
-
-    // The worker is detached by design. C++ cannot safely kill a thread blocked
-    // in ioctl. If it becomes slow, service() records timeout but does not
-    // start parallel readers that would overload the I2C driver.
-    std::thread(gyro_read_worker, generation).detach();
-    return true;
+    g_reader_thread_started = true;
+    std::thread(gyro_reader_thread).detach();
 }
 
 float calc_target_yaw_rate(float vision_error)
@@ -317,13 +301,10 @@ void gyro_yaw_rate_control_init(void)
     {
         std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
         g_has_gyro_sample = false;
-        g_current_generation = 0;
-        g_current_read_generation = 0;
         g_current_read_pending = false;
         g_current_read_timeout_reported = false;
         g_worker_count = 0;
         g_gyro_timeout_count = 0;
-        g_gyro_discard_count = 0;
         g_gyro_read_sample_count = 0;
         g_gyro_read_sum_us = 0;
         g_gyro_read_last_us = 0;
@@ -334,7 +315,6 @@ void gyro_yaw_rate_control_init(void)
         g_debug.gyro_read_avg_ms = 0.0f;
         g_debug.gyro_read_max_ms = 0.0f;
         g_debug.gyro_read_sample_count = 0;
-        g_restart_pause_until = Clock::now();
         update_worker_debug_locked(Clock::now());
 
         // Do not start async reads at boot. The default mode is visual PD
@@ -395,12 +375,9 @@ void gyro_yaw_rate_control_service(void)
     const Clock::time_point now = Clock::now();
     std::lock_guard<std::mutex> lock(g_gyro_async_mutex);
     update_worker_debug_locked(now);
+    ensure_gyro_reader_thread_started_locked();
 
-    if (now < g_restart_pause_until) {
-        return;
-    }
-
-    if (g_current_read_pending && g_current_read_generation == g_current_generation) {
+    if (g_current_read_pending) {
         const int read_age_ms = elapsed_ms(g_current_read_start_time, now);
         if (read_age_ms > kGyroReadTimeoutMs && !g_current_read_timeout_reported) {
             ++g_gyro_timeout_count;
@@ -414,12 +391,6 @@ void gyro_yaw_rate_control_service(void)
 
             return;
         }
-    }
-
-    // Normal path: one worker reads one sample and exits; watchdog starts next.
-    // Do not start a new worker while the previous one is still inside ioctl.
-    if (!g_current_read_pending && g_worker_count < kGyroMaxWorkerCount) {
-        start_gyro_read_worker_locked(now, "periodic");
     }
 }
 

@@ -70,7 +70,7 @@ typedef struct
     float gyro_read_max_ms;       // max successful read cost since init
     int gyro_read_sample_count;   // successful async read samples
     int gyro_timeout_count;      // number of timed-out async reads
-    int gyro_worker_count;       // active or stuck read workers
+    int gyro_worker_count;       // 1 means persistent gyro reader is inside a read
     int integral_frozen;         // 1 means I update is frozen because gyro is stale
 } GyroYawRateDebug;
 
@@ -88,7 +88,7 @@ bool gyro_yaw_rate_control_is_ready(void);
 // Read filtered MPU6050 gz from async cache. This function does not touch hardware.
 float gyro_yaw_rate_control_get_gyro_z_dps(void);
 
-// Lightweight service called by lq_timer. It checks timeout and starts read workers.
+// Lightweight service called by lq_timer. It starts the persistent reader and checks timeout.
 void gyro_yaw_rate_control_service(void);
 
 // True when async gyro cache is fresh enough for integral update.
