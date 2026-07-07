@@ -18,19 +18,20 @@
 volatile int gyro_yaw_rate_feedback_enabled = 0;
 
 // 外环：视觉误差 -> 目标角速度(deg/s)。
-// latest_error 大约被你限制在 -100~100，因此 kp=1.2 时，满误差目标角速度约 120 deg/s。
-volatile float gyro_outer_kp = 1.2f;
-volatile float gyro_outer_kd = 0.25f;
+// latest_error 大约被你限制在 -100~100，因此 kp=1.4 时，满误差目标角速度约 140 deg/s。
+volatile float gyro_outer_kp = 1.4f;
+volatile float gyro_outer_kd = 0.15f;
 
 // 内环：角速度误差(deg/s) -> 差速修正(RPS)。
-// 举例：实际角速度比目标少 100 deg/s，kp=0.045 会先给约 4.5 RPS 的差速修正。
-volatile float gyro_inner_kp = 0.045f;
-volatile float gyro_inner_ki = 0.015f;
+// 举例：实际角速度比目标少 100 deg/s，kp=0.055 会先给约 5.5 RPS 的差速修正。
+volatile float gyro_inner_kp = 0.055f;
+volatile float gyro_inner_ki = 0.0f;
 
 // 符号修正：
 // gyro_z_sign 修正 MPU6050 的正负方向；gyro_turn_sign 修正输出差速方向。
 // 正确时应满足：目标右转 -> 左右轮差速产生右转 -> MPU6050 反馈逐渐接近目标。
-volatile float gyro_z_sign = 1.0f;
+// 实车验证：MPU6050 安装方向下，手动左转时原始 gz 为正，因此默认取反。
+volatile float gyro_z_sign = -1.0f;
 volatile float gyro_turn_sign = 1.0f;
 
 volatile float gyro_target_max_dps = 160.0f;
