@@ -301,9 +301,11 @@ void gyro_yaw_rate_control_init(void)
         g_gyro_timeout_count = 0;
         g_gyro_discard_count = 0;
         g_restart_pause_until = Clock::now();
+        update_worker_debug_locked(Clock::now());
 
-        // Start once immediately so the first cached gyro value arrives quickly.
-        start_gyro_read_worker_locked(Clock::now(), "init");
+        // Do not start async reads at boot. The default mode is visual PD
+        // (#gyro=0), so reading MPU6050 before the user requests gyro feedback
+        // only adds I2C load and can create timeout logs during startup.
     }
 }
 
@@ -352,7 +354,7 @@ int gyro_yaw_rate_control_gyro_age_ms(void)
 
 void gyro_yaw_rate_control_service(void)
 {
-    if (!g_gyro_ready) {
+    if (!g_gyro_ready || gyro_yaw_rate_feedback_enabled == 0) {
         return;
     }
 
