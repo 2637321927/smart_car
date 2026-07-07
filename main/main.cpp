@@ -379,6 +379,8 @@ if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
 // 3. #gSign=-1;    如果手动右转时 gyro_z 正负反了，改它。
 // 4. #tSign=-1;    如果一闭环就越修越偏，改它。
 // 5. 先调 #gIP，再慢慢加 #gII。新手阶段 #gII 可以先设 0。
+// 6. #gTMax=160;   限制外环最大目标角速度，等价 #gyro_target_max_dps=160;
+// 7. #gRMax=15;    限制内环最大差速输出，等价 #gyro_turn_max_rps=15;
 if (sscanf(buf, "#gyro=%f;", &ftmp) == 1)
 {
     gyro_yaw_rate_feedback_enabled = (ftmp != 0.0f) ? 1 : 0;
@@ -412,6 +414,22 @@ if (sscanf(buf, "#gII=%f;", &ftmp) == 1)
     gyro_inner_ki = ftmp;
     gyro_yaw_rate_control_reset();
     printf("[VOFA] gyro_inner_ki = %.3f\n", gyro_inner_ki);
+}
+
+if (sscanf(buf, "#gTMax=%f;", &ftmp) == 1 ||
+    sscanf(buf, "#gyro_target_max_dps=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    gyro_target_max_dps = ftmp;
+    printf("[VOFA] gyro_target_max_dps = %.2f\n", gyro_target_max_dps);
+}
+
+if (sscanf(buf, "#gRMax=%f;", &ftmp) == 1 ||
+    sscanf(buf, "#gyro_turn_max_rps=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    gyro_turn_max_rps = ftmp;
+    printf("[VOFA] gyro_turn_max_rps = %.2f\n", gyro_turn_max_rps);
 }
 
 if (sscanf(buf, "#gSign=%f;", &ftmp) == 1)

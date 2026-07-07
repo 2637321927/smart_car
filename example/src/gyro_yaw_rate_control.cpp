@@ -13,9 +13,9 @@
 // 这些变量故意不用 const，后面可以接 VOFA 或菜单在线调参。
 // 初值给得比较保守，目的是先把闭环方向跑对，而不是一上来追求极限速度。
 
-// 默认关闭，避免没验证 gyro_z_sign / gyro_turn_sign 前直接改变实车控制。
-// 确认正负号后，用 VOFA 发送 #gyro=1; 请求启用角速度反馈。
-volatile int gyro_yaw_rate_feedback_enabled = 0;
+// 默认开启：当前实车已验证 gyro_z_sign=-1、gyro_turn_sign=1 的方向组合可用。
+// 如需临时回到原视觉 PD，用 VOFA 发送 #gyro=0;。
+volatile int gyro_yaw_rate_feedback_enabled = 1;
 
 // 外环：视觉误差 -> 目标角速度(deg/s)。
 // latest_error 大约被你限制在 -100~100，因此 kp=1.4 时，满误差目标角速度约 140 deg/s。
@@ -318,9 +318,8 @@ void gyro_yaw_rate_control_init(void)
         g_debug.gyro_read_sample_count = 0;
         update_worker_debug_locked(Clock::now());
 
-        // Do not start async reads at boot. The default mode is visual PD
-        // (#gyro=0), so reading MPU6050 before the user requests gyro feedback
-        // only adds I2C load and can create timeout logs during startup.
+        // The async reader is still started lazily by gyro_yaw_rate_control_service().
+        // Keeping startup here lightweight avoids doing extra I2C work during init.
     }
 }
 
