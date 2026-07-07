@@ -52,12 +52,13 @@ constexpr int kGyroOffsetSamples = 500;
 
 // Async gyro read policy:
 // - lq_timer calls gyro_yaw_rate_control_service() every 5 ms.
-// - A worker read should normally finish well below 20 ms.
-// - If it does not, the service invalidates that generation and starts a new one.
+// - Only one read worker is allowed. The MPU6050 driver can take about 100 ms
+//   on this board, so starting more workers only increases I2C pressure.
+// - Timeout is now a diagnostic mark, not a request to spawn another worker.
 // These constants are intentionally local: they are safety policy, not PID gains.
-constexpr int kGyroReadTimeoutMs = 20;
-constexpr int kGyroStaleFreezeMs = 30;
-constexpr int kGyroMaxWorkerCount = 3;
+constexpr int kGyroReadTimeoutMs = 120;
+constexpr int kGyroStaleFreezeMs = 150;
+constexpr int kGyroMaxWorkerCount = 1;
 constexpr int kGyroRestartPauseMs = 50;
 constexpr int kGyroNoSampleAgeMs = 1000000;
 
@@ -75,6 +76,7 @@ bool g_has_gyro_sample = false;
 int g_current_generation = 0;
 int g_current_read_generation = 0;
 bool g_current_read_pending = false;
+bool g_current_read_timeout_reported = false;
 int g_worker_count = 0;
 int g_gyro_timeout_count = 0;
 int g_gyro_discard_count = 0;
@@ -105,20 +107,6 @@ bool read_gyro_z_raw(int16_t *gz_raw)
 
     // get_mpu6050_ang 只读三轴角速度，比同时读加速度更直接。
     if (!mpu6050_device().get_mpu6050_ang(&gx, &gy, &gz)) {
-        return false;
-    }
-
-    *gz_raw = gz;
-    return true;
-}
-
-bool read_gyro_z_raw_from_device(lq_i2c_mpu6050 &device, int16_t *gz_raw)
-{
-    int16_t gx = 0;
-    int16_t gy = 0;
-    int16_t gz = 0;
-
-    if (!device.get_mpu6050_ang(&gx, &gy, &gz)) {
         return false;
     }
 
@@ -192,10 +180,10 @@ void gyro_read_worker(int generation)
 {
     int16_t gz_raw = 0;
 
-    // Each worker opens its own device handle. If an old ioctl is stuck inside
-    // the driver, a new worker is not forced to wait on the same user-space object.
-    lq_i2c_mpu6050 worker_mpu;
-    const bool ok = read_gyro_z_raw_from_device(worker_mpu, &gz_raw);
+    // Reuse the device handle opened during init. Opening/closing
+    // /dev/lq_i2c_mpu6050 for every sample was much slower on the car and
+    // created a stream of close logs. Single-worker mode keeps access ordered.
+    const bool ok = read_gyro_z_raw(&gz_raw);
     publish_worker_result(generation, ok, gz_raw);
 }
 
@@ -214,12 +202,14 @@ bool start_gyro_read_worker_locked(Clock::time_point now, const char *reason)
     const int generation = ++g_current_generation;
     g_current_read_generation = generation;
     g_current_read_pending = true;
+    g_current_read_timeout_reported = false;
     g_current_read_start_time = now;
     ++g_worker_count;
     update_worker_debug_locked(now);
 
     // The worker is detached by design. C++ cannot safely kill a thread blocked
-    // in ioctl, so timeout means "ignore its future result" rather than "force stop".
+    // in ioctl. If it becomes slow, service() records timeout but does not
+    // start parallel readers that would overload the I2C driver.
     std::thread(gyro_read_worker, generation).detach();
     return true;
 }
@@ -297,6 +287,7 @@ void gyro_yaw_rate_control_init(void)
         g_current_generation = 0;
         g_current_read_generation = 0;
         g_current_read_pending = false;
+        g_current_read_timeout_reported = false;
         g_worker_count = 0;
         g_gyro_timeout_count = 0;
         g_gyro_discard_count = 0;
@@ -368,13 +359,9 @@ void gyro_yaw_rate_control_service(void)
 
     if (g_current_read_pending && g_current_read_generation == g_current_generation) {
         const int read_age_ms = elapsed_ms(g_current_read_start_time, now);
-        if (read_age_ms > kGyroReadTimeoutMs) {
+        if (read_age_ms > kGyroReadTimeoutMs && !g_current_read_timeout_reported) {
             ++g_gyro_timeout_count;
-            g_current_read_pending = false;
-
-            // Incrementing generation means "discard the timed-out worker".
-            // If the old worker returns later, its result cannot update cache.
-            ++g_current_generation;
+            g_current_read_timeout_reported = true;
 
             printf("[GYRO] async read timeout: used=%dms limit=%dms workers=%d timeout_count=%d\n",
                    read_age_ms,
@@ -382,13 +369,12 @@ void gyro_yaw_rate_control_service(void)
                    g_worker_count,
                    g_gyro_timeout_count);
 
-            start_gyro_read_worker_locked(now, "timeout");
             return;
         }
     }
 
     // Normal path: one worker reads one sample and exits; watchdog starts next.
-    // If only timed-out workers remain, this starts a new current worker.
+    // Do not start a new worker while the previous one is still inside ioctl.
     if (!g_current_read_pending && g_worker_count < kGyroMaxWorkerCount) {
         start_gyro_read_worker_locked(now, "periodic");
     }
