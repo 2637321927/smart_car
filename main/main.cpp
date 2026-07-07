@@ -482,16 +482,46 @@ void encoder_sample_1ms_thread()
 }
 
 void udp_send(void){
-    char encoder_str[384];
+    char encoder_str[512];
+    const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
 
-snprintf(encoder_str, sizeof(encoder_str),
-         "{\"encoder1_speed_avg\":%.2f,\"encoder2_speed_avg\":%.2f,\"latest_error\":%.2f,\"ex_rps1\":%.2f,\"ex_rps2\":%.2f,\"current_pwm1\":%d,\"current_pwm2\":%d,\"P1_motor\":%.2f,\"P2_motor\":%.2f,\"I\":%.2f,\"D1_motor\":%.2f,\"D2_motor\":%.2f,\"spd_slow_ratio\":%d}",
-         safe_float(encoder1_speed_avg), safe_float(encoder2_speed_avg), safe_float(latest_error), safe_float(pwm1_duty_rps), safe_float(pwm2_duty_rps),  current_pwm1/100, current_pwm2/100, safe_float(P1_motor),    // 🔥 关键：修复这四个非法值
-         safe_float(P2_motor),    
-         safe_float(I),
-         safe_float(I1_motor),    
-         safe_float(I2_motor),
-         spd_slow_ratio);
+    snprintf(encoder_str, sizeof(encoder_str),
+             "{"
+             "\"encoder1_speed_avg\":%.2f,"
+             "\"encoder2_speed_avg\":%.2f,"
+             "\"latest_error\":%.2f,"
+             "\"ex_rps1\":%.2f,"
+             "\"ex_rps2\":%.2f,"
+             "\"current_pwm1\":%d,"
+             "\"current_pwm2\":%d,"
+             "\"P1_motor\":%.2f,"
+             "\"P2_motor\":%.2f,"
+             "\"I\":%.2f,"
+             "\"D1_motor\":%.2f,"
+             "\"D2_motor\":%.2f,"
+             "\"spd_slow_ratio\":%d,"
+             "\"gyro_target_dps\":%.2f,"
+             "\"gyro_dps\":%.2f,"
+             "\"gyro_timeout\":%d,"
+             "\"gyro_read_ms\":%.2f"
+             "}",
+             safe_float(encoder1_speed_avg),
+             safe_float(encoder2_speed_avg),
+             safe_float(latest_error),
+             safe_float(pwm1_duty_rps),
+             safe_float(pwm2_duty_rps),
+             current_pwm1/100,
+             current_pwm2/100,
+             safe_float(P1_motor),    // 修复非法浮点值，避免 JSON 被 nan/inf 破坏。
+             safe_float(P2_motor),
+             safe_float(I),
+             safe_float(I1_motor),
+             safe_float(I2_motor),
+             spd_slow_ratio,
+             safe_float(gyro_debug.target_yaw_rate_dps),
+             safe_float(gyro_debug.gyro_z_lpf),
+             gyro_debug.gyro_timeout_count,
+             safe_float(gyro_debug.gyro_read_last_ms));
 
 // 发送函数
 
@@ -688,7 +718,7 @@ gyro_yaw_rate_control_init();
      }
     });
 
-     udp_timer.set_seconds_ms(10, []() {
+     udp_timer.set_seconds_ms(12, []() {
     udp_send();
 
     });
