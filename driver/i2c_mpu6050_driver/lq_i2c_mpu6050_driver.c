@@ -1,6 +1,27 @@
 #include "lq_drv_common.h"
 #include "lq_i2c_read_write_drv.h"
 #include "lq_mpu6050_drv.h" 
+#include <linux/ktime.h>
+
+#define MPU6050_IOCTL_WARN_US          (10000LL)
+#define MPU6050_IOCTL_LOG_INTERVAL_NS  (1000000000LL)
+
+static void mpu6050_log_slow_ioctl(const char *cmd_name, s64 start_ns, s64 end_ns)
+{
+    static s64 last_log_ns;
+    s64 used_us = (end_ns - start_ns) / 1000;
+
+    if (used_us < MPU6050_IOCTL_WARN_US) {
+        return;
+    }
+    if (last_log_ns != 0 && end_ns - last_log_ns < MPU6050_IOCTL_LOG_INTERVAL_NS) {
+        return;
+    }
+
+    last_log_ns = end_ns;
+    printk(KERN_WARNING "%s: slow ioctl %s used=%lld us\n",
+           DEVICE_NAME, cmd_name, (long long)used_us);
+}
 
 /*************************************** 全局变量定义 **************************************/
 struct i2c_client    *main_client;  // 创建一个全局的 iic 客户端设备结构体
@@ -169,10 +190,14 @@ long i2c_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
                 return -EFAULT;
             break;
         case I2C_GET_MPU6050_ANG:  // 获取MPU6050的角速度值
-            mpu6050_get_gyro_data(dev, &data[0], &data[1], &data[2]);
-            if (copy_to_user((int16_t*)arg, data, sizeof(data[0]) * 3))
-                return -EFAULT;
-            break;
+            {
+                s64 start_ns = ktime_get_ns();
+                mpu6050_get_gyro_data(dev, &data[0], &data[1], &data[2]);
+                if (copy_to_user((int16_t*)arg, data, sizeof(data[0]) * 3))
+                    return -EFAULT;
+                mpu6050_log_slow_ioctl("I2C_GET_MPU6050_ANG", start_ns, ktime_get_ns());
+                break;
+            }
         case I2C_GET_MPU6050_ACC:  // 获取MPU6050的加速度值
             mpu6050_get_accelerometer(dev, &data[0], &data[1], &data[2]);
             if (copy_to_user((int16_t*)arg, data, sizeof(data[0]) * 3))

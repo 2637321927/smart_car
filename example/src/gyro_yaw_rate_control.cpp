@@ -56,8 +56,8 @@ constexpr int kGyroOffsetSamples = 500;
 //   on this board, so starting more workers only increases I2C pressure.
 // - Timeout is now a diagnostic mark, not a request to spawn another worker.
 // These constants are intentionally local: they are safety policy, not PID gains.
-constexpr int kGyroReadTimeoutMs = 120;
-constexpr int kGyroStaleFreezeMs = 150;
+constexpr int kGyroReadTimeoutMs = 200;
+constexpr int kGyroStaleFreezeMs = 250;
 constexpr int kGyroMaxWorkerCount = 1;
 constexpr int kGyroRestartPauseMs = 50;
 constexpr int kGyroNoSampleAgeMs = 1000000;
@@ -80,6 +80,11 @@ bool g_current_read_timeout_reported = false;
 int g_worker_count = 0;
 int g_gyro_timeout_count = 0;
 int g_gyro_discard_count = 0;
+int g_gyro_read_sample_count = 0;
+long long g_gyro_read_sum_us = 0;
+int g_gyro_read_last_us = 0;
+int g_gyro_read_min_us = 0;
+int g_gyro_read_max_us = 0;
 Clock::time_point g_current_read_start_time = Clock::now();
 Clock::time_point g_last_gyro_update_time = Clock::now();
 Clock::time_point g_restart_pause_until = Clock::now();
@@ -119,6 +124,11 @@ int elapsed_ms(Clock::time_point start, Clock::time_point end)
     return (int)std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 }
 
+int elapsed_us(Clock::time_point start, Clock::time_point end)
+{
+    return (int)std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+}
+
 int gyro_age_ms_locked(Clock::time_point now)
 {
     if (!g_has_gyro_sample) {
@@ -134,7 +144,26 @@ void update_worker_debug_locked(Clock::time_point now)
     g_debug.gyro_worker_count = g_worker_count;
 }
 
-void publish_worker_result(int generation, bool ok, int16_t gz_raw)
+void update_read_time_debug_locked(int read_us)
+{
+    g_gyro_read_last_us = read_us;
+    ++g_gyro_read_sample_count;
+    g_gyro_read_sum_us += read_us;
+    if (g_gyro_read_sample_count == 1 || read_us < g_gyro_read_min_us) {
+        g_gyro_read_min_us = read_us;
+    }
+    if (read_us > g_gyro_read_max_us) {
+        g_gyro_read_max_us = read_us;
+    }
+
+    g_debug.gyro_read_last_ms = read_us / 1000.0f;
+    g_debug.gyro_read_min_ms = g_gyro_read_min_us / 1000.0f;
+    g_debug.gyro_read_avg_ms = (g_gyro_read_sum_us / (float)g_gyro_read_sample_count) / 1000.0f;
+    g_debug.gyro_read_max_ms = g_gyro_read_max_us / 1000.0f;
+    g_debug.gyro_read_sample_count = g_gyro_read_sample_count;
+}
+
+void publish_worker_result(int generation, bool ok, int16_t gz_raw, int read_us)
 {
     const Clock::time_point now = Clock::now();
 
@@ -155,6 +184,8 @@ void publish_worker_result(int generation, bool ok, int16_t gz_raw)
     g_current_read_pending = false;
 
     if (ok) {
+        update_read_time_debug_locked(read_us);
+
         float gyro_z_dps = ((float)gz_raw - g_gyro_z_offset_raw) / kMpu6050GyroScale_2000Dps;
         gyro_z_dps *= gyro_z_sign;
 
@@ -183,8 +214,10 @@ void gyro_read_worker(int generation)
     // Reuse the device handle opened during init. Opening/closing
     // /dev/lq_i2c_mpu6050 for every sample was much slower on the car and
     // created a stream of close logs. Single-worker mode keeps access ordered.
+    const Clock::time_point read_start = Clock::now();
     const bool ok = read_gyro_z_raw(&gz_raw);
-    publish_worker_result(generation, ok, gz_raw);
+    const int read_us = elapsed_us(read_start, Clock::now());
+    publish_worker_result(generation, ok, gz_raw, read_us);
 }
 
 bool start_gyro_read_worker_locked(Clock::time_point now, const char *reason)
@@ -291,6 +324,16 @@ void gyro_yaw_rate_control_init(void)
         g_worker_count = 0;
         g_gyro_timeout_count = 0;
         g_gyro_discard_count = 0;
+        g_gyro_read_sample_count = 0;
+        g_gyro_read_sum_us = 0;
+        g_gyro_read_last_us = 0;
+        g_gyro_read_min_us = 0;
+        g_gyro_read_max_us = 0;
+        g_debug.gyro_read_last_ms = 0.0f;
+        g_debug.gyro_read_min_ms = 0.0f;
+        g_debug.gyro_read_avg_ms = 0.0f;
+        g_debug.gyro_read_max_ms = 0.0f;
+        g_debug.gyro_read_sample_count = 0;
         g_restart_pause_until = Clock::now();
         update_worker_debug_locked(Clock::now());
 
@@ -445,7 +488,7 @@ void gyro_yaw_rate_control_print_debug(int interval_count)
     }
     count = 0;
 
-    printf("[GYRO] target_loop err=%.1f target_dps=%.1f gyro_dps=%.1f rate_err=%.1f turn_rps=%.2f ready=%d age=%.0fms timeout=%d workers=%d I_freeze=%d\n",
+    printf("[GYRO] target_loop err=%.1f target_dps=%.1f gyro_dps=%.1f rate_err=%.1f turn_rps=%.2f ready=%d age=%.0fms read=%.1f/%.1f/%.1f/%.1fms n=%d timeout=%d workers=%d I_freeze=%d\n",
            g_debug.vision_error,
            g_debug.target_yaw_rate_dps,
            g_debug.gyro_z_lpf,
@@ -453,6 +496,11 @@ void gyro_yaw_rate_control_print_debug(int interval_count)
            g_debug.turn_rps,
            g_gyro_ready ? 1 : 0,
            g_debug.gyro_age_ms,
+           g_debug.gyro_read_last_ms,
+           g_debug.gyro_read_min_ms,
+           g_debug.gyro_read_avg_ms,
+           g_debug.gyro_read_max_ms,
+           g_debug.gyro_read_sample_count,
            g_debug.gyro_timeout_count,
            g_debug.gyro_worker_count,
            g_debug.integral_frozen);

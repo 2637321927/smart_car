@@ -1,6 +1,39 @@
 #include "lq_timer.hpp"
 #include "lq_assert.hpp"
 
+namespace
+{
+std::mutex g_timeout_log_mutex;
+uint64_t g_timeout_total_count = 0;
+uint64_t g_timeout_max_used_ns = 0;
+std::chrono::steady_clock::time_point g_timeout_last_log_time = std::chrono::steady_clock::now();
+
+void log_timer_timeout_throttled(uint64_t used_ns, uint64_t target_ns)
+{
+    const auto now = std::chrono::steady_clock::now();
+    std::lock_guard<std::mutex> lock(g_timeout_log_mutex);
+
+    ++g_timeout_total_count;
+    if (used_ns > g_timeout_max_used_ns) {
+        g_timeout_max_used_ns = used_ns;
+    }
+
+    const int elapsed_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(
+        now - g_timeout_last_log_time).count();
+    if (g_timeout_total_count == 1 || elapsed_ms >= 1000) {
+        // Timer callbacks run in realtime-ish threads. Printing every timeout
+        // can make the timeout worse, so keep one summary per second.
+        lq_log_warn("Timeout summary! Used: %llu ns, Max: %llu ns, Target: %llu ns, Total: %llu",
+                    (unsigned long long)used_ns,
+                    (unsigned long long)g_timeout_max_used_ns,
+                    (unsigned long long)target_ns,
+                    (unsigned long long)g_timeout_total_count);
+        g_timeout_last_log_time = now;
+        g_timeout_max_used_ns = 0;
+    }
+}
+} // namespace
+
 /********************************************************************************
  * @brief   定时器无参构造函数.
  * @param   none.
@@ -179,7 +212,7 @@ void lq_timer::timer_handler_thread()
         // 超时则警告, 每超则补时长
         if (used_ns > interval_ns)
         {
-            lq_log_warn("Timeout! Used: %llu ns, Target: %llu ns", used_ns, interval_ns);
+            log_timer_timeout_throttled(used_ns, interval_ns);
         } else {
             this->timer_sleep_ns(interval_ns - used_ns);
         }

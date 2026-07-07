@@ -1,4 +1,26 @@
 #include "lq_i2c_read_write_drv.h"
+#include <linux/ktime.h>
+
+#define MPU6050_I2C_WARN_US          (10000LL)
+#define MPU6050_I2C_LOG_INTERVAL_NS  (1000000000LL)
+
+static void mpu6050_log_slow_i2c_transfer(const char *op, u8 reg, int len,
+                                          int ret, s64 start_ns, s64 end_ns)
+{
+    static s64 last_log_ns;
+    s64 used_us = (end_ns - start_ns) / 1000;
+
+    if (used_us < MPU6050_I2C_WARN_US) {
+        return;
+    }
+    if (last_log_ns != 0 && end_ns - last_log_ns < MPU6050_I2C_LOG_INTERVAL_NS) {
+        return;
+    }
+
+    last_log_ns = end_ns;
+    printk(KERN_WARNING "%s: slow i2c_transfer op=%s reg=0x%02x len=%d ret=%d used=%lld us\n",
+           DEVICE_NAME, op, reg, len, ret, (long long)used_us);
+}
 
 /********************************************************************************
  * @brief   从寄存器读取数据
@@ -16,6 +38,8 @@ int i2c_read_regs(struct ls_i2c_dev *dev, u8 reg, void *val, int len)
     struct i2c_msg msg[2];
     // 表示一个连接到 I2C 总线上的客户端设备
     struct i2c_client *cli = (struct i2c_client*)dev->client;
+    s64 start_ns;
+    s64 end_ns;
     // 配置第一个消息(写消息)
     msg[0].addr = cli->addr;// cli 指向的 I2C 设备的地址
     msg[0].flags = 0;       // 消息标志位，表示一个写操作
@@ -27,7 +51,10 @@ int i2c_read_regs(struct ls_i2c_dev *dev, u8 reg, void *val, int len)
     msg[1].buf = val;       // 消息缓冲区指向 val
     msg[1].len = len;       // 消息长度为 len，即要从寄存器读取的字节数
     // 在 I2C 总线上进行数据传输
+    start_ns = ktime_get_ns();
     ret = i2c_transfer(cli->adapter, msg, 2);
+    end_ns = ktime_get_ns();
+    mpu6050_log_slow_i2c_transfer("read", reg, len, ret, start_ns, end_ns);
     if (ret == 2)
         ret = 0;
     else

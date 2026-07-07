@@ -64,6 +64,11 @@ typedef struct
     float yaw_rate_error;        // target yaw rate - actual yaw rate
     float turn_rps;              // inner loop output, RPS differential correction
     float gyro_age_ms;           // age of latest valid async gyro sample, ms
+    float gyro_read_last_ms;      // latest get_mpu6050_ang() cost
+    float gyro_read_min_ms;       // min successful read cost since init
+    float gyro_read_avg_ms;       // average successful read cost since init
+    float gyro_read_max_ms;       // max successful read cost since init
+    int gyro_read_sample_count;   // successful async read samples
     int gyro_timeout_count;      // number of timed-out async reads
     int gyro_worker_count;       // active or stuck read workers
     int integral_frozen;         // 1 means I update is frozen because gyro is stale

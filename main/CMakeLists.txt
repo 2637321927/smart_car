@@ -71,3 +71,20 @@ target_link_libraries(main PUBLIC
     ${OPENCV_LDFLAGS}
     # ${FFMPEG_LDFLAGS}
 )
+
+# Minimal user-space MPU6050 ioctl benchmark.
+# It avoids OpenCV/ncnn and only measures get_mpu6050_ang() latency.
+add_executable(gyro_read_benchmark
+    ${PROJECT_SOURCE_DIR}/../tools/gyro_read_benchmark.cpp
+    ${PROJECT_SOURCE_DIR}/../libraries/app/gyro/lq_i2c_mpu6050.cpp
+    ${PROJECT_SOURCE_DIR}/../libraries/common/src/lq_i2c_dev.cpp
+)
+
+target_include_directories(gyro_read_benchmark PRIVATE
+    ${PROJECT_SOURCE_DIR}/../libraries/app/gyro
+    ${PROJECT_SOURCE_DIR}/../libraries/common/inc
+)
+
+target_link_libraries(gyro_read_benchmark PUBLIC
+    pthread
+)
