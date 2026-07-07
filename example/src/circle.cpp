@@ -41,7 +41,7 @@ bool circle_entry_is_blocked()
 
     if (std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown&&std::chrono::steady_clock::now() - last_cross_time >= kCircleOUTCooldown) {
         circle_enter_cooldown = false;
-        std::cout<<"not circle"<<std::endl;
+        std::cout << "not circle\n";
         return false;
     }
 
@@ -161,7 +161,7 @@ void check_circle() {
         if(Lpt0_rpts0s_id<rpts0s_num*0.4){
         circle_type = CIRCLE_LEFT_BEGIN;
         start_circle_enter_cooldown();
-        std::cout << "begin" << std::endl;
+        std::cout << "begin\n";
         }
     }
 }
@@ -442,7 +442,7 @@ void find_corners() {
 void check_cross() {
     bool Xfound = Lpt0_found && Lpt1_found;
     if (cross_type == CROSS_NONE && Xfound) {cross_type = CROSS_BEGIN;
-        std::cout<<"cross"<<std::endl;
+        std::cout << "cross\n";
     }
 }
 
@@ -464,7 +464,7 @@ void run_cross() {
         //近角点过少，进入远线控制
         if ((Xfound && (Lpt0_rpts0s_id < 0.03 / sample_dist || Lpt1_rpts1s_id < 0.03 / sample_dist))|| (rpts1_num <10 && rpts0_num<10)) {
             cross_type = CROSS_IN;
-            std::cout<<"in"<<std::endl;
+            std::cout << "in\n";
             cross_encoder = current_encoder;
         }
     }

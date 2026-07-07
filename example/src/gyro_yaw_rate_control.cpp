@@ -57,8 +57,8 @@ constexpr int kGyroOffsetSamples = 500;
 // - Timeout is only a diagnostic mark; the reader thread keeps running.
 // These constants are intentionally local: they are safety policy, not PID gains.
 constexpr int kGyroReaderPeriodMs = 5;
-constexpr int kGyroReadTimeoutMs = 50;
-constexpr int kGyroStaleFreezeMs = 30;
+constexpr int kGyroReadTimeoutMs = 100;
+constexpr int kGyroStaleFreezeMs = 60;
 constexpr int kGyroNoSampleAgeMs = 1000000;
 
 bool g_gyro_ready = false;

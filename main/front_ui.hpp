@@ -1,7 +1,7 @@
 #ifndef __FRONT_UI_HPP
 #define __FRONT_UI_HPP
 #include <chrono>
-// 初始化车载前端：TFT18 屏幕、三颗实体按键、默认停车状态。
+// 初始化车载前端：三颗实体按键始终保留，TFT18 屏幕由 tft_UI_switch 控制。
 void front_ui_init();
 
 // 在主循环中反复调用，用来扫描按键并刷新屏幕。
@@ -15,6 +15,7 @@ bool front_ui_is_running();
 extern int selected_strategy;
 extern bool car_running;
 extern bool ui_ready;
+extern volatile int tft_UI_switch;
 // 当前选中的速度策略目标值，单位 rps。
 int front_ui_selected_speed();
 extern volatile float AIM;

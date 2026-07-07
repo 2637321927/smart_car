@@ -90,7 +90,7 @@ void PID_control_test(float error)
         control_mode = "GYRO_RATE";
         control_reason = "mpu6050_feedback";
         diffrential = gyro_yaw_rate_control_update(error);
-        gyro_yaw_rate_control_print_debug(50); // 8ms * 50 ~= 400ms 打印一次
+        gyro_yaw_rate_control_print_debug(100); // 8ms * 100 ~= 800ms 打印一次
     } else {
         if (gyro_feedback_requested && !gyro_feedback_ready) {
             control_mode = "VISUAL_PD_FALLBACK";

@@ -9,6 +9,7 @@
 int selected_strategy = 1;
 bool car_running = false;
 bool ui_ready = false;
+volatile int tft_UI_switch = 0;
 std::chrono::steady_clock::time_point last_start_time;
 namespace {
 
@@ -59,6 +60,7 @@ ButtonState next_state;
 ButtonState start_stop_state;
 std::chrono::steady_clock::time_point last_refresh =
     std::chrono::steady_clock::now() - kRefreshTime;
+bool tft_ready = false;
 
 bool is_pressed(ls_gpio &key)
 {
@@ -111,7 +113,7 @@ void start_car()
     car_running = true;
     gyro_yaw_rate_control_reset();
     apply_speed_strategy();
-    std::cout<<"run"<<std::endl;
+    std::cout << "run\n";
 
     last_start_time = std::chrono::steady_clock::now();
 
@@ -120,12 +122,20 @@ void start_car()
 
 void draw_line(uint8_t row, const char *text, lq_display_color_t color)
 {
+    if (!tft_ready) {
+        return;
+    }
+
     // TFT18 的 p8x16 字符坐标按字符格计算，row=0/1/2... 每行 16 像素高。
     lq_tft18_drv_p8x16_str(0, row, text, color, U16BLACK);
 }
 
 void draw_ui()
 {
+    if (tft_UI_switch == 0 || !tft_ready) {
+        return;
+    }
+
     char line[24] = {0};
     const lq_display_color_t state_color = car_running ? U16GREEN : U16RED;
 
@@ -176,11 +186,18 @@ void select_next_strategy()
 
 void front_ui_init()
 {
-    // 0 表示 TFT18 横屏初始化；启动后先停车，等 K2 发车。
-    lq_tft18_drv_init(0);
     stop_car();
     ui_ready = true;
-    draw_ui();
+
+    // 按键功能必须保留；这里只根据开关决定是否启用 TFT 显示。
+    if (tft_UI_switch != 0) {
+        // 0 表示 TFT18 横屏初始化；启动后先停车，等 K2 发车。
+        lq_tft18_drv_init(0);
+        tft_ready = true;
+        draw_ui();
+    } else {
+        tft_ready = false;
+    }
 }
 
 void front_ui_poll()
@@ -195,7 +212,7 @@ void front_ui_poll()
     if (pressed_edge(key_prev, prev_state)) {
         drive_by_toggle_enable();
         dirty = true;
-        std::cout<<"drive_by_enable:"<<drive_by_is_enabled()<<std::endl;
+        std::cout << "drive_by_enable:" << drive_by_is_enabled() << '\n';
     }
 
     // K1：下一个速度策略。

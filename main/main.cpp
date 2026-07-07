@@ -445,8 +445,10 @@ if (sscanf(buf, "#is_udp_img=%f;", &ftmp) == 1)
 // 全局变量，保存原来的终端模式
 void encoder_sample_1ms_thread()
 {
-    static float buf1[3] = {0};
-    static float buf2[3] = {0};
+    // 当前由 2ms 定时器调用。两点滑动平均能降低采样线程压力，
+    // 同时避免 2ms 周期下继续用三点平均造成速度反馈过慢。
+    static float buf1[2] = {0};
+    static float buf2[2] = {0};
     static int idx = 0;
     static float sum1 = 0.0f;
     static float sum2 = 0.0f;
@@ -469,13 +471,13 @@ void encoder_sample_1ms_thread()
         sum2 += buf2[idx];
 
         // 移动索引
-        idx = (idx + 1) % 3;
+        idx = (idx + 1) % 2;
 
         // 计算平均
-        encoder1_speed_avg = sum1 / 3.0f;
-        encoder2_speed_avg = sum2 / 3.0f;
+        encoder1_speed_avg = sum1 / 2.0f;
+        encoder2_speed_avg = sum2 / 2.0f;
 
-        //usleep(1000);  // 1ms 采样周期
+        //usleep(2000);  // 2ms 采样周期
    // }
 }
 
@@ -667,7 +669,7 @@ gyro_yaw_rate_control_init();
     gyro_yaw_rate_control_service();
     });
 
-   encoder_ave_timer.set_seconds_ms(1, []() {
+   encoder_ave_timer.set_seconds_ms(2, []() {
          encoder_sample_1ms_thread();
 
         //encoder1_speed_avg = -enc1.encoder_get_count();
@@ -712,7 +714,7 @@ while (1)
          if (has_input()) {
             char c = getchar();
             if (c == 'q') {
-                std::cout<<"caonima"<<std::endl;
+                std::cout << "quit requested\n";
                 cut();
                  while (getchar() != EOF); 
                 break;
@@ -1073,8 +1075,8 @@ printf("process=%3d ms |corner=%3d ms| warp=%3d ms | udp=%3d ms | total=%3d ms\n
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
 }
 
-     std::cout<<"caonissma"<<std::endl;
+     std::cout << "restore terminal\n";
      reset_terminal(); // 必须恢复终端！
-     std::cout<<"caonimssa"<<std::endl;
+     std::cout << "exit done\n";
     return 0;
 }
