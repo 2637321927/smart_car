@@ -6,6 +6,18 @@
 #define MPU6050_IOCTL_WARN_US          (10000LL)
 #define MPU6050_IOCTL_LOG_INTERVAL_NS  (1000000000LL)
 
+/*
+ * 默认关闭运行中的 500ms 设备自检。
+ *
+ * 原逻辑会周期性读取 WHO_AM_I，确认 MPU6050 还在总线上；但小车运行时
+ * 角速度环本身已经高频读取陀螺仪，再额外自检会抢同一条 I2C 总线。
+ * 目前自检失败后也没有可靠的行驶级恢复策略，甚至可能触发重新初始化，
+ * 所以先禁用它，用于验证偶发读超时是否明显减少。
+ *
+ * 如果后续确实需要恢复自检，把这里改成 1 即可。
+ */
+#define MPU6050_ENABLE_CYCLE_DETECTION 0
+
 static void mpu6050_log_slow_ioctl(const char *cmd_name, s64 start_ns, s64 end_ns)
 {
     static s64 last_log_ns;
@@ -28,6 +40,9 @@ struct i2c_client    *main_client;  // 创建一个全局的 iic 客户端设备
 struct ls_cycle_data  all_timer;    // 定义循环检测设备所需定时器结构
 
 static bool is_init = true;         // 设备是否初始化标志位
+#if MPU6050_ENABLE_CYCLE_DETECTION
+static bool cycle_detection_started = false; // 只在启用周期自检时用于安全释放 timer/workqueue
+#endif
 
 /***************************** 文件操作指针集 -- 提供给上层接口 *****************************/
 static const struct file_operations i2c_ops = {
@@ -263,9 +278,13 @@ int i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
     int ret;                    // 存储各种操作的返回值
     struct ls_i2c_dev *ls_i2c;  // 创建一个自定义结构体
+#if MPU6050_ENABLE_CYCLE_DETECTION
     struct ls_cycle_data *data; // 创建一个定时器结构体，用于周期性检测设备状态
+#endif
     main_client = client;       // 将传入的client参数保存到全局变量main_client中
+#if MPU6050_ENABLE_CYCLE_DETECTION
     data = &all_timer;          // 将定时器结构体的指针保存到data中
+#endif
 
     // devm_kzalloc 是一个内存分配函数，会给 client->dev 分配内存，并初始化为 0
     ls_i2c = devm_kzalloc(&client->dev, sizeof(*ls_i2c), GFP_KERNEL);
@@ -307,6 +326,7 @@ int i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
     i2c_set_clientdata(client, ls_i2c);
     // 保存 I2C 适配器指针
     ls_i2c->adapter = client->adapter;
+#if MPU6050_ENABLE_CYCLE_DETECTION
     // 开启定时器
     {
         data->wq = create_workqueue("mpu6050_cycle_wq");
@@ -321,11 +341,17 @@ int i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
         timer_setup(&data->cycle_detection, cycle_detection_timer_callback, 0);         // 初始化定时器，设置回调函数为 cycle_detection_timer_callback
         data->cycle_detection.expires = jiffies + msecs_to_jiffies(DETECT_INTERVAL_MS); // 设置定时器的超时时间，使其在设定的毫秒数后触发
         add_timer(&data->cycle_detection);                                              // 添加定时器，使其在设定的时间后执行回调函数
+        cycle_detection_started = true;
     }
+#else
+    printk("%s: cycle detection disabled, runtime WHO_AM_I polling skipped\n", DEVICE_NAME);
+#endif
     // 打印调试信息，表示设备探测和初始化成功
     printk("%s: module probe function success!\n", DEVICE_NAME);
     return 0;
+#if MPU6050_ENABLE_CYCLE_DETECTION
 destory_device: device_destroy(ls_i2c->class, ls_i2c->dev_id);          // 注销设备节点
+#endif
 destroy_class:  class_destroy(ls_i2c->class);                           // 注销之前创建的设备类
 del_cdev:       cdev_del(&ls_i2c->cdev);                                // 从内核的字符设备管理系统中删除指定的字符设备
 del_unregister: unregister_chrdev_region(ls_i2c->dev_id, DEVICE_CNT);   // 注销之前分配的字符设备编号
@@ -340,16 +366,21 @@ del_unregister: unregister_chrdev_region(ls_i2c->dev_id, DEVICE_CNT);   // 注�
  ********************************************************************************/
 int i2c_remove(struct i2c_client *c)
 {
+#if MPU6050_ENABLE_CYCLE_DETECTION
     struct ls_cycle_data *data = &all_timer;                // 获取定时器结构体的指针
+#endif
     struct ls_i2c_dev *ls_i2c = i2c_get_clientdata(c);      // 获取与 i2c_client 结构体关联的设备私有数据
-    if (data) {
+#if MPU6050_ENABLE_CYCLE_DETECTION
+    if (cycle_detection_started) {
         del_timer(&data->cycle_detection);                  // 停止定时器，避免继续提交工作
+        cycle_detection_started = false;
     }
     if (data->wq) {
         flush_workqueue(data->wq);                          // 等待工作队列无工作
         destroy_workqueue(data->wq);                        // 销毁工作队列，释放相关资源
         data->wq = NULL;
     }
+#endif
     device_destroy(ls_i2c->class, ls_i2c->dev_id);          // 注销之前创建的设备节点
     class_destroy(ls_i2c->class);                           // 用于销毁之前创建的设备类
     cdev_del(&ls_i2c->cdev);                                // 从内核的字符设备管理系统中删除指定的字符设备
