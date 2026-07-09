@@ -19,12 +19,12 @@ volatile int gyro_yaw_rate_feedback_enabled = 1;
 
 // 外环：视觉误差 -> 目标角速度(deg/s)。
 // latest_error 大约被你限制在 -100~100，因此 kp=1.4 时，满误差目标角速度约 140 deg/s。
-volatile float gyro_outer_kp = 1.4f;
-volatile float gyro_outer_kd = 0.15f;
+volatile float gyro_outer_kp = 3.2f;
+volatile float gyro_outer_kd = 1.52f;
 
 // 内环：角速度误差(deg/s) -> 差速修正(RPS)。
 // 举例：实际角速度比目标少 100 deg/s，kp=0.055 会先给约 5.5 RPS 的差速修正。
-volatile float gyro_inner_kp = 0.055f;
+volatile float gyro_inner_kp = 0.22f;
 volatile float gyro_inner_ki = 0.0f;
 
 // 符号修正：
@@ -34,8 +34,8 @@ volatile float gyro_inner_ki = 0.0f;
 volatile float gyro_z_sign = -1.0f;
 volatile float gyro_turn_sign = 1.0f;
 
-volatile float gyro_target_max_dps = 160.0f;
-volatile float gyro_turn_max_rps = 15.0f;
+volatile float gyro_target_max_dps = 220.0f;
+volatile float gyro_turn_max_rps = 20.0f;
 
 namespace
 {

@@ -839,7 +839,7 @@ img0.height = cam.get_camera_height();
 img0.step=frame.step;
         // 开始处理摄像头图像
 if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&&car_running==1){
-
+/*
     for (int y = 160; y <= 180; y++) {    // 车前方区域
         for (int x = 115; x <=125; x++) { // 画面中间，不贴左右边
         if (check_is_zebra(&img_raw, x, y, thres)) {
@@ -859,6 +859,7 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
         }
     }
 }
+*/
 }
         process_image();    // 边线提取&处理
         auto t1 = high_resolution_clock::now();
