@@ -404,8 +404,14 @@ float gyro_yaw_rate_control_update(float vision_error)
     const float target_yaw_rate = calc_target_yaw_rate(vision_error);
 
     // Feedback now comes from the async cache, not a direct MPU6050 read.
-    const float actual_yaw_rate = gyro_yaw_rate_control_get_gyro_z_dps();
+    const float cached_yaw_rate = gyro_yaw_rate_control_get_gyro_z_dps();
     const bool gyro_fresh = gyro_yaw_rate_control_gyro_is_fresh();
+
+    // If a hardware read is stuck, the cache may be old for hundreds of ms.
+    // Do not use that stale value as feedback P input, or the car can keep
+    // correcting for a turn that has already ended. We keep driving by using
+    // the vision-generated target as an open-loop request until gyro recovers.
+    const float actual_yaw_rate = gyro_fresh ? cached_yaw_rate : 0.0f;
 
     // Inner loop error: target yaw rate - actual yaw rate.
     const float rate_error = target_yaw_rate - actual_yaw_rate;

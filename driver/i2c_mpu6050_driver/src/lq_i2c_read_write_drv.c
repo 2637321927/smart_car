@@ -55,12 +55,15 @@ int i2c_read_regs(struct ls_i2c_dev *dev, u8 reg, void *val, int len)
     ret = i2c_transfer(cli->adapter, msg, 2);
     end_ns = ktime_get_ns();
     mpu6050_log_slow_i2c_transfer("read", reg, len, ret, start_ns, end_ns);
-    if (ret == 2)
+    if (ret == 2) {
         ret = 0;
-    else
-    {
+    } else {
         printk("i2c read error. ret = %d, reg = %06x, len = %d\r\n", ret, reg, len);
-        ret = -EREMOTEIO;
+        // Preserve kernel errors such as -ETIMEDOUT(-110). User space needs
+        // to know the read really failed instead of treating zeroed data as new.
+        if (ret >= 0) {
+            ret = -EREMOTEIO;
+        }
     }
     return ret;
 }

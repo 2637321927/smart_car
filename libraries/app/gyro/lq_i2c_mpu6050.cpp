@@ -70,6 +70,12 @@ bool lq_i2c_mpu6050::get_mpu6050_ang(int16_t *gx, int16_t *gy, int16_t *gz)
         lq_log_error("get_mpu6050_ang failed");
         return false;
     }
+    if (ang[0] == 0 && ang[1] == 0 && ang[2] == 0)
+    {
+        // The old kernel module copied zeroed data even after an I2C failure.
+        // A real MPU6050 raw gyro sample is very unlikely to be exactly all zero.
+        return false;
+    }
     *gx = ang[0];
     *gy = ang[1];
     *gz = ang[2];

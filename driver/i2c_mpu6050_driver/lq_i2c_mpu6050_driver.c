@@ -206,11 +206,14 @@ long i2c_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
             break;
         case I2C_GET_MPU6050_ANG:  // 获取MPU6050的角速度值
             {
+                int ret;
                 s64 start_ns = ktime_get_ns();
-                mpu6050_get_gyro_data(dev, &data[0], &data[1], &data[2]);
+                ret = mpu6050_get_gyro_data(dev, &data[0], &data[1], &data[2]);
+                mpu6050_log_slow_ioctl("I2C_GET_MPU6050_ANG", start_ns, ktime_get_ns());
+                if (ret != 0)
+                    return ret;
                 if (copy_to_user((int16_t*)arg, data, sizeof(data[0]) * 3))
                     return -EFAULT;
-                mpu6050_log_slow_ioctl("I2C_GET_MPU6050_ANG", start_ns, ktime_get_ns());
                 break;
             }
         case I2C_GET_MPU6050_ACC:  // 获取MPU6050的加速度值

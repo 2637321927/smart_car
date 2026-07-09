@@ -7,6 +7,10 @@
 #include "drive_by.hpp"  // 目标板触发后的固定动作脚本
 #include "gyro_yaw_rate_control.hpp"  // MPU6050 角速度环 demo
 #include <chrono>
+#include <fcntl.h>
+#include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 using namespace std::chrono;
 volatile float AIM =0.40;
 int item_flag=1;
@@ -222,6 +226,37 @@ static struct termios old_tio;
 float safe_float(float val) {
     return (isnan(val) || isinf(val)) ? 0.0f : val;
 }
+
+namespace {
+constexpr const char *kGyroI2cAdapterDev = "/dev/i2c-1";
+constexpr int kGyroI2cTimeout10msUnits = 2; // I2C_TIMEOUT uses 10 ms units.
+constexpr int kGyroI2cRetries = 0;
+
+void configure_gyro_i2c_adapter_timeout()
+{
+    int fd = open(kGyroI2cAdapterDev, O_RDWR);
+    if (fd < 0) {
+        printf("[I2C] skip adapter timeout tuning: open %s failed\n", kGyroI2cAdapterDev);
+        return;
+    }
+
+    // This does not slow SCL down. It only asks the Linux I2C adapter to give
+    // up a bad transfer sooner, so one MPU6050 fault is less likely to cost 2s.
+    if (ioctl(fd, I2C_RETRIES, kGyroI2cRetries) < 0) {
+        printf("[I2C] set retries failed, keep system default\n");
+    }
+    if (ioctl(fd, I2C_TIMEOUT, kGyroI2cTimeout10msUnits) < 0) {
+        printf("[I2C] set timeout failed, keep system default\n");
+    } else {
+        printf("[I2C] %s timeout set to about %dms, retries=%d\n",
+               kGyroI2cAdapterDev,
+               kGyroI2cTimeout10msUnits * 10,
+               kGyroI2cRetries);
+    }
+
+    close(fd);
+}
+} // namespace
 
 void handle_exit(int sig)
 {
@@ -709,6 +744,7 @@ save_per_map();
     printf("模型加载成功!\n\n");
     
 vofa_recv_init();
+configure_gyro_i2c_adapter_timeout();
 gyro_yaw_rate_control_init();
 
    gyro_watchdog_timer.set_seconds_ms(5, []() {

@@ -4,14 +4,46 @@
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
+#include <fcntl.h>
+#include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 namespace
 {
+constexpr const char *kGyroI2cAdapterDev = "/dev/i2c-1";
+constexpr int kGyroI2cTimeout10msUnits = 2;
+constexpr int kGyroI2cRetries = 0;
+
 long long elapsed_us(std::chrono::steady_clock::time_point start,
                      std::chrono::steady_clock::time_point end)
 {
     return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+}
+
+void configure_gyro_i2c_adapter_timeout()
+{
+    int fd = open(kGyroI2cAdapterDev, O_RDWR);
+    if (fd < 0) {
+        printf("[GYRO_BENCH] skip adapter timeout tuning: open %s failed\n", kGyroI2cAdapterDev);
+        return;
+    }
+
+    // Keep benchmark behavior consistent with main: bad I2C transfers should
+    // fail quickly instead of blocking near the default 2s adapter timeout.
+    if (ioctl(fd, I2C_RETRIES, kGyroI2cRetries) < 0) {
+        printf("[GYRO_BENCH] set retries failed, keep system default\n");
+    }
+    if (ioctl(fd, I2C_TIMEOUT, kGyroI2cTimeout10msUnits) < 0) {
+        printf("[GYRO_BENCH] set timeout failed, keep system default\n");
+    } else {
+        printf("[GYRO_BENCH] %s timeout set to about %dms, retries=%d\n",
+               kGyroI2cAdapterDev,
+               kGyroI2cTimeout10msUnits * 10,
+               kGyroI2cRetries);
+    }
+
+    close(fd);
 }
 } // namespace
 
@@ -32,6 +64,8 @@ int main(int argc, char **argv)
     if (sleep_us_between_reads < 0) {
         sleep_us_between_reads = 0;
     }
+
+    configure_gyro_i2c_adapter_timeout();
 
     lq_i2c_mpu6050 mpu6050;
     const uint8_t id = mpu6050.get_mpu6050_id();
