@@ -535,8 +535,10 @@ void encoder_sample_1ms_thread()
 }
 
 void udp_send(void){
-    char encoder_str[512];
+    char encoder_str[640];
     const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
+    lq_timer_timeout_snapshot timeout_debug = {};
+    lq_timer_timeout_get_snapshot(&timeout_debug);
 
     snprintf(encoder_str, sizeof(encoder_str),
              "{"
@@ -556,7 +558,11 @@ void udp_send(void){
              "\"gyro_target_dps\":%.2f,"
              "\"gyro_dps\":%.2f,"
              "\"gyro_timeout\":%d,"
-             "\"gyro_read_ms\":%.2f"
+             "\"gyro_read_ms\":%.2f,"
+             "\"to_id\":%d,"
+             "\"to_used\":%.2f,"
+             "\"to_target\":%.2f,"
+             "\"to_total\":%llu"
              "}",
              safe_float(encoder1_speed_avg),
              safe_float(encoder2_speed_avg),
@@ -574,7 +580,11 @@ void udp_send(void){
              safe_float(gyro_debug.target_yaw_rate_dps),
              safe_float(gyro_debug.gyro_z_lpf),
              gyro_debug.gyro_timeout_count,
-             safe_float(gyro_debug.gyro_read_last_ms));
+             safe_float(gyro_debug.gyro_read_last_ms),
+             timeout_debug.id,
+             safe_float(timeout_debug.used_ms),
+             safe_float(timeout_debug.target_ms),
+             (unsigned long long)timeout_debug.total);
 
 // 发送函数
 
@@ -746,6 +756,12 @@ save_per_map();
 vofa_recv_init();
 configure_gyro_i2c_adapter_timeout();
 gyro_yaw_rate_control_init();
+
+   gyro_watchdog_timer.set_debug_info(1, "陀螺仪服务");
+   encoder_ave_timer.set_debug_info(2, "编码器");
+   speed_timer.set_debug_info(3, "速度环");
+   udp_timer.set_debug_info(4, "UDP");
+   dir_timer.set_debug_info(5, "方向环");
 
    gyro_watchdog_timer.set_seconds_ms(5, []() {
     // lq_timer only runs lightweight scheduling here.

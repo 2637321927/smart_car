@@ -15,22 +15,25 @@ void print_direction_control_status(const char *mode,
                                     float base_rps,
                                     float differential_rps)
 {
-    static int count = 0;
-    if (++count < 50) {
+    static const char *last_mode = nullptr;
+    static const char *last_reason = nullptr;
+
+    if (last_mode == mode && last_reason == reason) {
         return;
     }
-    count = 0;
 
-    printf("[DIR] mode=%s reason=%s gyro_request=%d gyro_ready=%d err=%.2f base_rps=%.2f diff_rps=%.2f target1=%.2f target2=%.2f\n",
+    printf("[方向环] 模式切换: %s -> %s 原因=%s gyro_request=%d gyro_ready=%d err=%.2f base=%.2f diff=%.2f\n",
+           last_mode ? last_mode : "INIT",
            mode,
            reason,
            gyro_yaw_rate_feedback_enabled ? 1 : 0,
            gyro_yaw_rate_control_is_ready() ? 1 : 0,
            vision_error,
            base_rps,
-           differential_rps,
-           pwm1_duty_rps,
-           pwm2_duty_rps);
+           differential_rps);
+
+    last_mode = mode;
+    last_reason = reason;
 }
 } // namespace
 /********************************************************************************
@@ -90,7 +93,6 @@ void PID_control_test(float error)
         control_mode = "GYRO_RATE";
         control_reason = "mpu6050_feedback";
         diffrential = gyro_yaw_rate_control_update(error);
-        gyro_yaw_rate_control_print_debug(100); // 8ms * 100 ~= 800ms 打印一次
     } else {
         if (gyro_feedback_requested && !gyro_feedback_ready) {
             control_mode = "VISUAL_PD_FALLBACK";

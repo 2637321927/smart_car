@@ -5,34 +5,79 @@ namespace
 {
 std::mutex g_timeout_log_mutex;
 uint64_t g_timeout_total_count = 0;
-uint64_t g_timeout_max_used_ns = 0;
+int g_timeout_last_id = 0;
+uint64_t g_timeout_last_used_ns = 0;
+uint64_t g_timeout_last_target_ns = 0;
 std::chrono::steady_clock::time_point g_timeout_last_log_time = std::chrono::steady_clock::now();
+std::chrono::steady_clock::time_point g_timeout_start_time = std::chrono::steady_clock::now();
 
-void log_timer_timeout_throttled(uint64_t used_ns, uint64_t target_ns)
+float ns_to_ms(uint64_t ns)
 {
-    const auto now = std::chrono::steady_clock::now();
-    std::lock_guard<std::mutex> lock(g_timeout_log_mutex);
+    return ns / 1000000.0f;
+}
 
-    ++g_timeout_total_count;
-    if (used_ns > g_timeout_max_used_ns) {
-        g_timeout_max_used_ns = used_ns;
-    }
-
-    const int elapsed_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(
-        now - g_timeout_last_log_time).count();
-    if (g_timeout_total_count == 1 || elapsed_ms >= 1000) {
-        // Timer callbacks run in realtime-ish threads. Printing every timeout
-        // can make the timeout worse, so keep one summary per second.
-        lq_log_warn("Timeout summary! Used: %llu ns, Max: %llu ns, Target: %llu ns, Total: %llu",
-                    (unsigned long long)used_ns,
-                    (unsigned long long)g_timeout_max_used_ns,
-                    (unsigned long long)target_ns,
-                    (unsigned long long)g_timeout_total_count);
-        g_timeout_last_log_time = now;
-        g_timeout_max_used_ns = 0;
-    }
+uint64_t elapsed_ms_since_start(std::chrono::steady_clock::time_point now)
+{
+    return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+        now - g_timeout_start_time).count();
 }
 } // namespace
+
+void lq_timer_timeout_report(int id, const char *name_cn, uint64_t used_ns, uint64_t target_ns)
+{
+    if (name_cn == nullptr) {
+        name_cn = "unknown";
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    uint64_t total = 0;
+    bool should_log = false;
+
+    {
+        std::lock_guard<std::mutex> lock(g_timeout_log_mutex);
+
+        ++g_timeout_total_count;
+        g_timeout_last_id = id;
+        g_timeout_last_used_ns = used_ns;
+        g_timeout_last_target_ns = target_ns;
+        total = g_timeout_total_count;
+
+        const int elapsed_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - g_timeout_last_log_time).count();
+        if (g_timeout_total_count == 1 || elapsed_ms >= 1000) {
+            // Timer callbacks run in realtime-ish threads. Printing every timeout
+            // can make the timeout worse, so keep one summary per second.
+            g_timeout_last_log_time = now;
+            should_log = true;
+        }
+    }
+
+    if (should_log) {
+        const uint64_t over_ns = used_ns > target_ns ? used_ns - target_ns : 0;
+        lq_log_warn("[超时] 时间=%llums 来源=%s(id=%d) 实际=%.2fms 目标=%.2fms 超出=%.2fms 累计=%llu",
+                    (unsigned long long)elapsed_ms_since_start(now),
+                    name_cn,
+                    id,
+                    ns_to_ms(used_ns),
+                    ns_to_ms(target_ns),
+                    ns_to_ms(over_ns),
+                    (unsigned long long)total);
+    }
+}
+
+void lq_timer_timeout_get_snapshot(lq_timer_timeout_snapshot *snapshot)
+{
+    if (snapshot == nullptr) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(g_timeout_log_mutex);
+
+    snapshot->id = g_timeout_last_id;
+    snapshot->total = g_timeout_total_count;
+    snapshot->used_ms = ns_to_ms(g_timeout_last_used_ns);
+    snapshot->target_ms = ns_to_ms(g_timeout_last_target_ns);
+}
 
 /********************************************************************************
  * @brief   定时器无参构造函数.
@@ -41,7 +86,7 @@ void log_timer_timeout_throttled(uint64_t used_ns, uint64_t target_ns)
  * @example lq_timer timer;
  * @note    none.
  ********************************************************************************/
-lq_timer::lq_timer() : is_running_(false), target_ns_(0), callback_(nullptr), thread_running_(true), timer_thread_(&lq_timer::timer_handler_thread, this)
+lq_timer::lq_timer() : thread_running_(true), is_running_(false), target_ns_(0), callback_(nullptr), debug_id_(0), debug_name_cn_("unknown"), timer_thread_(&lq_timer::timer_handler_thread, this)
 {
 }
 
@@ -135,6 +180,13 @@ bool lq_timer::is_running() const
     return this->is_running_;
 }
 
+void lq_timer::set_debug_info(int id, const char *name_cn)
+{
+    std::lock_guard<std::mutex> lock(this->mutex_);
+    this->debug_id_ = id;
+    this->debug_name_cn_ = name_cn ? name_cn : "unknown";
+}
+
 /********************************************************************************
  * @brief   更新定时器配置.
  * @param   _ns : 定时器间隔.
@@ -193,6 +245,8 @@ void lq_timer::timer_handler_thread()
         // 读取配置并解锁
         const uint64_t interval_ns    = this->target_ns_;
         const timer_callback callback = this->callback_;    // 拷贝回调, 避免锁持有过久
+        const int debug_id = this->debug_id_;
+        const char *debug_name_cn = this->debug_name_cn_;
         lock.unlock();
 
         // 开始时间获取
@@ -200,7 +254,7 @@ void lq_timer::timer_handler_thread()
 
         // 执行回调函数
         try {
-            this->callback_();
+            callback();
         } catch (...) {
             lq_log_error("Callback execption!");
         }
@@ -212,7 +266,7 @@ void lq_timer::timer_handler_thread()
         // 超时则警告, 每超则补时长
         if (used_ns > interval_ns)
         {
-            log_timer_timeout_throttled(used_ns, interval_ns);
+            lq_timer_timeout_report(debug_id, debug_name_cn, used_ns, interval_ns);
         } else {
             this->timer_sleep_ns(interval_ns - used_ns);
         }

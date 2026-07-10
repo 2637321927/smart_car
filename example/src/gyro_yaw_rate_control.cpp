@@ -1,5 +1,6 @@
 #include "gyro_yaw_rate_control.hpp"
 #include "lq_all_demo.hpp"
+#include "lq_timer.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -383,11 +384,10 @@ void gyro_yaw_rate_control_service(void)
             ++g_gyro_timeout_count;
             g_current_read_timeout_reported = true;
 
-            printf("[GYRO] async read timeout: used=%dms limit=%dms workers=%d timeout_count=%d\n",
-                   read_age_ms,
-                   kGyroReadTimeoutMs,
-                   g_worker_count,
-                   g_gyro_timeout_count);
+            lq_timer_timeout_report(6,
+                                    "陀螺仪读取",
+                                    (uint64_t)read_age_ms * 1000000ULL,
+                                    (uint64_t)kGyroReadTimeoutMs * 1000000ULL);
 
             return;
         }
@@ -456,29 +456,5 @@ const GyroYawRateDebug &gyro_yaw_rate_control_get_debug(void)
 
 void gyro_yaw_rate_control_print_debug(int interval_count)
 {
-    static int count = 0;
-    if (interval_count <= 0) {
-        return;
-    }
-    if (++count < interval_count) {
-        return;
-    }
-    count = 0;
-
-    printf("[GYRO] target_loop err=%.1f target_dps=%.1f gyro_dps=%.1f rate_err=%.1f turn_rps=%.2f ready=%d age=%.0fms read=%.1f/%.1f/%.1f/%.1fms n=%d timeout=%d workers=%d I_freeze=%d\n",
-           g_debug.vision_error,
-           g_debug.target_yaw_rate_dps,
-           g_debug.gyro_z_lpf,
-           g_debug.yaw_rate_error,
-           g_debug.turn_rps,
-           g_gyro_ready ? 1 : 0,
-           g_debug.gyro_age_ms,
-           g_debug.gyro_read_last_ms,
-           g_debug.gyro_read_min_ms,
-           g_debug.gyro_read_avg_ms,
-           g_debug.gyro_read_max_ms,
-           g_debug.gyro_read_sample_count,
-           g_debug.gyro_timeout_count,
-           g_debug.gyro_worker_count,
-           g_debug.integral_frozen);
+    (void)interval_count;
 }

@@ -17,6 +17,17 @@
 // 定义回调函数类型(兼容无参数/无返回值的函数、lambda、绑定函数)
 using timer_callback = std::function<void()>;
 
+struct lq_timer_timeout_snapshot
+{
+    int id;
+    uint64_t total;
+    float used_ms;
+    float target_ms;
+};
+
+void lq_timer_timeout_report(int id, const char *name_cn, uint64_t used_ns, uint64_t target_ns);
+void lq_timer_timeout_get_snapshot(lq_timer_timeout_snapshot *snapshot);
+
 /****************************************************************************************************
  * @brief   类定义
  ****************************************************************************************************/
@@ -36,6 +47,8 @@ public:
     bool stop();                // 停止定时器
     bool is_running() const;    // 定时器是否正在运行
 
+    void set_debug_info(int id, const char *name_cn);
+
 private:
     bool timer_update(uint64_t _ns, const timer_callback& _cb); // 定时器更新函数
     void timer_handler_thread();                                // 定时器处理线程函数
@@ -48,6 +61,8 @@ private:
     bool                    is_running_;        // 定时器运行状态
     uint64_t                target_ns_;         // 定时器定时周期(纳秒)
     timer_callback          callback_;          // 回调函数
+    int                     debug_id_;
+    const char             *debug_name_cn_;
     std::thread             timer_thread_;      // 工作线程
 };
 
