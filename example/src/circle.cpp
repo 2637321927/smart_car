@@ -1,6 +1,7 @@
 #include "circle.hpp"
 #include "img.hpp"
 #include "odometry.hpp"
+#include "lq_all_demo.hpp"
 #include <algorithm>
 #include<cmath>
 #include <chrono>
