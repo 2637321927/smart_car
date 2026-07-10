@@ -428,7 +428,7 @@ void find_corners() {
         if (conf > 15. / 180. * PI && 0.1 / sample_dist <i < 0.4 / sample_dist) is_straight0 = false;
         if ( Lpt0_found == true && is_straight0 == false) break;
     }
-    for (int i = rpts1s_num*0.15; i < rpts1s_num*0.8; i++) {
+    for (int i = rpts1s_num*0.15; i < rpts1s_num*0.5; i++) {
         if (rpts1an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
@@ -481,6 +481,8 @@ void run_cross() {
     float Lpt1y = rpts1s[Lpt1_rpts1s_id][1];
     //检测到十字，先按照近线走
     if (cross_type == CROSS_BEGIN) {
+        track_type = midd;  // 强制走中线，防止继承环岛状态的单侧贴线
+
         if (Lpt0_found) {
             rptsc0_num = rpts0s_num = Lpt0_rpts0s_id;
         }
