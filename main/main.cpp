@@ -70,9 +70,9 @@ float filter_error(float new_error)
     return filtered;
 }
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82 ,17000, 0);
-ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0); 
-ls_gpio polar_pwm2(PIN_21, GPIO_MODE_OUT);
+ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0); //2026/7/9teset
 ls_gpio polar_pwm1(PIN_22, GPIO_MODE_OUT);
+ls_gpio polar_pwm2(PIN_21, GPIO_MODE_OUT);//2026/7/9teset
 ls_encoder_pwm enc2(ENC_PWM0_PIN64, PIN_72);
 ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
  volatile float set_speed_of_motor1_rps=0.0f;
