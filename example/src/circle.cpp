@@ -1,5 +1,6 @@
 #include "circle.hpp"
 #include "img.hpp"
+#include "odometry.hpp"
 #include <algorithm>
 #include<cmath>
 #include <chrono>
@@ -157,9 +158,18 @@ void check_circle() {
     }
 
     // 非圆环模式下，单边L角点, 单边长直道
+    // 左环：左L角点 + 右直道
     if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found) {
         if(Lpt0_rpts0s_id<rpts0s_num*0.4){
         circle_type = CIRCLE_LEFT_BEGIN;
+        start_circle_enter_cooldown();
+        std::cout << "begin" << std::endl;
+        }
+    }
+    // 右环：右L角点 + 左直道
+    else if (circle_type == CIRCLE_NONE && Lpt1_found && !Lpt0_found) {
+        if(Lpt1_rpts1s_id<rpts1s_num*0.4){
+        circle_type = CIRCLE_RIGHT_BEGIN;
         start_circle_enter_cooldown();
         std::cout << "begin" << std::endl;
         }
@@ -199,6 +209,7 @@ void run_circle() {
                 none_right_line = 0;
                 have_right_line = 0;
                 circle_encoder = 0;
+                odometry_reset();  // 进入环岛行驶态，开始累计里程
             }
         }
     //todo：改成先丢线后有线感觉可以
@@ -210,6 +221,22 @@ void run_circle() {
     //正常巡线，寻外圆右线
     else if (circle_type == CIRCLE_LEFT_RUNNING) {
         track_type = TRACK_RIGHT;
+
+        // ===== 编码器里程累计 + 出环判断 =====
+        {
+            static auto last_odom_time = std::chrono::steady_clock::now();
+            auto now = std::chrono::steady_clock::now();
+            float dt = std::chrono::duration<float>(now - last_odom_time).count();
+            last_odom_time = now;
+
+            float avg_rps = (fabs(encoder1_speed_avg) + fabs(encoder2_speed_avg)) / 2.0f;
+            odometry_update(avg_rps, dt);
+
+            if (odometry_get_distance() > CIRCLE_EXIT_DISTANCE_M) {
+                circle_type = CIRCLE_LEFT_OUT;
+            }
+        }
+        // ===================================
 
         if (Lpt1_found) rpts1s_num = rptsc1_num = Lpt1_rpts1s_id;
         //外环拐点(右L点)
@@ -276,6 +303,7 @@ void run_circle() {
                 none_left_line = 0;
                 have_left_line = 0;
                 circle_encoder = 0;
+                odometry_reset();  // 进入环岛行驶态，开始累计里程
             }
         }
         //编码器打表过1/4圆   应修正为左线为转弯无拐点
@@ -286,6 +314,22 @@ void run_circle() {
     //正常巡线，寻外圆左线
     else if (circle_type == CIRCLE_RIGHT_RUNNING) {
         track_type = TRACK_LEFT;
+
+        // ===== 编码器里程累计 + 出环判断 =====
+        {
+            static auto last_odom_time = std::chrono::steady_clock::now();
+            auto now = std::chrono::steady_clock::now();
+            float dt = std::chrono::duration<float>(now - last_odom_time).count();
+            last_odom_time = now;
+
+            float avg_rps = (fabs(encoder1_speed_avg) + fabs(encoder2_speed_avg)) / 2.0f;
+            odometry_update(avg_rps, dt);
+
+            if (odometry_get_distance() > CIRCLE_EXIT_DISTANCE_M) {
+                circle_type = CIRCLE_RIGHT_OUT;
+            }
+        }
+        // ===================================
 
         //外环存在拐点,可再加拐点距离判据(左L点)s
         if (Lpt0_found) rpts0s_num = rptsc0_num = Lpt0_rpts0s_id;
