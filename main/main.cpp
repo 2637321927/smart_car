@@ -122,10 +122,10 @@ float mapy[IMG_H][IMG_W];
 int thres = 100;            // 固定二值化阈值（判断黑线/背景）
 int block_size = 7;         // 自适应阈值的窗口大小
 int clip_value = 2;         // 自适应阈值减去的偏移量
-int track_min_y = 65;   // 越小 → 巡得越远
-int track_max_y = 170;  // 越大 → 巡到最底部
-int begin_x = 5;           // 巡线起始点 水平偏移
-int begin_y = 170;  
+int track_min_y = 86;   // ԽС �� Ѳ��ԽԶ
+int track_max_y = 180;  // Խ�� �� Ѳ����ײ�
+int begin_x = 40;           // Ѳ����ʼ�� ˮƽƫ��
+int begin_y = 180;          // Ѳ����ʼ�� ��ֱλ�ã��������ף�
 int end_y=100;        // 巡线起始点 垂直位置（靠近车底）
 int line_blur_kernel = 5;   // 边线滤波平滑程度7-5
 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
