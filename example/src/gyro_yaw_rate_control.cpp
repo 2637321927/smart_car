@@ -37,7 +37,7 @@ volatile float gyro_inner_ki = 0.0f;
 volatile float gyro_z_sign = -1.0f;
 volatile float gyro_turn_sign = 1.0f;
 
-volatile float gyro_target_max_dps = 220.0f;
+volatile float gyro_target_max_dps = 360.0f;
 volatile float gyro_turn_max_rps = 20.0f;
 
 namespace
