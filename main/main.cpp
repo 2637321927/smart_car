@@ -416,6 +416,12 @@ if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
 // 5. 先调 #gIP，再慢慢加 #gII。新手阶段 #gII 可以先设 0。
 // 6. #gTMax=160;   限制外环最大目标角速度，等价 #gyro_target_max_dps=160;
 // 7. #gRMax=15;    限制内环最大差速输出，等价 #gyro_turn_max_rps=15;
+if (sscanf(buf, "#run=%f;", &ftmp) == 1)
+{
+    front_ui_set_running(ftmp != 0.0f);
+    printf("[VOFA] run = %d\n", front_ui_is_running() ? 1 : 0);
+}
+
 if (sscanf(buf, "#gyro=%f;", &ftmp) == 1)
 {
     gyro_yaw_rate_feedback_enabled = (ftmp != 0.0f) ? 1 : 0;
@@ -424,6 +430,26 @@ if (sscanf(buf, "#gyro=%f;", &ftmp) == 1)
            gyro_yaw_rate_feedback_enabled,
            gyro_yaw_rate_control_is_ready() ? 1 : 0,
            gyro_yaw_rate_feedback_enabled ? "GYRO_RATE" : "VISUAL_PD");
+}
+
+if (sscanf(buf, "#gDbg=%f;", &ftmp) == 1)
+{
+    gyro_manual_target_enabled = (ftmp != 0.0f) ? 1 : 0;
+    if (gyro_manual_target_enabled) {
+        gyro_yaw_rate_feedback_enabled = 1;
+    }
+    gyro_yaw_rate_control_reset();
+    printf("[VOFA] gyro_manual_target_enabled = %d, target = %.2f dps, gyro = %d\n",
+           gyro_manual_target_enabled,
+           gyro_manual_target_dps,
+           gyro_yaw_rate_feedback_enabled);
+}
+
+if (sscanf(buf, "#gTar=%f;", &ftmp) == 1)
+{
+    gyro_manual_target_dps = ftmp;
+    gyro_yaw_rate_control_reset();
+    printf("[VOFA] gyro_manual_target_dps = %.2f\n", gyro_manual_target_dps);
 }
 
 if (sscanf(buf, "#gOP=%f;", &ftmp) == 1)

@@ -7,6 +7,10 @@ void front_ui_init();
 // 在主循环中反复调用，用来扫描按键并刷新屏幕。
 void front_ui_poll();
 
+void front_ui_start();
+void front_ui_stop();
+void front_ui_set_running(bool running);
+
 // 停车保持：定时器在停车状态下调用，持续把目标速度和 PWM 清零。
 void front_ui_hold_stop();
 

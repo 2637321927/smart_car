@@ -17,6 +17,8 @@
 // 默认开启：当前实车已验证 gyro_z_sign=-1、gyro_turn_sign=1 的方向组合可用。
 // 如需临时回到原视觉 PD，用 VOFA 发送 #gyro=0;。
 volatile int gyro_yaw_rate_feedback_enabled = 1;
+volatile int gyro_manual_target_enabled = 0;
+volatile float gyro_manual_target_dps = 0.0f;
 
 // 外环：视觉误差 -> 目标角速度(deg/s)。
 // latest_error 大约被你限制在 -100~100，因此 kp=1.4 时，满误差目标角速度约 140 deg/s。
@@ -246,6 +248,16 @@ float calc_target_yaw_rate(float vision_error)
     // 3. 外环 PD：
     //    P：偏得越多，目标角速度越大。
     //    D：误差变化越快，提前给一点角速度需求，减少滞后。
+    const float target_limit = std::fabs((float)gyro_target_max_dps);
+    if (gyro_manual_target_enabled != 0) {
+        const float target_yaw_rate = clampf((float)gyro_manual_target_dps,
+                                             -target_limit,
+                                             target_limit);
+        g_debug.vision_error = vision_error;
+        g_debug.target_yaw_rate_dps = target_yaw_rate;
+        return target_yaw_rate;
+    }
+
     const float outer_kp = gyro_outer_kp;
     const float outer_kd = gyro_outer_kd;
     const float d_error = vision_error - g_last_vision_error;
@@ -253,7 +265,6 @@ float calc_target_yaw_rate(float vision_error)
     g_last_vision_error = vision_error;
 
     // 4. 目标角速度限幅：这里限制的是“想转多快”，不是电机输出。
-    const float target_limit = std::fabs((float)gyro_target_max_dps);
     target_yaw_rate = clampf(target_yaw_rate, -target_limit, target_limit);
 
     g_debug.vision_error = vision_error;

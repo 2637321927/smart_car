@@ -27,6 +27,11 @@
 //   mode=VISUAL_PD_FALLBACK   请求打开，但 MPU6050 没 ready，自动回退旧视觉 PD
 extern volatile int gyro_yaw_rate_feedback_enabled;
 
+// 手动目标角速度调试模式，默认关闭。
+// 关闭时不改变正常视觉外环；开启时 target_yaw_rate 直接使用 gyro_manual_target_dps。
+extern volatile int gyro_manual_target_enabled;
+extern volatile float gyro_manual_target_dps;
+
 // 外环参数：视觉误差 -> 目标角速度。
 // 单位直觉：gyro_outer_kp 越大，同样的视觉 error 会要求车转得越快。
 // gyro_outer_kd 用于抑制误差变化太快造成的滞后，但太大容易抖。

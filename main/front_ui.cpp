@@ -223,11 +223,7 @@ void front_ui_poll()
 
     // K2：一键发车/停车。
     if (pressed_edge(key_start_stop, start_stop_state)) {
-        if (car_running) {
-            stop_car();
-        } else {
-            start_car();
-        }
+        front_ui_set_running(!car_running);
         dirty = true;
     }
 
@@ -242,6 +238,29 @@ void front_ui_poll()
 bool front_ui_is_running()
 {
     return car_running;
+}
+
+void front_ui_start()
+{
+    start_car();
+}
+
+void front_ui_stop()
+{
+    stop_car();
+}
+
+void front_ui_set_running(bool running)
+{
+    if (running && car_running) {
+        return;
+    }
+
+    if (running) {
+        front_ui_start();
+    } else {
+        front_ui_stop();
+    }
 }
 
 void front_ui_hold_stop()
