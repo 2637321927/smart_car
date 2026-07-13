@@ -70,7 +70,7 @@ float calculate_diffrential(float error,float expect_error)//给我误差值，�
 void PID_control_test(float error)
 {
     const float max_error=100;
-    const float dead_error=2;
+    const float dead_error=10;
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
     if((error<dead_error)&&(error>-dead_error)) error=0;
