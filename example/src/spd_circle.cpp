@@ -1,9 +1,9 @@
 #include "lq_all_demo.hpp"
 
-volatile float P = 1284.0f;
+volatile float P = 300.0f;
 //volatile float I = 80.0f;old static premeter
-volatile float I = 80.0f;
-volatile float D = 2.0f;
+volatile float I = 100.0f;
+volatile float D = 0.0f;
 volatile int current_pwm1 = 0;
 volatile int current_pwm2 = 0;
 
