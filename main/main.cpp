@@ -921,7 +921,7 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
         aim_distance = AIM;
 
         // 单侧线少，切换巡线方向  切外向圆
- if(g_avoid_state==AV_NORMAL){
+ if(g_avoid_state==AV_NORMAL&&cross_type!=CROSS_IN){
         if (rpts0s_num < rpts1s_num / 2 && rpts0s_num < 60) {
             track_type = TRACK_RIGHT;
         } else if (rpts1s_num < rpts0s_num / 2 && rpts1s_num < 60) {

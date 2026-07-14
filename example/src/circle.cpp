@@ -34,7 +34,14 @@ bool circle_enter_cooldown = false;
 std::chrono::steady_clock::time_point last_circle_enter_time;
 std::chrono::steady_clock::time_point last_cross_time;
 
-
+// 判断一条线 0.8m 内是否无显著拐角（即长直道）
+static bool is_line_straight(float an[], int num) {
+    if (num < 10) return false;
+    int check_n = (int)MIN(num, (int)(0.8f / sample_dist));
+    for (int j = 0; j < check_n; j++)
+        if (fabs(an[j]) > 10. / 180. * PI) return false;//最大拐点不超过10度
+    return true;
+}
 bool circle_entry_is_blocked()
 {
     if (!circle_enter_cooldown) {
@@ -158,21 +165,20 @@ void check_circle() {
         return;
     }
 
-    // 非圆环模式下，单边L角点, 单边长直道
-    // 左环：左L角点 + 右直道
-    if (circle_type == CIRCLE_NONE && Lpt0_found && !Lpt1_found) {
-        if(Lpt0_rpts0s_id<rpts0s_num*0.4){
-        circle_type = CIRCLE_LEFT_BEGIN;
-        start_circle_enter_cooldown();
-        std::cout << "begin" << std::endl;
+    // 左环：左有角点 + 右是长直道
+    if (Lpt0_found && !Lpt1_found && is_line_straight(rpts1an, rpts1s_num)) {
+        if (Lpt0_rpts0s_id < rpts0s_num * 0.75) {
+            circle_type = CIRCLE_LEFT_BEGIN;
+            start_circle_enter_cooldown();
+            std::cout << "begin left circle" << std::endl;
         }
     }
-    // 右环：右L角点 + 左直道
-    else if (circle_type == CIRCLE_NONE && Lpt1_found && !Lpt0_found) {
-        if(Lpt1_rpts1s_id<rpts1s_num*0.4){
-        circle_type = CIRCLE_RIGHT_BEGIN;
-        start_circle_enter_cooldown();
-        std::cout << "begin" << std::endl;
+    // 右环：右有角点 + 左是长直道
+    if (Lpt1_found && !Lpt0_found && is_line_straight(rpts0an, rpts0s_num)) {
+        if (Lpt1_rpts1s_id < rpts1s_num * 0.75) {
+            circle_type = CIRCLE_RIGHT_BEGIN;
+            start_circle_enter_cooldown();
+            std::cout << "begin right circle" << std::endl;
         }
     }
 }
@@ -414,36 +420,51 @@ void find_corners() {
      Lpt0_found = Lpt1_found = false;
     is_straight0 = rpts0s_num > 0.5 / sample_dist;
     is_straight1 = rpts1s_num > 0.5 / sample_dist;
-    for (int i = rpts0s_num*0.15; i < rpts0s_num*0.5; i++) {//不要找的太远
+    for (int i = 0; i < rpts0s_num*0.5; i++) {
         if (rpts0an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
+        int ip2 = clip(i + 2 * (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         float conf = fabs(rpts0a[i]) - (fabs(rpts0a[im1]) + fabs(rpts0a[ip1])) / 2;
 
-        //L角点阈值
-        if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.8 / sample_dist) {
+        bool sustained = (rpts0a[i] * rpts0a[ip2] > 0);
+
+        printf("L i=%d conf=%.2fdeg\n", i, conf * 180 / PI);
+
+        if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI
+                && i < 0.8 / sample_dist) {
             Lpt0_rpts0s_id = i;
             Lpt0_found = true;
+            printf(">>> Lpt0 FOUND at i=%d\n", i);
         }
-        //长直道阈值
-        if (conf > 15. / 180. * PI && 0.1 / sample_dist <i < 0.4 / sample_dist) is_straight0 = false;
+        //长直道阈值（修复了 a<i<b 运算符优先级 bug）
+        if (conf > 15. / 180. * PI && i > 0.1 / sample_dist && i < 0.4 / sample_dist) is_straight0 = false;
         if ( Lpt0_found == true && is_straight0 == false) break;
     }
-    for (int i = rpts1s_num*0.15; i < rpts1s_num*0.5; i++) {
+    for (int i = 0; i < rpts1s_num*0.5; i++) {
         if (rpts1an[i] == 0) continue;
         int im1 = clip(i - (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         int ip1 = clip(i + (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
+        int ip2 = clip(i + 2 * (int) round(angle_dist / sample_dist), 0, rpts1s_num - 1);
         float conf = fabs(rpts1a[i]) - (fabs(rpts1a[im1]) + fabs(rpts1a[ip1])) / 2;
-        if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI && i < 0.8 / sample_dist) {
+
+        bool sustained = (rpts1a[i] * rpts1a[ip2] > 0);
+
+        printf("R i=%d conf=%.2fdeg\n", i, conf * 180 / PI);
+
+        if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI
+                && i < 0.8 / sample_dist) {
             Lpt1_rpts1s_id = i;
             Lpt1_found = true;
+            printf(">>> Lpt1 FOUND at i=%d\n", i);
         }
 
-        if (conf > 15. / 180. * PI && 0.1 / sample_dist <i < 0.4 / sample_dist) is_straight1 = false;
+        //长直道阈值（修复了 a<i<b 运算符优先级 bug）
+        if (conf > 15. / 180. * PI && i > 0.1 / sample_dist && i < 0.4 / sample_dist) is_straight1 = false;
 
         if ( Lpt1_found == true && is_straight1 == false) break;
     }
-    // L点二次检查，车库模式不检查, 依据L角点距离及角点后张开特性，暂未实现车库
+    // L点二次检查
     if (1) {
         if (Lpt0_found && Lpt1_found) {
             float dx = rpts0s[Lpt0_rpts0s_id][0] - rpts1s[Lpt1_rpts1s_id][0];
@@ -466,7 +487,6 @@ void find_corners() {
         }
     }
 }
-
 //双L角点,切十字模式
 void check_cross() {
     bool Xfound = Lpt0_found && Lpt1_found;
@@ -551,66 +571,48 @@ void draw_cross() {
     }
 }
 
+
 void cross_farline() {
-    int cross_width = 4;
-//    far_x1 = cross_width, far_x2 = img_raw.width -cross_width;
-    far_y1 = 0, far_y2 = 0;
+    // 远线需要往远处巡，临时放宽 track_min_y
+    float saved_track_min_y = track_min_y;
+    track_min_y = 60;
 
+    // 根据当前近线的最高点，往上20px作为远线扫描起始Y
+    int y = 140;
+    if (ipts0_num > 0) y = MIN(y, ipts0[ipts0_num - 1][1]);
+    if (ipts1_num > 0) y = MIN(y, ipts1[ipts1_num - 1][1]);
+    y = MAX(y - 20, 10);
 
-    int x1 = img_raw.width / 2 - begin_x, y1 = begin_y;
-    bool white_found = false;
+    int cx = img_raw.width / 2;
+    int LIM_LEFT = 40, LIM_RIGHT = 280;
+
+    // ===== 左远线：从中心往左扫，X ≥ 40 =====
     far_ipts0_num = sizeof(far_ipts0) / sizeof(far_ipts0[0]);
-
-    //在begin_y向两边找黑线
-//    for(;x1>cross_width*2; x1--) 
-//    {
-//      if(AT_IMAGE(&img_raw, x1-1, y1) < low_thres) {
-//        far_x1 = x1 - cross_width;
-//        break;
-//      }   
-//    }
-    //全白  far_x1 = 0,从边界找
-    for (; y1 > 0; y1--) {
-        //先黑后白，先找white
-        if (AT_IMAGE(&img_raw, far_x1, y1) >= thres) { white_found = true; }
-        if (AT_IMAGE(&img_raw, far_x1, y1) < thres && (white_found || far_x1 == cross_width)) {
-            far_y1 = y1;
-            break;
-        }
+    int xL = cx;
+    bool L_found = false;
+    for (; xL > LIM_LEFT; xL--) {
+        if (AT_IMAGE(&img_raw, xL - 1, y) < thres) { L_found = true; break; }
     }
+    if (L_found)
+        findline_lefthand_adaptive(&img_raw, block_size, clip_value, xL, y, far_ipts0, &far_ipts0_num);
+    else
+        far_ipts0_num = 0;
 
-    //从找到角点位置开始寻找
-    if (AT_IMAGE(&img_raw, far_x1, far_y1 + 1) >= thres)
-        findline_lefthand_adaptive(&img_raw, block_size, clip_value, far_x1, far_y1 + 1, far_ipts0, &far_ipts0_num);
-    else far_ipts0_num = 0;
-
-    int x2 = img_raw.width / 2 + begin_x, y2 = 200;
-    white_found = false;
+    // ===== 右远线：从中心往右扫，X ≤ 280 =====
     far_ipts1_num = sizeof(far_ipts1) / sizeof(far_ipts1[0]);
-
-    //在begin_y向两边找黑线
-//    for(;x2<img_raw.width-cross_width*2; x2++) 
-//    {
-//      if(AT_IMAGE(&img_raw, x2+1, y2) < low_thres) {
-//        far_x2 = x2 + cross_width;
-//        break;
-//      }   
-//    }
-    //全白  far_x2 = 0,从边界找
-    for (; y2 > 0; y2--) {
-        //先黑后白，先找white
-        if (AT_IMAGE(&img_raw, far_x2, y2) >= thres) { white_found = true; }
-        if (AT_IMAGE(&img_raw, far_x2, y2) < thres && (white_found || far_x2 == img_raw.width - cross_width)) {
-            far_y2 = y2;
-            break;
-        }
+    int xR = cx;
+    bool R_found = false;
+    for (; xR < LIM_RIGHT; xR++) {
+        if (AT_IMAGE(&img_raw, xR + 1, y) < thres) { R_found = true; break; }
     }
 
-    //从找到角点位置开始寻找
-    if (AT_IMAGE(&img_raw, far_x2, far_y2 + 1) >= thres)
-        findline_righthand_adaptive(&img_raw, block_size, clip_value, far_x2, far_y2 + 1, far_ipts1, &far_ipts1_num);
-    else far_ipts1_num = 0;
+    if (R_found)
+        findline_righthand_adaptive(&img_raw, block_size, clip_value, xR, y, far_ipts1, &far_ipts1_num);
+    else
+        far_ipts1_num = 0;
 
+    far_x1 = xL; far_y1 = y;
+    far_x2 = xR; far_y2 = y;
 
     // 去畸变+透视变换
     for (int i = 0; i < far_ipts0_num; i++) {
@@ -674,4 +676,7 @@ void cross_farline() {
             break;
         }
     }
+
+    track_min_y = saved_track_min_y;
+
 }
