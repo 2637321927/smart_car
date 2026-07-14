@@ -400,6 +400,15 @@ if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
     printf("[VOFA] spd = %.2f\n", set_speed_of_motor1_rps);
 }
 
+// VOFA command example: #AIM=0.30;
+// AIM is the forward look-ahead distance in meters. The image-processing loop
+// copies it to aim_distance before selecting the tracking target point.
+if (sscanf(buf, "#AIM=%f;", &ftmp) == 1)
+{
+    AIM = ftmp;
+    printf("[VOFA] AIM = %.3f m\n", AIM);
+}
+
 if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
 {
     
