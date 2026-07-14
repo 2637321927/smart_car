@@ -170,7 +170,7 @@ void check_circle() {
         if (Lpt0_rpts0s_id < rpts0s_num * 0.75) {
             circle_type = CIRCLE_LEFT_BEGIN;
             start_circle_enter_cooldown();
-            std::cout << "begin left circle" << std::endl;
+           // std::cout << "begin left circle" << std::endl;
         }
     }
     // 右环：右有角点 + 左是长直道
@@ -178,7 +178,7 @@ void check_circle() {
         if (Lpt1_rpts1s_id < rpts1s_num * 0.75) {
             circle_type = CIRCLE_RIGHT_BEGIN;
             start_circle_enter_cooldown();
-            std::cout << "begin right circle" << std::endl;
+           // std::cout << "begin right circle" << std::endl;
         }
     }
 }
@@ -429,13 +429,13 @@ void find_corners() {
 
         bool sustained = (rpts0a[i] * rpts0a[ip2] > 0);
 
-        printf("L i=%d conf=%.2fdeg\n", i, conf * 180 / PI);
+       // printf("L i=%d conf=%.2fdeg\n", i, conf * 180 / PI);
 
         if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI
                 && i < 0.8 / sample_dist) {
             Lpt0_rpts0s_id = i;
             Lpt0_found = true;
-            printf(">>> Lpt0 FOUND at i=%d\n", i);
+          //  printf(">>> Lpt0 FOUND at i=%d\n", i);
         }
         //长直道阈值（修复了 a<i<b 运算符优先级 bug）
         if (conf > 15. / 180. * PI && i > 0.1 / sample_dist && i < 0.4 / sample_dist) is_straight0 = false;
@@ -450,13 +450,13 @@ void find_corners() {
 
         bool sustained = (rpts1a[i] * rpts1a[ip2] > 0);
 
-        printf("R i=%d conf=%.2fdeg\n", i, conf * 180 / PI);
+     //   printf("R i=%d conf=%.2fdeg\n", i, conf * 180 / PI);
 
         if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI
                 && i < 0.8 / sample_dist) {
             Lpt1_rpts1s_id = i;
             Lpt1_found = true;
-            printf(">>> Lpt1 FOUND at i=%d\n", i);
+          //  printf(">>> Lpt1 FOUND at i=%d\n", i);
         }
 
         //长直道阈值（修复了 a<i<b 运算符优先级 bug）
