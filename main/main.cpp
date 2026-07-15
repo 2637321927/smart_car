@@ -913,19 +913,7 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
 */
 }
         process_image();    // 边线提取&处理
-
-        // 角点检测仅在需要识别十字/环岛时才运行，直道巡线时跳过。
-        // 每 4 帧至少跑一次，保证十字/环岛不会漏检。
-        {
-            static int corner_skip_counter = 0;
-            bool need_corners = (cross_type != CROSS_NONE)      // 已在十字中
-                             || (circle_type != CIRCLE_NONE)    // 已在环岛中
-                             || (++corner_skip_counter >= 4);   // 每4帧检测一次
-            if (need_corners) {
-                corner_skip_counter = 0;
-                find_corners();     // 角点提取&筛选
-            }
-        }
+        find_corners();     // 角点提取&筛选
         // 预瞄距离,动态效果更佳
         aim_distance = AIM;
 

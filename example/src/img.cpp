@@ -264,17 +264,21 @@ void process_image() {
         rpts2s[i][1]=(rpts1s[i][1]+rpts0s[i][1])/2;
     }
         */
-    // 边线局部角度变化率（只需要左右边线，中线角度无人使用，跳过）
+    // 边线局部角度变化率
     local_angle_points(rpts0s, rpts0s_num, rpts0a, (int)round(angle_dist / sample_dist));
     rpts0a_num = rpts0s_num;
     local_angle_points(rpts1s, rpts1s_num, rpts1a, (int)round(angle_dist / sample_dist));
     rpts1a_num = rpts1s_num;
+    local_angle_points(rpts2s, rpts2s_num, rpts2a, (int)round(angle_dist / sample_dist));
+    rpts2a_num = rpts2s_num;
 
     // 角度变化率非极大抑制
     nms_angle(rpts0a, rpts0a_num, rpts0an, (int)round(angle_dist / sample_dist) * 2 + 1);
     rpts0an_num = rpts0a_num;
     nms_angle(rpts1a, rpts1a_num, rpts1an, (int)round(angle_dist / sample_dist) * 2 + 1);
     rpts1an_num = rpts1a_num;
+    nms_angle(rpts2a, rpts2a_num, rpts2an, (int)round(angle_dist / sample_dist) * 2 + 1);
+    rpts2an_num = rpts2a_num;
     // ===================== 【中线选择逻辑：只改中线，不改线】=====================
     int approx = (int)round(angle_dist / sample_dist);
 /*
