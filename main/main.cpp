@@ -1078,7 +1078,7 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
             else {
                 // 其他情况保持原样或维持上一帧
             }
-        } 
+        }
         else {
             if (diu != 0) {
                 diu = 0;
@@ -1086,8 +1086,11 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
                 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
             }
             // 正常巡线状态：对计算出的视觉误差进行低通与突变限幅滤波
-            latest_error = filter_error(-error); 
+            if(cross_type==CROSS_IN)latest_error=0;
+
+            else latest_error = filter_error(-error); 
         }
+        
  if(is_udp_img==1){
                clear_image(&img_line);
                cv::Mat birdview;

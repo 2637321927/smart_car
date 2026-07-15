@@ -5,7 +5,7 @@
 
 volatile float dir_P = 0.128f;
 volatile float dir_D = 1.55f;
-volatile int spd_slow_ratio = 0;
+volatile int spd_slow_ratio = 15;//for test
 
 namespace
 {
@@ -101,7 +101,7 @@ void PID_control_test(float error)
         diffrential = calculate_diffrential(error, 0);
     }
 
-    const float max_dif=25.0f;
+    const float max_dif=15.0f;
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     float target_spd1 = set_speed_of_motor1_rps;
