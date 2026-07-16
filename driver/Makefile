@@ -1,5 +1,5 @@
 # 统一使用内核路径
-KDIR?=/home/linux/Desktop/linux-4.19-loongson-embeded
+KDIR?=/home/linux/LQ_Project/Loongson/linux-4.19
 
 # 获取所有子目录
 SUBDIRS := $(shell find . -maxdepth 1 -type d ! -name "." ! -name ".." ! -name ".*" | sort)

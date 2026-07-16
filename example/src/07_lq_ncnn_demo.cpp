@@ -75,14 +75,14 @@ void lq_ncnn_photo_demo(void)
     printf("========================================\n");
     printf("       NCNN 图像分类推理示例\n");
     printf("========================================\n\n");
-
+ std::string model_param = "tiny_classifier_fp32.ncnn.param";
+  
     // ==================== 配置区域 ====================
     // 测试图片路径（修改为你的图片路径）
     std::string test_image_path = "test.jpg";
     
     // 模型配置
-    std::string model_param = "tiny_classifier_fp32.ncnn.param";
-    std::string model_bin   = "tiny_classifier_fp32.ncnn.bin";
+     std::string model_bin   = "tiny_classifier_fp32.ncnn.bin";
     int input_width    = 96;
     int input_height   = 96;
     

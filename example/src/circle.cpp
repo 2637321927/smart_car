@@ -28,7 +28,7 @@ int have_left_line = 0, have_right_line = 0;
 namespace {
 
 // 识别到一次环岛后，20 秒内不允许再次从 CIRCLE_NONE 进入环岛。
-constexpr auto kCircleEnterCooldown = std::chrono::seconds(2);
+constexpr auto kCircleEnterCooldown = std::chrono::seconds(3);
 constexpr auto kCircleOUTCooldown = std::chrono::seconds(0);
 bool circle_enter_cooldown = false;
 std::chrono::steady_clock::time_point last_circle_enter_time;
@@ -161,7 +161,9 @@ return total_valid > 10;
 // ==========================================================================
 }
 void check_circle() {
-    if (circle_type != CIRCLE_NONE || circle_entry_is_blocked()) {
+    if (circle_type != CIRCLE_NONE 
+        //|| circle_entry_is_blocked()
+    ) {
         return;
     }
 
@@ -169,16 +171,16 @@ void check_circle() {
     if (Lpt0_found && !Lpt1_found && is_line_straight(rpts1an, rpts1s_num)) {
         if (Lpt0_rpts0s_id < rpts0s_num * 0.75) {
             circle_type = CIRCLE_LEFT_BEGIN;
-            start_circle_enter_cooldown();
-           // std::cout << "begin left circle" << std::endl;
+            //start_circle_enter_cooldown();
+           std::cout << "begin left circle" << std::endl;
         }
     }
     // 右环：右有角点 + 左是长直道
     if (Lpt1_found && !Lpt0_found && is_line_straight(rpts0an, rpts0s_num)) {
         if (Lpt1_rpts1s_id < rpts1s_num * 0.75) {
             circle_type = CIRCLE_RIGHT_BEGIN;
-            start_circle_enter_cooldown();
-           // std::cout << "begin right circle" << std::endl;
+          //  start_circle_enter_cooldown();
+           std::cout << "begin right circle" << std::endl;
         }
     }
 }
@@ -240,6 +242,7 @@ void run_circle() {
             odometry_update(avg_rps, dt);
 
             if (odometry_get_distance() > CIRCLE_EXIT_DISTANCE_M) {
+                std::cout<<"dis_out"<<std::endl;
                 circle_type = CIRCLE_LEFT_OUT;
             }
         }
@@ -248,6 +251,7 @@ void run_circle() {
         if (Lpt1_found) rpts1s_num = rptsc1_num = Lpt1_rpts1s_id;
         //外环拐点(右L点)
         if ((Lpt1_found && Lpt1_rpts1s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
+            std::cout<<"L_out"<<std::endl;
             circle_type = CIRCLE_LEFT_OUT;
         }
     }
@@ -333,6 +337,7 @@ void run_circle() {
             odometry_update(avg_rps, dt);
 
             if (odometry_get_distance() > CIRCLE_EXIT_DISTANCE_M) {
+                std::cout<<"dis_out"<<std::endl;
                 circle_type = CIRCLE_RIGHT_OUT;
             }
         }
@@ -341,6 +346,7 @@ void run_circle() {
         //外环存在拐点,可再加拐点距离判据(左L点)s
         if (Lpt0_found) rpts0s_num = rptsc0_num = Lpt0_rpts0s_id;
         if ((Lpt0_found && Lpt0_rpts0s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
+            std::cout<<"L_out"<<std::endl;
             circle_type = CIRCLE_RIGHT_OUT;
         }
     }
@@ -427,11 +433,10 @@ void find_corners() {
         int ip2 = clip(i + 2 * (int) round(angle_dist / sample_dist), 0, rpts0s_num - 1);
         float conf = fabs(rpts0a[i]) - (fabs(rpts0a[im1]) + fabs(rpts0a[ip1])) / 2;
 
-        bool sustained = (rpts0a[i] * rpts0a[ip2] > 0);
 
        // printf("L i=%d conf=%.2fdeg\n", i, conf * 180 / PI);
 
-        if (Lpt0_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI
+        if (Lpt0_found == false && 50. / 180. * PI < conf && conf < 140. / 180. * PI
                 && i < 0.8 / sample_dist) {
             Lpt0_rpts0s_id = i;
             Lpt0_found = true;
@@ -452,7 +457,7 @@ void find_corners() {
 
      //   printf("R i=%d conf=%.2fdeg\n", i, conf * 180 / PI);
 
-        if (Lpt1_found == false && 70. / 180. * PI < conf && conf < 140. / 180. * PI
+        if (Lpt1_found == false && 50. / 180. * PI < conf && conf < 140. / 180. * PI
                 && i < 0.8 / sample_dist) {
             Lpt1_rpts1s_id = i;
             Lpt1_found = true;
@@ -513,7 +518,7 @@ void run_cross() {
 
         //aim_distance = 0.4;
         //近角点过少，进入远线控制
-        if ((Xfound && (Lpt0_rpts0s_id < 0.03 / sample_dist || Lpt1_rpts1s_id < 0.03 / sample_dist))|| (rpts1_num <10 && rpts0_num<10)) {
+        if ((Xfound && (Lpt0_rpts0s_id < 0.005 / sample_dist || Lpt1_rpts1s_id < 0.005/ sample_dist))|| (rpts1_num <10 && rpts0_num<10)) {
             cross_type = CROSS_IN;
             std::cout<<"in"<<std::endl;
             cross_encoder = current_encoder;
@@ -527,7 +532,7 @@ void run_cross() {
         if (rpts1s_num < 5 && rpts0s_num < 5) { not_have_line++; }
         if (not_have_line > 2 && rpts1s_num > 20 && rpts0s_num > 20) {
             cross_type = CROSS_NONE;
-            start_cross_cooldown();
+            //start_cross_cooldown();
             not_have_line = 0;
         }
         if (far_Lpt1_found) { track_type = TRACK_RIGHT; }

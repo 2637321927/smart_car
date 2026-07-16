@@ -1051,12 +1051,17 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
         }
 // ====================== 误差计算与滤波处理 ======================
         if (cross_type == CROSS_BEGIN) {
-            float raw_err = -error;
-            if (abs(latest_error) <= 15 && abs(raw_err - latest_error) >= 30) {
-                // 特殊十字边界保护，维持上一帧不突变
+            // 单侧丢线 → 保持上一帧误差，不走不可靠的中线
+            if (!Lpt0_found || !Lpt1_found) {
+                // 维持 latest_error 不变
             } else {
-                // 使用你写好的 filter_error 保护函数进行滤波
-                latest_error = filter_error(raw_err);
+                float raw_err = -error;
+                if (abs(latest_error) <= 15 && abs(raw_err - latest_error) >= 30) {
+                    // 特殊十字边界保护，维持上一帧不突变
+                } else {
+                    // 使用你写好的 filter_error 保护函数进行滤波
+                    latest_error = filter_error(raw_err);
+                }
             }
         } 
         else if (check_line_lost() && cross_type != CROSS_IN) {
@@ -1086,7 +1091,7 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
                 float pixel_per_meter = M2PIX;  // 像素 → 实际距离换算比例
             }
             // 正常巡线状态：对计算出的视觉误差进行低通与突变限幅滤波
-            if(cross_type==CROSS_IN)latest_error=0;
+           // if(cross_type==CROSS_IN)latest_error=0;
 
             else latest_error = filter_error(-error); 
         }
