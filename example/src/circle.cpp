@@ -50,7 +50,7 @@ bool circle_entry_is_blocked()
 
     if (std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown&&std::chrono::steady_clock::now() - last_cross_time >= kCircleOUTCooldown) {
         circle_enter_cooldown = false;
-        std::cout<<"not circle"<<std::endl;
+        //std::cout<<"not circle"<<std::endl;
         return false;
     }
 
@@ -172,7 +172,7 @@ void check_circle() {
         if (Lpt0_rpts0s_id < rpts0s_num * 0.75) {
             circle_type = CIRCLE_LEFT_BEGIN;
             //start_circle_enter_cooldown();
-           std::cout << "begin left circle" << std::endl;
+          // std::cout << "begin left circle" << std::endl;
         }
     }
     // 右环：右有角点 + 左是长直道
@@ -180,7 +180,7 @@ void check_circle() {
         if (Lpt1_rpts1s_id < rpts1s_num * 0.75) {
             circle_type = CIRCLE_RIGHT_BEGIN;
           //  start_circle_enter_cooldown();
-           std::cout << "begin right circle" << std::endl;
+          //std::cout << "begin right circle" << std::endl;
         }
     }
 }
@@ -242,7 +242,7 @@ void run_circle() {
             odometry_update(avg_rps, dt);
 
             if (odometry_get_distance() > CIRCLE_EXIT_DISTANCE_M) {
-                std::cout<<"dis_out"<<std::endl;
+                //std::cout<<"dis_out"<<std::endl;
                 circle_type = CIRCLE_LEFT_OUT;
             }
         }
@@ -251,7 +251,7 @@ void run_circle() {
         if (Lpt1_found) rpts1s_num = rptsc1_num = Lpt1_rpts1s_id;
         //外环拐点(右L点)
         if ((Lpt1_found && Lpt1_rpts1s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
-            std::cout<<"L_out"<<std::endl;
+            //std::cout<<"L_out"<<std::endl;
             circle_type = CIRCLE_LEFT_OUT;
         }
     }
@@ -337,7 +337,7 @@ void run_circle() {
             odometry_update(avg_rps, dt);
 
             if (odometry_get_distance() > CIRCLE_EXIT_DISTANCE_M) {
-                std::cout<<"dis_out"<<std::endl;
+                //std::cout<<"dis_out"<<std::endl;
                 circle_type = CIRCLE_RIGHT_OUT;
             }
         }
@@ -346,7 +346,7 @@ void run_circle() {
         //外环存在拐点,可再加拐点距离判据(左L点)s
         if (Lpt0_found) rpts0s_num = rptsc0_num = Lpt0_rpts0s_id;
         if ((Lpt0_found && Lpt0_rpts0s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
-            std::cout<<"L_out"<<std::endl;
+            //std::cout<<"L_out"<<std::endl;
             circle_type = CIRCLE_RIGHT_OUT;
         }
     }
@@ -496,7 +496,7 @@ void find_corners() {
 void check_cross() {
     bool Xfound = Lpt0_found && Lpt1_found;
     if (cross_type == CROSS_NONE && Xfound) {cross_type = CROSS_BEGIN;
-        std::cout<<"cross"<<std::endl;
+        //std::cout<<"cross"<<std::endl;
     }
 }
 
@@ -520,7 +520,7 @@ void run_cross() {
         //近角点过少，进入远线控制
         if ((Xfound && (Lpt0_rpts0s_id < 0.005 / sample_dist || Lpt1_rpts1s_id < 0.005/ sample_dist))|| (rpts1_num <10 && rpts0_num<10)) {
             cross_type = CROSS_IN;
-            std::cout<<"in"<<std::endl;
+            //std::cout<<"in"<<std::endl;
             cross_encoder = current_encoder;
         }
     }
