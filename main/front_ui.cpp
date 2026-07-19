@@ -20,7 +20,7 @@ struct SpeedStrategy {
     int speed_rps;
 };
 
-// TFT18 前端提供的速度档位。默认 selected_strategy = 1，即 20 RPS。
+// TFT18 前端提供的速度档位。默认 selected_strategy = 1，即 35 RPS。
 constexpr SpeedStrategy kStrategies[] = {
     {"20", 20},
     {"35", 35},
@@ -90,10 +90,25 @@ void apply_speed_strategy()
     set_speed_of_motor2_rps = kStrategies[selected_strategy].speed_rps;
 }
 
+void select_speed_strategy(int speed_rps)
+{
+    for (int index = 0; index < kStrategyCount; ++index) {
+        if (kStrategies[index].speed_rps != speed_rps) {
+            continue;
+        }
+
+        selected_strategy = index;
+        if (car_running) {
+            apply_speed_strategy();
+        }
+        return;
+    }
+}
+
 void stop_car()
 {
     // K2 停车是最高优先级：如果目标板脚本正在接管，先取消脚本，再清零电机。
-    drive_by_cancel();
+    const bool recognition_test_aborted = drive_by_cancel();
     // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
     car_running = false;
     gyro_yaw_rate_control_reset();
@@ -105,6 +120,9 @@ void stop_car()
     current_pwm2 = 0;
     pwm1.atim_pwm_set_duty(0);
     pwm2.atim_pwm_set_duty(0);
+    if (recognition_test_aborted) {
+        printf("[识别测试] 测试已中止，车辆已停车\n");
+    }
 }
 
 void start_car()
@@ -155,10 +173,10 @@ void draw_ui()
              set_speed_of_motor1_rps, set_speed_of_motor2_rps);
     draw_line(4, line, U16WHITE);
 
-    snprintf(line, sizeof(line), "TARGET:%s", drive_by_is_enabled() ? "ON" : "OFF");
+    snprintf(line, sizeof(line), "TEST  :%s", drive_by_is_enabled() ? "ON" : "OFF");
     draw_line(5, line, drive_by_is_enabled() ? U16GREEN : U16RED);
 
-    draw_line(6, "K0 TARGET K1 SPD", U16WHITE);
+    draw_line(6, "K0 TEST   K1 SPD", U16WHITE);
     draw_line(7, "K2 START/STOP", U16WHITE);
 }
 
@@ -208,16 +226,23 @@ void front_ui_poll()
 
     bool dirty = false;
 
-    // K0：目标板脚本模式开关。关闭时完全不检测目标板，不影响普通巡线。
+    // K0：临时动态识别测速开关。关闭时完全不检测目标板，不影响普通巡线。
     if (pressed_edge(key_prev, prev_state)) {
         drive_by_toggle_enable();
+        if (drive_by_is_enabled()) {
+            // 当前K0临时作为动态识别测速开关，开启时固定使用35RPS。
+            select_speed_strategy(35);
+        }
         dirty = true;
         std::cout << "drive_by_enable:" << drive_by_is_enabled() << '\n';
     }
 
     // K1：下一个速度策略。
     if (pressed_edge(key_next, next_state)) {
-        select_next_strategy();
+        // 测速模式要求每轮实验速度一致，因此K0开启期间忽略K1切档。
+        if (!drive_by_is_enabled()) {
+            select_next_strategy();
+        }
         dirty = true;
     }
 

@@ -831,11 +831,19 @@ gyro_yaw_rate_control_init();
     dir_timer.set_seconds_ms(8, []() {
       // 发车后才让方向环根据图像误差修正左右轮目标速度。
       // 目标板脚本执行时要暂停方向环，否则方向环会覆盖脚本给出的左右轮差速。
-      if (front_ui_is_running() && !drive_by_is_busy()) {
+      if (front_ui_is_running() &&
+          !drive_by_is_busy() &&
+          !drive_by_is_enabled()) {
         PID_control_test(latest_error);
       } else if (front_ui_is_running()) {
+        // K0动态识别测速模式要求左右目标相等：停用视觉PD和角速度环，
+        // 只保留两个独立速度环跟踪相同RPS，避免车辆主动转弯改变观察角度。
         gyro_yaw_rate_control_reset();
         latest_error = 0;
+        if (drive_by_is_enabled()) {
+          pwm1_duty_rps = set_speed_of_motor1_rps;
+          pwm2_duty_rps = set_speed_of_motor2_rps;
+        }
       } else {
         gyro_yaw_rate_control_reset();
         front_ui_hold_stop();

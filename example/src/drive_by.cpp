@@ -29,8 +29,8 @@ int drive_by_turn_out_ms = 600;          // 第一次向外转的持续时间，
 int drive_by_forward_ms = 400;            // 绕过目标板时直行持续时间，影响横向/前向绕行距离
 int drive_by_turn_back_ms = 800;          // 往回转的持续时间，影响回正姿态
 int drive_by_exit_forward_ms = 150;       // 回正后补偿前进时间
-int drive_by_stop_ms = 200;               // 识别到目标后先停车等待时间
-int drive_by_infer_timeout_ms = 1000;     // 五帧推理最长等待时间，超时默认直行
+int drive_by_stop_ms = 200;               // 旧绕行脚本停车参数，当前动态三帧测试不使用
+int drive_by_infer_timeout_ms = 1000;     // 旧绕行脚本推理超时，当前动态三帧测试不使用
 int drive_by_cooldown_ms =1000;             // 脚本完成后的再次触发冷却，0 表示目标离开画面即可解锁
 
 namespace {
@@ -64,9 +64,43 @@ struct SavedControl {
     bool valid = false;
 };
 
-constexpr int kInferFrames = 5;
+constexpr int kInferFrames = 3;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
+constexpr int kRecognitionTestSpeedRps = 35;
+
+enum RecognitionFrameStatus {
+    TEST_FRAME_NOT_PROCESSED,
+    TEST_FRAME_OK,
+    TEST_FRAME_NO_RED,
+    TEST_FRAME_INVALID_ROI,
+    TEST_FRAME_UNKNOWN_LABEL,
+};
+
+struct RecognitionFrameRecord {
+    RecognitionFrameStatus status = TEST_FRAME_NOT_PROCESSED;
+    std::string label;
+    int mapped_result = 1;
+    double detect_ms = 0.0;
+    double prepare_ms = 0.0;
+    double infer_ms = 0.0;
+    double frame_ms = 0.0;
+    double since_trigger_ms = 0.0;
+};
+
+struct RecognitionTestReport {
+    RecognitionFrameRecord frames[kInferFrames];
+    int frame_count = 0;
+    int valid_count = 0;
+    int votes[3] = {0, 0, 0};
+    double trigger_detect_ms = 0.0;
+    double infer_sum_ms = 0.0;
+    double total_ms = 0.0;
+    float trigger_left_rps = 0.0f;
+    float trigger_right_rps = 0.0f;
+    float finish_left_rps = 0.0f;
+    float finish_right_rps = 0.0f;
+};
 
 volatile bool g_drive_by_enable = false;
 volatile bool g_drive_by_busy = false;
@@ -76,14 +110,54 @@ DriveByClock::time_point g_state_start = DriveByClock::now();
 DriveByClock::time_point g_cooldown_start = DriveByClock::now();
 int g_frame_counter = 0;
 int g_votes[3] = {0, 0, 0};
-int g_infer_count = 0;
 SavedControl g_saved;
+RecognitionTestReport g_test_report;
+DriveByClock::time_point g_test_trigger_time = DriveByClock::now();
 
 long long elapsed_ms(DriveByClock::time_point start)
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
                DriveByClock::now() - start)
         .count();
+}
+
+double duration_ms(DriveByClock::time_point start, DriveByClock::time_point end)
+{
+    return std::chrono::duration<double, std::milli>(end - start).count();
+}
+
+const char *frame_status_name(RecognitionFrameStatus status)
+{
+    switch (status) {
+    case TEST_FRAME_OK: return "成功";
+    case TEST_FRAME_NO_RED: return "未检测到红色";
+    case TEST_FRAME_INVALID_ROI: return "目标板区域无效";
+    case TEST_FRAME_UNKNOWN_LABEL: return "未知类别";
+    default: return "未处理";
+    }
+}
+
+const char *label_chinese_name(const std::string& label)
+{
+    if (label == "weapon") {
+        return "武器";
+    }
+    if (label == "vehicle") {
+        return "车辆";
+    }
+    if (label == "supplies") {
+        return "物资";
+    }
+    return "未知类别";
+}
+
+const char *result_action_name(int result)
+{
+    switch (result) {
+    case 0: return "左绕";
+    case 2: return "右绕";
+    default: return "直行";
+    }
 }
 
 const char *state_name(DriveByState state)
@@ -164,6 +238,17 @@ void command_stop()
     PID_control_test(0);
 }
 
+void command_recognition_test_cruise()
+{
+    // 测速模式只允许直行：左右轮目标严格相等，不调用方向环产生差速。
+    // 两个独立速度环仍会分别修正各自 PWM，因此实际编码器值允许存在小误差。
+    set_speed_of_motor1_rps = kRecognitionTestSpeedRps;
+    set_speed_of_motor2_rps = kRecognitionTestSpeedRps;
+    pwm1_duty_rps = kRecognitionTestSpeedRps;
+    pwm2_duty_rps = kRecognitionTestSpeedRps;
+    latest_error = 0;
+}
+
 void enter_state(DriveByState next)
 {
     g_state = next;
@@ -177,7 +262,6 @@ void enter_state(DriveByState next)
         g_votes[0] = 0;
         g_votes[1] = 0;
         g_votes[2] = 0;
-        g_infer_count = 0;
         command_stop();
         break;
     case DB_LEFT_TURN_OUT:
@@ -220,13 +304,23 @@ void finish_script()
     printf("[drive_by] finish, item_flag=%d\n", item_flag);
 }
 
-void start_script()
+void start_recognition_test(double trigger_detect_ms)
 {
     save_control_once();
     g_drive_by_busy = true;
     g_seen_lock = true;
     item_flag = 1;
-    enter_state(DB_STOPPING);
+    g_state = DB_INFER;
+    g_state_start = DriveByClock::now();
+    g_test_trigger_time = g_state_start;
+    g_test_report = RecognitionTestReport{};
+    g_test_report.trigger_detect_ms = trigger_detect_ms;
+    g_test_report.trigger_left_rps = encoder1_speed_avg;
+    g_test_report.trigger_right_rps = encoder2_speed_avg;
+    g_votes[0] = 0;
+    g_votes[1] = 0;
+    g_votes[2] = 0;
+    command_recognition_test_cruise();
 }
 
 void reset_runtime(bool restore_outputs)
@@ -241,7 +335,7 @@ void reset_runtime(bool restore_outputs)
     g_votes[0] = 0;
     g_votes[1] = 0;
     g_votes[2] = 0;
-    g_infer_count = 0;
+    g_test_report = RecognitionTestReport{};
     have_target = false;
 }
 
@@ -308,46 +402,179 @@ int choose_vote_result()
     return best;
 }
 
-void infer_one_valid_frame(cv::Mat& frame, LQ_NCNN& ncnn)
+bool is_known_infer_result(const std::string& result)
 {
-    detectRedPlate(frame);
-    if (!have_target) {
+    return result == "weapon" || result == "vehicle" || result == "supplies";
+}
+
+void finish_frame_record(RecognitionFrameRecord& record,
+                         DriveByClock::time_point frame_start)
+{
+    const DriveByClock::time_point frame_end = DriveByClock::now();
+    record.frame_ms = duration_ms(frame_start, frame_end);
+    record.since_trigger_ms = duration_ms(g_test_trigger_time, frame_end);
+}
+
+void process_recognition_test_frame(cv::Mat& frame,
+                                    LQ_NCNN& ncnn,
+                                    bool reuse_trigger_detection)
+{
+    if (g_test_report.frame_count >= kInferFrames) {
         return;
+    }
+
+    RecognitionFrameRecord& record =
+        g_test_report.frames[g_test_report.frame_count];
+    g_test_report.frame_count++;
+    const DriveByClock::time_point frame_start = DriveByClock::now();
+
+    // 第1帧复用刚刚触发测试时得到的 plate_rect，避免同一帧重复做红色检测。
+    // 第2、3帧必须重新检测，才能真实观察运动中红色和目标板 ROI 是否稳定。
+    if (!reuse_trigger_detection) {
+        const DriveByClock::time_point detect_start = DriveByClock::now();
+        detectRedPlate(frame);
+        const DriveByClock::time_point detect_end = DriveByClock::now();
+        record.detect_ms = duration_ms(detect_start, detect_end);
+
+        if (!have_target) {
+            record.status = TEST_FRAME_NO_RED;
+            finish_frame_record(record, frame_start);
+            return;
+        }
     }
 
     cv::Mat roi;
+    const DriveByClock::time_point prepare_start = DriveByClock::now();
     if (!make_plate_roi(frame, roi)) {
+        record.prepare_ms = duration_ms(prepare_start, DriveByClock::now());
+        record.status = TEST_FRAME_INVALID_ROI;
+        finish_frame_record(record, frame_start);
         return;
     }
+    const DriveByClock::time_point prepare_end = DriveByClock::now();
+    record.prepare_ms = duration_ms(prepare_start, prepare_end);
 
-    const std::string result = ncnn.Infer(roi);
-    const int mapped = map_infer_result(result);
-    g_votes[mapped]++;
-    g_infer_count++;
-    printf("[drive_by] infer %d/%d: %s -> %d\n",
-           g_infer_count, kInferFrames, result.c_str(), mapped);
+    const DriveByClock::time_point infer_start = DriveByClock::now();
+    record.label = ncnn.Infer(roi);
+    const DriveByClock::time_point infer_end = DriveByClock::now();
+    record.infer_ms = duration_ms(infer_start, infer_end);
+    record.mapped_result = map_infer_result(record.label);
+
+    if (is_known_infer_result(record.label)) {
+        record.status = TEST_FRAME_OK;
+        g_votes[record.mapped_result]++;
+        g_test_report.votes[record.mapped_result]++;
+        g_test_report.valid_count++;
+        g_test_report.infer_sum_ms += record.infer_ms;
+    } else {
+        record.status = TEST_FRAME_UNKNOWN_LABEL;
+    }
+
+    finish_frame_record(record, frame_start);
 }
 
-void update_idle_detection(cv::Mat& frame)
+void print_recognition_test_report(const RecognitionTestReport& report,
+                                   int final_result)
 {
-    if (!should_check_this_frame()) {
-        return;
+    printf("[识别测试] 检测到红色：检测耗时=%.2f毫秒，左轮=%.2fRPS，右轮=%.2fRPS\n",
+           report.trigger_detect_ms,
+           report.trigger_left_rps,
+           report.trigger_right_rps);
+
+    for (int index = 0; index < report.frame_count; ++index) {
+        const RecognitionFrameRecord& record = report.frames[index];
+        printf("[识别测试] 第%d/%d帧：%s\n",
+               index + 1,
+               kInferFrames,
+               frame_status_name(record.status));
+
+        if (!record.label.empty()) {
+            printf("  模型标签=%s（%s）\n",
+                   record.label.c_str(),
+                   label_chinese_name(record.label));
+            printf("  识别结果=%d（%s）\n",
+                   record.mapped_result,
+                   result_action_name(record.mapped_result));
+        }
+
+        printf("  红色检测=%.2f毫秒，图像准备=%.2f毫秒，模型推理=%.2f毫秒\n",
+               record.detect_ms,
+               record.prepare_ms,
+               record.infer_ms);
+        printf("  单帧处理=%.2f毫秒，触发后累计=%.2f毫秒\n",
+               record.frame_ms,
+               record.since_trigger_ms);
     }
 
+    const char *stability = "无有效结果";
+    if (report.valid_count == kInferFrames) {
+        stability = "成功";
+    } else if (report.valid_count > 0) {
+        stability = "部分成功";
+    }
+
+    printf("[识别测试] 三帧汇总\n");
+    printf("  最终结果=%d（%s）\n", final_result, result_action_name(final_result));
+    printf("  投票结果：左绕=%d，直行=%d，右绕=%d\n",
+           report.votes[0], report.votes[1], report.votes[2]);
+    printf("  有效帧数=%d/%d\n", report.valid_count, kInferFrames);
+    printf("  推理耗时合计=%.2f毫秒，三帧总时间=%.2f毫秒\n",
+           report.infer_sum_ms,
+           report.total_ms);
+    printf("  稳定性评价=%s\n", stability);
+    printf("  第三帧结束时：左轮=%.2fRPS，右轮=%.2fRPS\n",
+           report.finish_left_rps,
+           report.finish_right_rps);
+    printf("[识别测试] 已停车：左轮目标=%.2fRPS，右轮目标=%.2fRPS，PWM目标=(%.2f, %.2f)\n",
+           static_cast<double>(set_speed_of_motor1_rps),
+           static_cast<double>(set_speed_of_motor2_rps),
+           static_cast<double>(pwm1_duty_rps),
+           static_cast<double>(pwm2_duty_rps));
+}
+
+void finish_recognition_test()
+{
+    g_test_report.total_ms = duration_ms(g_test_trigger_time, DriveByClock::now());
+    g_test_report.finish_left_rps = encoder1_speed_avg;
+    g_test_report.finish_right_rps = encoder2_speed_avg;
+    item_flag = choose_vote_result();
+
+    // front_ui_stop() 会取消 drive_by 并清空运行状态，因此先复制报告。
+    // 停车必须早于 printf，避免控制台输出延迟停车命令。
+    const RecognitionTestReport report = g_test_report;
+    const int final_result = item_flag;
+    // 本测试结束后必须保持停车，不需要在 cancel 中短暂恢复触发前的35RPS目标。
+    g_saved.valid = false;
+    // 正常完成不是“中止”，先清 busy，避免 front_ui_stop() 输出中止提示。
+    g_drive_by_busy = false;
+    front_ui_stop();
+    print_recognition_test_report(report, final_result);
+}
+
+bool update_idle_detection(cv::Mat& frame)
+{
+    if (!should_check_this_frame()) {
+        return false;
+    }
+
+    const DriveByClock::time_point detect_start = DriveByClock::now();
     detectRedPlate(frame);
+    const DriveByClock::time_point detect_end = DriveByClock::now();
 
     if (g_seen_lock) {
         if (!have_target && elapsed_ms(g_cooldown_start) >= drive_by_cooldown_ms) {
             g_seen_lock = false;
             printf("[drive_by] target lock cleared\n");
         }
-        return;
+        return false;
     }
 
     if (have_target) {
-        printf("[drive_by] target found\n");
-        start_script();
+        start_recognition_test(duration_ms(detect_start, detect_end));
+        return true;
     }
+
+    return false;
 }
 
 void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
@@ -361,20 +588,11 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
         break;
 
     case DB_INFER:
-        command_stop();
-        infer_one_valid_frame(frame, ncnn);
-        if (g_infer_count >= kInferFrames ||
-            elapsed_ms(g_state_start) >= drive_by_infer_timeout_ms) {
-            item_flag = choose_vote_result();
-            printf("[drive_by] vote: L=%d S=%d R=%d => %d\n",
-                   g_votes[0], g_votes[1], g_votes[2], item_flag);
-            if (item_flag == 0) {
-                enter_state(DB_LEFT_TURN_OUT);
-            } else if (item_flag == 2) {
-                enter_state(DB_RIGHT_TURN_OUT);
-            } else {
-                finish_script();
-            }
+        // 三帧完成前保持35RPS直行；不等待三次成功，失败帧同样计数。
+        command_recognition_test_cruise();
+        process_recognition_test_frame(frame, ncnn, false);
+        if (g_test_report.frame_count >= kInferFrames) {
+            finish_recognition_test();
         }
         break;
 
@@ -464,7 +682,12 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
     if (g_drive_by_busy) {
         update_busy_state(frame, ncnn);
     } else {
-        update_idle_detection(frame);
+        // K0测速模式启用后持续锁定35RPS直行，防止K1或VOFA残留速度影响实验。
+        command_recognition_test_cruise();
+        if (update_idle_detection(frame)) {
+            // 触发帧就是第1帧，直接复用当前 plate_rect，不等下一张图。
+            process_recognition_test_frame(frame, ncnn, true);
+        }
     }
 }
 
@@ -496,9 +719,11 @@ void drive_by_toggle_enable()
     drive_by_set_enable(!g_drive_by_enable);
 }
 
-void drive_by_cancel()
+bool drive_by_cancel()
 {
+    const bool was_busy = g_drive_by_busy;
     reset_runtime(true);
+    return was_busy;
 }
 
 const char *drive_by_state_name()

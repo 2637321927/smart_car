@@ -24,7 +24,8 @@ bool drive_by_is_busy();
 bool drive_by_is_enabled();
 void drive_by_set_enable(bool enable);
 void drive_by_toggle_enable();
-void drive_by_cancel();
+// 取消当前测试并复位状态；返回 true 表示取消前正在执行三帧测试。
+bool drive_by_cancel();
 const char *drive_by_state_name();
 
 #endif
