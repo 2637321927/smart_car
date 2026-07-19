@@ -27,7 +27,7 @@ volatile float gyro_outer_kd = 3.3f;
 
 // 内环：角速度误差(deg/s) -> 差速修正(RPS)。
 // 举例：实际角速度比目标少 100 deg/s，kp=0.055 会先给约 5.5 RPS 的差速修正。
-volatile float gyro_inner_kp = 0.305f;
+volatile float gyro_inner_kp = 0.40f;
 volatile float gyro_inner_ki = 0.0f;
 
 // 符号修正：

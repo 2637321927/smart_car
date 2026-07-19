@@ -12,7 +12,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 using namespace std::chrono;
-volatile float AIM =0.30;
+volatile float AIM =0.25;
 int item_flag=1;
 bool need_exit = false;
 // 全局互斥锁（解决多线程冲突）
