@@ -5,7 +5,7 @@
 
 volatile float dir_P = 0.128f;
 volatile float dir_D = 1.55f;
-volatile int spd_slow_ratio = 15;//for test
+volatile int spd_slow_ratio = 30;
 
 namespace
 {
