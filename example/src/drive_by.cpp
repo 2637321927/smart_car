@@ -2,6 +2,7 @@
 #include "lq_all_demo.hpp"
 #include "front_ui.hpp"
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <opencv2/imgproc.hpp>
@@ -29,7 +30,7 @@ int drive_by_turn_out_ms = 600;          // 第一次向外转的持续时间，
 int drive_by_forward_ms = 400;            // 绕过目标板时直行持续时间，影响横向/前向绕行距离
 int drive_by_turn_back_ms = 800;          // 往回转的持续时间，影响回正姿态
 int drive_by_exit_forward_ms = 150;       // 回正后补偿前进时间
-int drive_by_stop_ms = 200;               // 旧绕行脚本停车参数，当前动态三帧测试不使用
+int drive_by_stop_ms = 200;               // 第三帧结束后闭环减速的最大等待时间
 int drive_by_infer_timeout_ms = 1000;     // 旧绕行脚本推理超时，当前动态三帧测试不使用
 int drive_by_cooldown_ms =1000;             // 脚本完成后的再次触发冷却，0 表示目标离开画面即可解锁
 
@@ -39,6 +40,7 @@ enum DriveByState {
     DB_IDLE,
     DB_STOPPING,
     DB_INFER,
+    DB_TEST_BRAKING,
     DB_LEFT_TURN_OUT,
     DB_LEFT_FORWARD,
     DB_LEFT_TURN_BACK,
@@ -68,6 +70,7 @@ constexpr int kInferFrames = 3;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
 constexpr int kRecognitionTestSpeedRps = 35;
+constexpr float kBrakeStopThresholdRps = 1.0f;
 
 enum RecognitionFrameStatus {
     TEST_FRAME_NOT_PROCESSED,
@@ -96,10 +99,13 @@ struct RecognitionTestReport {
     double trigger_detect_ms = 0.0;
     double infer_sum_ms = 0.0;
     double total_ms = 0.0;
+    double braking_ms = 0.0;
     float trigger_left_rps = 0.0f;
     float trigger_right_rps = 0.0f;
     float finish_left_rps = 0.0f;
     float finish_right_rps = 0.0f;
+    float before_reset_left_rps = 0.0f;
+    float before_reset_right_rps = 0.0f;
 };
 
 volatile bool g_drive_by_enable = false;
@@ -166,6 +172,7 @@ const char *state_name(DriveByState state)
     case DB_IDLE: return "IDLE";
     case DB_STOPPING: return "STOPPING";
     case DB_INFER: return "INFER";
+    case DB_TEST_BRAKING: return "TEST_BRAKING";
     case DB_LEFT_TURN_OUT: return "LEFT_TURN_OUT";
     case DB_LEFT_FORWARD: return "LEFT_FORWARD";
     case DB_LEFT_TURN_BACK: return "LEFT_TURN_BACK";
@@ -525,6 +532,10 @@ void print_recognition_test_report(const RecognitionTestReport& report,
     printf("  第三帧结束时：左轮=%.2fRPS，右轮=%.2fRPS\n",
            report.finish_left_rps,
            report.finish_right_rps);
+    printf("  闭环减速保持=%.2f毫秒，复位run前：左轮=%.2fRPS，右轮=%.2fRPS\n",
+           report.braking_ms,
+           report.before_reset_left_rps,
+           report.before_reset_right_rps);
     printf("[识别测试] 已停车：左轮目标=%.2fRPS，右轮目标=%.2fRPS，PWM目标=(%.2f, %.2f)\n",
            static_cast<double>(set_speed_of_motor1_rps),
            static_cast<double>(set_speed_of_motor2_rps),
@@ -532,12 +543,25 @@ void print_recognition_test_report(const RecognitionTestReport& report,
            static_cast<double>(pwm2_duty_rps));
 }
 
-void finish_recognition_test()
+void begin_recognition_test_braking()
 {
     g_test_report.total_ms = duration_ms(g_test_trigger_time, DriveByClock::now());
     g_test_report.finish_left_rps = encoder1_speed_avg;
     g_test_report.finish_right_rps = encoder2_speed_avg;
     item_flag = choose_vote_result();
+
+    // 第三帧结束后先把左右目标速度同时置0，但暂不清除run。
+    // 此时3ms速度环仍然运行，可以主动把轮速拉到0，而不是直接断PWM滑行。
+    g_state = DB_TEST_BRAKING;
+    g_state_start = DriveByClock::now();
+    command_wheel_speed(0, 0);
+}
+
+void finish_recognition_test()
+{
+    g_test_report.braking_ms = duration_ms(g_state_start, DriveByClock::now());
+    g_test_report.before_reset_left_rps = encoder1_speed_avg;
+    g_test_report.before_reset_right_rps = encoder2_speed_avg;
 
     // front_ui_stop() 会取消 drive_by 并清空运行状态，因此先复制报告。
     // 停车必须早于 printf，避免控制台输出延迟停车命令。
@@ -592,6 +616,16 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
         command_recognition_test_cruise();
         process_recognition_test_frame(frame, ncnn, false);
         if (g_test_report.frame_count >= kInferFrames) {
+            begin_recognition_test_braking();
+        }
+        break;
+
+    case DB_TEST_BRAKING:
+        // run仍为1，速度环继续工作；这里只反复保证左右目标保持0。
+        command_wheel_speed(0, 0);
+        if ((std::fabs(encoder1_speed_avg) <= kBrakeStopThresholdRps &&
+             std::fabs(encoder2_speed_avg) <= kBrakeStopThresholdRps) ||
+            elapsed_ms(g_state_start) >= drive_by_stop_ms) {
             finish_recognition_test();
         }
         break;
