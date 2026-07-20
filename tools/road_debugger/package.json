@@ -1,0 +1,10 @@
+{
+  "name": "smart-car-road-debugger",
+  "version": "1.0.0",
+  "private": true,
+  "description": "智能车道路三线、参数、目标识别UDP调试与回放工具",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js && node test_protocol.js && node test_integration.js"
+  }
+}

@@ -1,0 +1,699 @@
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+
+const elements = {
+  connectionBadge: $('connectionBadge'),
+  modeBadge: $('modeBadge'),
+  packetAge: $('packetAge'),
+  leftCount: $('leftCount'),
+  centerCount: $('centerCount'),
+  rightCount: $('rightCount'),
+  frameSequence: $('frameSequence'),
+  frameInterval: $('frameInterval'),
+  roadCanvas: $('roadCanvas'),
+  trendCanvas: $('trendCanvas'),
+  detectionCanvas: $('detectionCanvas'),
+  udpPort: $('udpPort'),
+  localAddress: $('localAddress'),
+  remoteAddress: $('remoteAddress'),
+  jsonPacketCount: $('jsonPacketCount'),
+  roadPacketCount: $('roadPacketCount'),
+  dropCount: $('dropCount'),
+  invalidPacketCount: $('invalidPacketCount'),
+  driveState: $('driveState'),
+  runIndicator: $('runIndicator'),
+  targetBadge: $('targetBadge'),
+  itemResult: $('itemResult'),
+  redRectText: $('redRectText'),
+  plateRectText: $('plateRectText'),
+  parameterList: $('parameterList'),
+  parameterFilter: $('parameterFilter'),
+  recordButton: $('recordButton'),
+  recordingName: $('recordingName'),
+  recordingState: $('recordingState'),
+  recordingSelect: $('recordingSelect'),
+  refreshRecordings: $('refreshRecordings'),
+  loadRecording: $('loadRecording'),
+  returnLiveButton: $('returnLiveButton'),
+  playPauseButton: $('playPauseButton'),
+  stepBackButton: $('stepBackButton'),
+  stepForwardButton: $('stepForwardButton'),
+  timeline: $('timeline'),
+  playbackTime: $('playbackTime'),
+  playbackSpeed: $('playbackSpeed'),
+  carIp: $('carIp'),
+  carPort: $('carPort'),
+  commandInput: $('commandInput'),
+  sendCommand: $('sendCommand'),
+  commandStatus: $('commandStatus'),
+  toast: $('toast'),
+};
+
+const PARAMETER_LABELS = {
+  seq: '参数包序号',
+  uptime_ms: '小车运行时间',
+  udp_mode: 'UDP调试模式',
+  encoder1_speed_avg: '左轮实际RPS',
+  encoder2_speed_avg: '右轮实际RPS',
+  latest_error: '视觉误差',
+  ex_rps1: '左轮目标RPS',
+  ex_rps2: '右轮目标RPS',
+  current_pwm1: '左轮PWM',
+  current_pwm2: '右轮PWM',
+  P1_motor: '左轮P输出',
+  P2_motor: '右轮P输出',
+  I: '速度环I',
+  D1_motor: '左轮I输出',
+  D2_motor: '右轮I输出',
+  spd_slow_ratio: '减速比例',
+  gyro_target_dps: '目标角速度',
+  gyro_dps: '实际角速度',
+  gyro_timeout: '陀螺仪超时数',
+  gyro_read_ms: '陀螺仪读取耗时',
+  to_id: '最近超时来源',
+  to_used: '最近任务耗时',
+  to_target: '任务目标周期',
+  to_total: '累计超时数',
+  run: '运行状态',
+  selected_speed: '速度档位',
+  drive_enabled: '识别模式开关',
+  drive_busy: '识别流程忙',
+  drive_state: '识别状态',
+  have_target: '检测到目标',
+  item_flag: '识别结果',
+  red_x: '红块X',
+  red_y: '红块Y',
+  red_w: '红块宽',
+  red_h: '红块高',
+  plate_x: '目标板X',
+  plate_y: '目标板Y',
+  plate_w: '目标板宽',
+  plate_h: '目标板高',
+  left_n: '左线点数',
+  mid_n: '中线点数',
+  right_n: '右线点数',
+  circle_type: '环岛状态',
+  cross_type: '十字状态',
+  track_type: '赛道类型',
+  AIM: '前瞻距离',
+};
+
+const PARAMETER_ORDER = Object.keys(PARAMETER_LABELS);
+const ITEM_NAMES = { 0: '左绕 / 武器', 1: '直行 / 车辆', 2: '右绕 / 物资' };
+
+const state = {
+  mode: 'live',
+  liveParams: null,
+  liveRoad: null,
+  displayParams: null,
+  displayRoad: null,
+  lastPacketAt: 0,
+  lastRoadAt: 0,
+  previousRoadSequence: null,
+  droppedRoadFrames: 0,
+  trend: [],
+  serverStatus: null,
+  recording: { active: false },
+  replay: {
+    events: [],
+    duration: 0,
+    currentTime: 0,
+    playing: false,
+    animationId: 0,
+    playWallTime: 0,
+    playDataTime: 0,
+  },
+};
+
+let toastTimer = 0;
+
+function showToast(message) {
+  elements.toast.textContent = message;
+  elements.toast.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => elements.toast.classList.remove('visible'), 2600);
+}
+
+function formatTime(milliseconds) {
+  const value = Math.max(0, Number(milliseconds) || 0);
+  const minutes = Math.floor(value / 60000);
+  const seconds = Math.floor((value % 60000) / 1000);
+  const ms = Math.floor(value % 1000);
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+}
+
+function formatValue(key, value) {
+  if (value === null || value === undefined) return '--';
+  if (typeof value === 'boolean') return value ? '是' : '否';
+  if (key === 'run' || key === 'drive_enabled' || key === 'drive_busy' || key === 'have_target') {
+    return Number(value) ? '是' : '否';
+  }
+  if (key === 'item_flag') return `${value} / ${ITEM_NAMES[value] || '未知'}`;
+  if (key === 'udp_mode') return ({ 0: '0 / 关闭', 1: '1 / 仅波形', 2: '2 / 波形和道路' })[Number(value)] || String(value);
+  if (key === 'uptime_ms') return formatTime(value);
+  if (typeof value === 'number' && !Number.isInteger(value)) return value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+  return String(value);
+}
+
+function renderParameters(params) {
+  const filter = elements.parameterFilter.value.trim().toLowerCase();
+  const keys = params
+    ? [...PARAMETER_ORDER.filter((key) => key in params), ...Object.keys(params).filter((key) => !PARAMETER_ORDER.includes(key)).sort()]
+    : [];
+
+  elements.parameterList.replaceChildren(...keys
+    .filter((key) => {
+      const label = PARAMETER_LABELS[key] || key;
+      return !filter || key.toLowerCase().includes(filter) || label.toLowerCase().includes(filter);
+    })
+    .map((key) => {
+      const row = document.createElement('div');
+      row.className = 'parameter-row';
+      const label = document.createElement('span');
+      label.textContent = PARAMETER_LABELS[key] || key;
+      label.title = key;
+      const value = document.createElement('strong');
+      value.textContent = formatValue(key, params[key]);
+      row.append(label, value);
+      return row;
+    }));
+}
+
+function itemResultText(value) {
+  const numeric = Number(value);
+  return `${Number.isFinite(numeric) ? numeric : 1} / ${ITEM_NAMES[numeric] || '未知'}`;
+}
+
+function mergedDetection() {
+  const params = state.displayParams || {};
+  const road = state.displayRoad;
+  const paramRect = (prefix) => ({
+    x: Number(params[`${prefix}_x`] || 0),
+    y: Number(params[`${prefix}_y`] || 0),
+    w: Number(params[`${prefix}_w`] || 0),
+    h: Number(params[`${prefix}_h`] || 0),
+  });
+  return {
+    haveTarget: 'have_target' in params ? Boolean(Number(params.have_target)) : Boolean(road?.flags.haveTarget),
+    itemFlag: 'item_flag' in params ? Number(params.item_flag) : Number(road?.itemFlag ?? 1),
+    redRect: 'red_w' in params ? paramRect('red') : (road?.redRect || { x: 0, y: 0, w: 0, h: 0 }),
+    plateRect: 'plate_w' in params ? paramRect('plate') : (road?.plateRect || { x: 0, y: 0, w: 0, h: 0 }),
+  };
+}
+
+function drawGrid(context, width, height, sourceWidth, sourceHeight) {
+  context.fillStyle = '#071113';
+  context.fillRect(0, 0, width, height);
+  context.lineWidth = 1;
+  context.strokeStyle = 'rgba(103, 170, 168, 0.11)';
+  for (let x = 0; x <= sourceWidth; x += 40) {
+    const px = x / sourceWidth * width;
+    context.beginPath();
+    context.moveTo(px, 0);
+    context.lineTo(px, height);
+    context.stroke();
+  }
+  for (let y = 0; y <= sourceHeight; y += 40) {
+    const py = y / sourceHeight * height;
+    context.beginPath();
+    context.moveTo(0, py);
+    context.lineTo(width, py);
+    context.stroke();
+  }
+}
+
+function drawRoad() {
+  const canvas = elements.roadCanvas;
+  const context = canvas.getContext('2d');
+  const road = state.displayRoad;
+  const sourceWidth = road?.width || 320;
+  const sourceHeight = road?.height || 240;
+  drawGrid(context, canvas.width, canvas.height, sourceWidth, sourceHeight);
+
+  const horizon = 100 / sourceHeight * canvas.height;
+  context.fillStyle = 'rgba(81, 216, 208, 0.025)';
+  context.fillRect(0, horizon, canvas.width, canvas.height - horizon);
+
+  if (!road) {
+    context.fillStyle = '#83a09f';
+    context.font = '600 25px Bahnschrift, Microsoft YaHei';
+    context.textAlign = 'center';
+    const hasUdpMode = state.displayParams && 'udp_mode' in state.displayParams;
+    const roadEnabled = !hasUdpMode || Number(state.displayParams.udp_mode) >= 2;
+    context.fillText(
+      roadEnabled ? '等待道路帧 RDL1' : '道路发送已关闭，请发送 #udp=2;',
+      canvas.width / 2,
+      canvas.height / 2);
+    return;
+  }
+
+  const scaleX = canvas.width / sourceWidth;
+  const scaleY = canvas.height / sourceHeight;
+  const drawLine = (points, color, width, glow) => {
+    if (!points || points.length < 1) return;
+    context.save();
+    context.strokeStyle = color;
+    context.lineWidth = width;
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    context.shadowColor = color;
+    context.shadowBlur = glow;
+    context.beginPath();
+    points.forEach(([x, y], index) => {
+      const px = x * scaleX;
+      const py = y * scaleY;
+      if (index === 0) context.moveTo(px, py);
+      else context.lineTo(px, py);
+    });
+    context.stroke();
+    context.restore();
+  };
+
+  drawLine(road.lines.left, '#5ba9ff', 5, 8);
+  drawLine(road.lines.right, '#ff9c5a', 5, 8);
+  drawLine(road.lines.center, '#ecf6f3', 4, 7);
+
+  if (road.aim && road.aim[0] >= 0 && road.aim[1] >= 0) {
+    const x = road.aim[0] * scaleX;
+    const y = road.aim[1] * scaleY;
+    context.save();
+    context.strokeStyle = '#ff645f';
+    context.lineWidth = 4;
+    context.shadowColor = '#ff645f';
+    context.shadowBlur = 12;
+    context.beginPath();
+    context.moveTo(x - 10, y - 10);
+    context.lineTo(x + 10, y + 10);
+    context.moveTo(x + 10, y - 10);
+    context.lineTo(x - 10, y + 10);
+    context.stroke();
+    context.restore();
+  }
+
+  const carX = sourceWidth / 2 * scaleX;
+  const carY = (sourceHeight - 11) * scaleY;
+  context.fillStyle = '#51d8d0';
+  context.beginPath();
+  context.moveTo(carX, carY - 18);
+  context.lineTo(carX - 13, carY + 12);
+  context.lineTo(carX + 13, carY + 12);
+  context.closePath();
+  context.fill();
+}
+
+function drawDetection() {
+  const canvas = elements.detectionCanvas;
+  const context = canvas.getContext('2d');
+  const sourceWidth = 320;
+  const sourceHeight = 240;
+  drawGrid(context, canvas.width, canvas.height, sourceWidth, sourceHeight);
+  const detection = mergedDetection();
+  const scaleX = canvas.width / sourceWidth;
+  const scaleY = canvas.height / sourceHeight;
+
+  context.save();
+  context.setLineDash([8, 8]);
+  context.strokeStyle = 'rgba(245, 223, 116, 0.48)';
+  context.lineWidth = 2;
+  context.strokeRect(60 * scaleX, 110 * scaleY, 200 * scaleX, 90 * scaleY);
+  context.restore();
+
+  function drawRect(rect, color, label) {
+    if (!rect || rect.w <= 0 || rect.h <= 0) return;
+    context.strokeStyle = color;
+    context.fillStyle = color;
+    context.lineWidth = 4;
+    context.strokeRect(rect.x * scaleX, rect.y * scaleY, rect.w * scaleX, rect.h * scaleY);
+    context.font = '700 20px Bahnschrift, Microsoft YaHei';
+    context.fillText(label, rect.x * scaleX + 4, Math.max(22, rect.y * scaleY - 7));
+  }
+
+  drawRect(detection.redRect, '#ff645f', '红块');
+  drawRect(detection.plateRect, '#f5df74', '目标板');
+
+  elements.targetBadge.textContent = detection.haveTarget ? '已检测' : '未检测';
+  elements.targetBadge.className = `badge ${detection.haveTarget ? 'badge-alert' : 'badge-offline'}`;
+  elements.itemResult.textContent = itemResultText(detection.itemFlag);
+  const rectText = (rect) => rect.w > 0 && rect.h > 0 ? `(${rect.x}, ${rect.y}) ${rect.w}×${rect.h}` : '--';
+  elements.redRectText.textContent = rectText(detection.redRect);
+  elements.plateRectText.textContent = rectText(detection.plateRect);
+}
+
+function pushTrend(receivedAt, params) {
+  if (state.mode !== 'live') return;
+  const number = (key) => Number(params[key] || 0);
+  state.trend.push({
+    t: receivedAt,
+    actual: (number('encoder1_speed_avg') + number('encoder2_speed_avg')) / 2,
+    target: (number('ex_rps1') + number('ex_rps2')) / 2,
+    error: number('latest_error'),
+  });
+  const cutoff = receivedAt - 10000;
+  while (state.trend.length && state.trend[0].t < cutoff) state.trend.shift();
+}
+
+function drawTrend() {
+  const canvas = elements.trendCanvas;
+  const context = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  context.fillStyle = '#071113';
+  context.fillRect(0, 0, width, height);
+  context.strokeStyle = 'rgba(103, 170, 168, 0.12)';
+  context.lineWidth = 1;
+  for (let index = 1; index < 5; index += 1) {
+    const y = index / 5 * height;
+    context.beginPath();
+    context.moveTo(0, y);
+    context.lineTo(width, y);
+    context.stroke();
+  }
+
+  if (state.trend.length < 2) return;
+  const start = state.trend[0].t;
+  const end = Math.max(start + 1, state.trend[state.trend.length - 1].t);
+  const speedMax = Math.max(40, ...state.trend.map((point) => Math.abs(point.actual)), ...state.trend.map((point) => Math.abs(point.target)));
+  const drawSeries = (getter, color, mapper) => {
+    context.strokeStyle = color;
+    context.lineWidth = 2.5;
+    context.beginPath();
+    state.trend.forEach((point, index) => {
+      const x = (point.t - start) / (end - start) * width;
+      const y = mapper(getter(point));
+      if (index === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    });
+    context.stroke();
+  };
+  drawSeries((point) => point.actual, '#51d8d0', (value) => height - (value / speedMax) * height * 0.86 - 12);
+  drawSeries((point) => point.target, '#f5df74', (value) => height - (value / speedMax) * height * 0.86 - 12);
+  drawSeries((point) => point.error, '#ff645f', (value) => height / 2 - (Math.max(-120, Math.min(120, value)) / 120) * height * 0.42);
+}
+
+function updateSummary() {
+  const params = state.displayParams || {};
+  const road = state.displayRoad;
+  const running = Boolean(Number(params.run ?? road?.flags.running ?? 0));
+  elements.runIndicator.textContent = running ? 'RUN' : 'STOP';
+  elements.runIndicator.classList.toggle('running', running);
+  elements.driveState.textContent = params.drive_state || (road?.flags.driveBusy ? 'BUSY' : '--');
+  elements.leftCount.textContent = road?.sourceCounts.left ?? params.left_n ?? 0;
+  elements.centerCount.textContent = road?.sourceCounts.center ?? params.mid_n ?? 0;
+  elements.rightCount.textContent = road?.sourceCounts.right ?? params.right_n ?? 0;
+  elements.frameSequence.textContent = road ? `帧 ${road.sequence}` : '帧 --';
+}
+
+function applyParams(receivedAt, params, fromReplay = false) {
+  const roadDisabled = 'udp_mode' in params && Number(params.udp_mode) < 2;
+  if (!fromReplay) {
+    state.liveParams = params;
+    state.lastPacketAt = receivedAt;
+    pushTrend(receivedAt, params);
+    if (roadDisabled) {
+      state.liveRoad = null;
+      state.previousRoadSequence = null;
+    }
+  }
+  if (state.mode === 'live' || fromReplay) {
+    state.displayParams = params;
+    if (roadDisabled) state.displayRoad = null;
+    renderParameters(params);
+    updateSummary();
+    drawRoad();
+    drawDetection();
+  }
+}
+
+function applyRoad(receivedAt, road, fromReplay = false) {
+  if (!fromReplay) {
+    if (state.previousRoadSequence !== null && road.sequence > state.previousRoadSequence + 1) {
+      state.droppedRoadFrames += road.sequence - state.previousRoadSequence - 1;
+    }
+    state.previousRoadSequence = road.sequence;
+    if (state.lastRoadAt) elements.frameInterval.textContent = `间隔 ${receivedAt - state.lastRoadAt} ms`;
+    state.lastRoadAt = receivedAt;
+    state.lastPacketAt = receivedAt;
+    state.liveRoad = road;
+  }
+  if (state.mode === 'live' || fromReplay) {
+    state.displayRoad = road;
+    updateSummary();
+    drawRoad();
+    drawDetection();
+  }
+}
+
+function applyStatus(status) {
+  state.serverStatus = status;
+  elements.udpPort.textContent = status.udpPort;
+  elements.localAddress.textContent = status.localAddresses?.map((entry) => entry.address).join(' / ') || '--';
+  elements.remoteAddress.textContent = status.lastRemote || '--';
+  elements.jsonPacketCount.textContent = status.jsonPackets;
+  elements.roadPacketCount.textContent = status.roadPackets;
+  elements.invalidPacketCount.textContent = status.invalidPackets;
+  elements.dropCount.textContent = state.droppedRoadFrames;
+  updateRecordingState(status.recording || { active: false });
+}
+
+function updateRecordingState(recording) {
+  state.recording = recording || { active: false };
+  const active = Boolean(recording?.active);
+  elements.recordButton.textContent = active ? '停止录制' : '开始录制';
+  elements.recordButton.classList.toggle('active', active);
+  elements.recordingState.textContent = active
+    ? `${recording.filename} / ${recording.eventCount || 0}条 / ${formatTime(recording.durationMs)}`
+    : '未录制';
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  elements.modeBadge.textContent = mode === 'live' ? '实时模式' : '回放模式';
+  elements.modeBadge.classList.toggle('badge-alert', mode === 'replay');
+  if (mode === 'live') {
+    pauseReplay();
+    state.displayParams = state.liveParams;
+    state.displayRoad = state.liveRoad;
+    renderParameters(state.displayParams || {});
+    updateSummary();
+    drawRoad();
+    drawDetection();
+  }
+}
+
+function eventIndexAtTime(time) {
+  const events = state.replay.events;
+  let low = 0;
+  let high = events.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (events[middle].t <= time) low = middle + 1;
+    else high = middle;
+  }
+  return low - 1;
+}
+
+function applyReplayTime(time) {
+  const events = state.replay.events;
+  if (!events.length) return;
+  const clamped = Math.max(0, Math.min(state.replay.duration, time));
+  const index = Math.max(0, eventIndexAtTime(clamped));
+  let params = null;
+  let road = null;
+  for (let cursor = index; cursor >= 0 && (!params || !road); cursor -= 1) {
+    if (!params && events[cursor].type === 'params') params = events[cursor].data;
+    if (!road && events[cursor].type === 'road') road = events[cursor].data;
+  }
+  state.replay.currentTime = clamped;
+  elements.timeline.value = String(Math.round(clamped));
+  elements.playbackTime.textContent = formatTime(clamped);
+  if (params) applyParams(events[index]?.receivedAt || 0, params, true);
+  if (road) applyRoad(events[index]?.receivedAt || 0, road, true);
+}
+
+function replayTick(now) {
+  if (!state.replay.playing) return;
+  const speed = Number(elements.playbackSpeed.value || 1);
+  const target = state.replay.playDataTime + (now - state.replay.playWallTime) * speed;
+  applyReplayTime(target);
+  if (target >= state.replay.duration) {
+    pauseReplay();
+    return;
+  }
+  state.replay.animationId = requestAnimationFrame(replayTick);
+}
+
+function playReplay() {
+  if (!state.replay.events.length) {
+    showToast('请先载入录像');
+    return;
+  }
+  if (state.replay.currentTime >= state.replay.duration) applyReplayTime(0);
+  state.replay.playing = true;
+  state.replay.playWallTime = performance.now();
+  state.replay.playDataTime = state.replay.currentTime;
+  elements.playPauseButton.textContent = 'Ⅱ';
+  state.replay.animationId = requestAnimationFrame(replayTick);
+}
+
+function pauseReplay() {
+  state.replay.playing = false;
+  cancelAnimationFrame(state.replay.animationId);
+  elements.playPauseButton.textContent = '▶';
+}
+
+async function loadRecordings() {
+  const response = await fetch('/api/recordings');
+  const payload = await response.json();
+  elements.recordingSelect.replaceChildren(...(payload.recordings || []).map((recording) => {
+    const option = document.createElement('option');
+    option.value = recording.name;
+    option.textContent = `${recording.name} (${(recording.size / 1024 / 1024).toFixed(1)}MB)`;
+    return option;
+  }));
+  if (!elements.recordingSelect.options.length) {
+    const option = document.createElement('option');
+    option.textContent = '暂无录像';
+    option.value = '';
+    elements.recordingSelect.append(option);
+  }
+}
+
+async function loadSelectedRecording() {
+  const name = elements.recordingSelect.value;
+  if (!name) {
+    showToast('暂无可载入录像');
+    return;
+  }
+  pauseReplay();
+  showToast('正在载入录像…');
+  const response = await fetch(`/api/recording/file?name=${encodeURIComponent(name)}`);
+  if (!response.ok) throw new Error((await response.json()).error || '录像载入失败');
+  const text = await response.text();
+  const events = text.split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => JSON.parse(line))
+    .filter((event) => event.type === 'params' || event.type === 'road')
+    .sort((left, right) => left.t - right.t);
+  if (!events.length) throw new Error('录像中没有有效遥测事件');
+  state.replay.events = events;
+  state.replay.duration = events[events.length - 1].t;
+  state.replay.currentTime = 0;
+  elements.timeline.max = String(Math.max(1, Math.ceil(state.replay.duration)));
+  setMode('replay');
+  applyReplayTime(0);
+  showToast(`已载入 ${events.length} 条事件`);
+}
+
+async function toggleRecording() {
+  const active = Boolean(state.recording?.active);
+  const path = active ? '/api/recording/stop' : '/api/recording/start';
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: elements.recordingName.value }),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || '录制操作失败');
+  showToast(active ? '录像已保存' : '开始录制');
+  await loadRecordings();
+}
+
+async function sendCommand(command) {
+  const normalized = String(command || '').trim();
+  if (!normalized) return;
+  const response = await fetch('/api/command', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ip: elements.carIp.value,
+      port: Number(elements.carPort.value),
+      command: normalized,
+    }),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || '发送失败');
+  elements.commandStatus.textContent = `已发送 ${payload.command} → ${payload.ip}:${payload.port}`;
+  showToast(`已发送 ${payload.command}`);
+}
+
+function bindEvents() {
+  elements.parameterFilter.addEventListener('input', () => renderParameters(state.displayParams || {}));
+  elements.recordButton.addEventListener('click', () => toggleRecording().catch((error) => showToast(error.message)));
+  elements.refreshRecordings.addEventListener('click', () => loadRecordings().catch((error) => showToast(error.message)));
+  elements.loadRecording.addEventListener('click', () => loadSelectedRecording().catch((error) => showToast(error.message)));
+  elements.returnLiveButton.addEventListener('click', () => setMode('live'));
+  elements.playPauseButton.addEventListener('click', () => state.replay.playing ? pauseReplay() : playReplay());
+  elements.timeline.addEventListener('input', () => {
+    pauseReplay();
+    applyReplayTime(Number(elements.timeline.value));
+  });
+  elements.stepBackButton.addEventListener('click', () => {
+    pauseReplay();
+    const index = Math.max(0, eventIndexAtTime(state.replay.currentTime) - 1);
+    if (state.replay.events[index]) applyReplayTime(state.replay.events[index].t);
+  });
+  elements.stepForwardButton.addEventListener('click', () => {
+    pauseReplay();
+    const index = Math.min(state.replay.events.length - 1, eventIndexAtTime(state.replay.currentTime) + 1);
+    if (state.replay.events[index]) applyReplayTime(state.replay.events[index].t);
+  });
+  elements.sendCommand.addEventListener('click', () => sendCommand(elements.commandInput.value).catch((error) => showToast(error.message)));
+  elements.commandInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') sendCommand(elements.commandInput.value).catch((error) => showToast(error.message));
+  });
+  document.querySelectorAll('[data-command]').forEach((button) => {
+    button.addEventListener('click', () => sendCommand(button.dataset.command).catch((error) => showToast(error.message)));
+  });
+}
+
+function connectEvents() {
+  const source = new EventSource('/events');
+  source.addEventListener('open', () => {
+    elements.connectionBadge.textContent = '服务已连接';
+    elements.connectionBadge.className = 'badge badge-online';
+  });
+  source.addEventListener('error', () => {
+    elements.connectionBadge.textContent = '服务重连中';
+    elements.connectionBadge.className = 'badge badge-alert';
+  });
+  source.addEventListener('status', (event) => applyStatus(JSON.parse(event.data)));
+  source.addEventListener('recording', (event) => updateRecordingState(JSON.parse(event.data)));
+  source.addEventListener('params', (event) => {
+    const payload = JSON.parse(event.data);
+    applyParams(payload.receivedAt, payload.params);
+  });
+  source.addEventListener('road', (event) => {
+    const payload = JSON.parse(event.data);
+    applyRoad(payload.receivedAt, payload.road);
+  });
+}
+
+function updateConnectionAge() {
+  const age = state.lastPacketAt ? Date.now() - state.lastPacketAt : Infinity;
+  elements.packetAge.textContent = Number.isFinite(age) ? `${age} ms` : '-- ms';
+  if (age < 500) {
+    elements.connectionBadge.textContent = 'UDP实时';
+    elements.connectionBadge.className = 'badge badge-online';
+  } else if (age < 2000) {
+    elements.connectionBadge.textContent = 'UDP延迟';
+    elements.connectionBadge.className = 'badge badge-alert';
+  } else if (state.serverStatus) {
+    elements.connectionBadge.textContent = '等待小车UDP';
+    elements.connectionBadge.className = 'badge badge-offline';
+  }
+  elements.dropCount.textContent = state.droppedRoadFrames;
+  drawTrend();
+}
+
+async function initialize() {
+  bindEvents();
+  drawRoad();
+  drawDetection();
+  drawTrend();
+  connectEvents();
+  await loadRecordings().catch(() => null);
+  setInterval(updateConnectionAge, 100);
+}
+
+initialize();

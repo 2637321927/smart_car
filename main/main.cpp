@@ -7,6 +7,7 @@
 #include "drive_by.hpp"  // 目标板触发后的固定动作脚本
 #include "gyro_yaw_rate_control.hpp"  // MPU6050 角速度环 demo
 #include <chrono>
+#include <cstdint>
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
@@ -79,6 +80,8 @@ ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
  volatile float set_speed_of_motor2_rps=0.0f;
 lq_udp_client udp_client;
 lq_udp_client udp_client_img;
+// UDP调试模式：0关闭，1仅参数波形，2参数波形+道路三线。默认保持原有波形输出。
+volatile int udp_debug_mode = 1;
 cv::Mat bgr_bird;
 volatile int test_count = 0;
 enum AvoidState
@@ -400,6 +403,17 @@ if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
     printf("[VOFA] spd = %.2f\n", set_speed_of_motor1_rps);
 }
 
+if (sscanf(buf, "#udp=%d;", &itmp) == 1)
+{
+    if (itmp < 0) itmp = 0;
+    if (itmp > 2) itmp = 2;
+    udp_debug_mode = itmp;
+    const char *mode_name = udp_debug_mode == 0
+        ? "关闭"
+        : (udp_debug_mode == 1 ? "仅波形" : "波形和道路三线");
+    printf("[VOFA] UDP调试模式=%d（%s）\n", udp_debug_mode, mode_name);
+}
+
 // VOFA command example: #AIM=0.30;
 // AIM is the forward look-ahead distance in meters. The image-processing loop
 // copies it to aim_distance before selecting the tracking target point.
@@ -569,14 +583,153 @@ void encoder_sample_1ms_thread()
    // }
 }
 
+namespace {
+
+constexpr int kRoadTelemetryMaxPoints = 64;
+constexpr uint16_t kRoadTelemetryHeaderSize = 52;
+constexpr int kRoadTelemetryMinIntervalMs = 12;
+
+void telemetry_write_u16(uint8_t *&cursor, uint16_t value)
+{
+    *cursor++ = static_cast<uint8_t>(value & 0xff);
+    *cursor++ = static_cast<uint8_t>((value >> 8) & 0xff);
+}
+
+void telemetry_write_i16(uint8_t *&cursor, int value)
+{
+    if (value < -32768) value = -32768;
+    if (value > 32767) value = 32767;
+    telemetry_write_u16(cursor, static_cast<uint16_t>(static_cast<int16_t>(value)));
+}
+
+void telemetry_write_u32(uint8_t *&cursor, uint32_t value)
+{
+    *cursor++ = static_cast<uint8_t>(value & 0xff);
+    *cursor++ = static_cast<uint8_t>((value >> 8) & 0xff);
+    *cursor++ = static_cast<uint8_t>((value >> 16) & 0xff);
+    *cursor++ = static_cast<uint8_t>((value >> 24) & 0xff);
+}
+
+int telemetry_point_count(int source_count)
+{
+    if (source_count <= 0) {
+        return 0;
+    }
+    return source_count < kRoadTelemetryMaxPoints
+        ? source_count
+        : kRoadTelemetryMaxPoints;
+}
+
+void telemetry_write_line(uint8_t *&cursor,
+                          float points[][2],
+                          int source_count,
+                          int output_count)
+{
+    for (int index = 0; index < output_count; ++index) {
+        const int source_index = output_count <= 1
+            ? 0
+            : index * (source_count - 1) / (output_count - 1);
+        telemetry_write_i16(cursor, cvRound(points[source_index][0]));
+        telemetry_write_i16(cursor, cvRound(points[source_index][1]));
+    }
+}
+
+void road_telemetry_send()
+{
+    if (udp_debug_mode < 2) {
+        return;
+    }
+
+    static uint32_t sequence = 0;
+    static const steady_clock::time_point started_at = steady_clock::now();
+    static steady_clock::time_point last_sent =
+        steady_clock::now() - milliseconds(kRoadTelemetryMinIntervalMs);
+
+    const steady_clock::time_point now = steady_clock::now();
+    if (duration_cast<milliseconds>(now - last_sent).count() <
+        kRoadTelemetryMinIntervalMs) {
+        return;
+    }
+    last_sent = now;
+
+    const int left_count = telemetry_point_count(rpts0s_num);
+    const int center_count = telemetry_point_count(rptsn_num);
+    const int right_count = telemetry_point_count(rpts1s_num);
+
+    uint8_t flags = 0;
+    if (have_target) flags |= 1u << 0;
+    if (red_block_rect.width > 0 && red_block_rect.height > 0) flags |= 1u << 1;
+    if (plate_rect.width > 0 && plate_rect.height > 0) flags |= 1u << 2;
+    if (front_ui_is_running()) flags |= 1u << 3;
+    if (drive_by_is_busy()) flags |= 1u << 4;
+
+    int aim_x = -1;
+    int aim_y = -1;
+    if (rptsn_num > 0) {
+        const int aim_index = clip(cvRound(aim_distance / sample_dist), 0, rptsn_num - 1);
+        aim_x = cvRound(rptsn[aim_index][0]);
+        aim_y = cvRound(rptsn[aim_index][1]);
+    }
+
+    uint8_t packet[kRoadTelemetryHeaderSize + kRoadTelemetryMaxPoints * 3 * 4] = {};
+    uint8_t *cursor = packet;
+    *cursor++ = 'R';
+    *cursor++ = 'D';
+    *cursor++ = 'L';
+    *cursor++ = '1';
+    *cursor++ = 1;
+    *cursor++ = flags;
+    telemetry_write_u16(cursor, kRoadTelemetryHeaderSize);
+    telemetry_write_u32(cursor, ++sequence);
+    telemetry_write_u32(cursor, static_cast<uint32_t>(
+        duration_cast<milliseconds>(now - started_at).count()));
+    telemetry_write_u16(cursor, IMG_W);
+    telemetry_write_u16(cursor, IMG_H);
+    *cursor++ = static_cast<uint8_t>(left_count);
+    *cursor++ = static_cast<uint8_t>(center_count);
+    *cursor++ = static_cast<uint8_t>(right_count);
+    *cursor++ = static_cast<uint8_t>(item_flag & 0xff);
+    telemetry_write_i16(cursor, red_block_rect.x);
+    telemetry_write_i16(cursor, red_block_rect.y);
+    telemetry_write_i16(cursor, red_block_rect.width);
+    telemetry_write_i16(cursor, red_block_rect.height);
+    telemetry_write_i16(cursor, plate_rect.x);
+    telemetry_write_i16(cursor, plate_rect.y);
+    telemetry_write_i16(cursor, plate_rect.width);
+    telemetry_write_i16(cursor, plate_rect.height);
+    telemetry_write_i16(cursor, aim_x);
+    telemetry_write_i16(cursor, aim_y);
+    telemetry_write_u16(cursor, static_cast<uint16_t>(rpts0s_num));
+    telemetry_write_u16(cursor, static_cast<uint16_t>(rptsn_num));
+    telemetry_write_u16(cursor, static_cast<uint16_t>(rpts1s_num));
+    telemetry_write_u16(cursor, 0);
+
+    telemetry_write_line(cursor, rpts0s, rpts0s_num, left_count);
+    telemetry_write_line(cursor, rptsn, rptsn_num, center_count);
+    telemetry_write_line(cursor, rpts1s, rpts1s_num, right_count);
+
+    udp_client.udp_send(packet, static_cast<size_t>(cursor - packet));
+}
+
+} // namespace
+
 void udp_send(void){
-    char encoder_str[640];
+    char encoder_str[1200];
+    static uint32_t udp_sequence = 0;
+    static const steady_clock::time_point udp_started_at = steady_clock::now();
     const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
     lq_timer_timeout_snapshot timeout_debug = {};
     lq_timer_timeout_get_snapshot(&timeout_debug);
+    const cv::Rect red_rect = red_block_rect;
+    const cv::Rect target_rect = plate_rect;
+    const uint32_t uptime_ms = static_cast<uint32_t>(duration_cast<milliseconds>(
+        steady_clock::now() - udp_started_at).count());
 
-    snprintf(encoder_str, sizeof(encoder_str),
+    const int json_length = snprintf(encoder_str, sizeof(encoder_str),
              "{"
+             "\"seq\":%u,"
+             "\"uptime_ms\":%u,"
+             "\"udp_mode\":%d,"
              "\"encoder1_speed_avg\":%.2f,"
              "\"encoder2_speed_avg\":%.2f,"
              "\"latest_error\":%.2f,"
@@ -597,8 +750,23 @@ void udp_send(void){
              "\"to_id\":%d,"
              "\"to_used\":%.2f,"
              "\"to_target\":%.2f,"
-             "\"to_total\":%llu"
+             "\"to_total\":%llu,"
+             "\"run\":%d,"
+             "\"selected_speed\":%d,"
+             "\"drive_enabled\":%d,"
+             "\"drive_busy\":%d,"
+             "\"drive_state\":\"%s\","
+             "\"have_target\":%d,"
+             "\"item_flag\":%d,"
+             "\"red_x\":%d,\"red_y\":%d,\"red_w\":%d,\"red_h\":%d,"
+             "\"plate_x\":%d,\"plate_y\":%d,\"plate_w\":%d,\"plate_h\":%d,"
+             "\"left_n\":%d,\"mid_n\":%d,\"right_n\":%d,"
+             "\"circle_type\":%d,\"cross_type\":%d,\"track_type\":%d,"
+             "\"AIM\":%.3f"
              "}",
+             ++udp_sequence,
+             uptime_ms,
+             udp_debug_mode,
              safe_float(encoder1_speed_avg),
              safe_float(encoder2_speed_avg),
              safe_float(latest_error),
@@ -619,11 +787,26 @@ void udp_send(void){
              timeout_debug.id,
              safe_float(timeout_debug.used_ms),
              safe_float(timeout_debug.target_ms),
-             (unsigned long long)timeout_debug.total);
+             (unsigned long long)timeout_debug.total,
+             front_ui_is_running() ? 1 : 0,
+             front_ui_selected_speed(),
+             drive_by_is_enabled() ? 1 : 0,
+             drive_by_is_busy() ? 1 : 0,
+             drive_by_state_name(),
+             have_target ? 1 : 0,
+             item_flag,
+             red_rect.x, red_rect.y, red_rect.width, red_rect.height,
+             target_rect.x, target_rect.y, target_rect.width, target_rect.height,
+             rpts0s_num, rptsn_num, rpts1s_num,
+             static_cast<int>(circle_type),
+             static_cast<int>(cross_type),
+             static_cast<int>(track_type),
+             safe_float(AIM));
 
-// 发送函数
-
-udp_client.udp_send_string(encoder_str);
+// 截断的JSON没有调试价值，直接丢弃，避免PC端把它统计为协议错误。
+if (json_length > 0 && json_length < static_cast<int>(sizeof(encoder_str))) {
+    udp_client.udp_send(encoder_str, static_cast<size_t>(json_length));
+}
 /*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");
@@ -824,7 +1007,9 @@ gyro_yaw_rate_control_init();
     });
 
      udp_timer.set_seconds_ms(12, []() {
-    udp_send();
+    if (udp_debug_mode >= 1) {
+      udp_send();
+    }
 
     });
 
@@ -1104,6 +1289,9 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
             else latest_error = filter_error(-error); 
         }
         
+ // 发送控制算法实际使用的鸟瞰左/中/右线。每个包小于MTU，不启用JPEG图传。
+ road_telemetry_send();
+
  if(is_udp_img==1){
                clear_image(&img_line);
                cv::Mat birdview;

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>智能车道路遥测台</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">SMART CAR / ROAD TELEMETRY</p>
+        <h1>道路遥测台</h1>
+      </div>
+      <div class="top-status">
+        <span id="connectionBadge" class="badge badge-offline">等待UDP</span>
+        <span id="modeBadge" class="badge">实时模式</span>
+        <span id="packetAge" class="metric-chip">-- ms</span>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <section class="visual-column">
+        <article class="panel road-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">BIRD VIEW / 320 × 240</p>
+              <h2>道路识别结果</h2>
+            </div>
+            <div class="line-stats">
+              <span><i class="dot left-dot"></i>左线 <b id="leftCount">0</b></span>
+              <span><i class="dot center-dot"></i>中线 <b id="centerCount">0</b></span>
+              <span><i class="dot right-dot"></i>右线 <b id="rightCount">0</b></span>
+            </div>
+          </div>
+          <div class="road-stage">
+            <canvas id="roadCanvas" width="960" height="720"></canvas>
+            <div class="stage-overlay">
+              <span id="frameSequence">帧 --</span>
+              <span id="frameInterval">间隔 -- ms</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel trend-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="section-label">LAST 10 SECONDS</p>
+              <h2>控制趋势</h2>
+            </div>
+            <div class="trend-legend">
+              <span class="speed-actual">实际轮速</span>
+              <span class="speed-target">目标轮速</span>
+              <span class="error-line">视觉误差</span>
+            </div>
+          </div>
+          <canvas id="trendCanvas" width="1200" height="260"></canvas>
+        </article>
+
+        <article id="playbackPanel" class="panel playback-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="section-label">RECORD & REPLAY</p>
+              <h2>录制与回放</h2>
+            </div>
+            <button id="returnLiveButton" class="button ghost" type="button">返回实时</button>
+          </div>
+          <div class="record-row">
+            <input id="recordingName" class="input" value="tuning" aria-label="录像名称">
+            <button id="recordButton" class="button record" type="button">开始录制</button>
+            <span id="recordingState" class="muted">未录制</span>
+          </div>
+          <div class="replay-row">
+            <select id="recordingSelect" class="input grow" aria-label="录像列表"></select>
+            <button id="refreshRecordings" class="button ghost" type="button">刷新</button>
+            <button id="loadRecording" class="button" type="button">载入</button>
+          </div>
+          <div class="timeline-row">
+            <button id="playPauseButton" class="icon-button" type="button" aria-label="播放或暂停">▶</button>
+            <button id="stepBackButton" class="icon-button" type="button" aria-label="上一事件">−1</button>
+            <button id="stepForwardButton" class="icon-button" type="button" aria-label="下一事件">+1</button>
+            <input id="timeline" type="range" min="0" max="0" value="0" step="1">
+            <span id="playbackTime" class="timecode">00:00.000</span>
+            <select id="playbackSpeed" class="input speed-select" aria-label="回放速度">
+              <option value="0.25">0.25×</option>
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+        </article>
+      </section>
+
+      <aside class="side-column">
+        <article class="panel status-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="section-label">UDP STATUS</p>
+              <h2>连接状态</h2>
+            </div>
+            <span id="runIndicator" class="run-indicator">STOP</span>
+          </div>
+          <dl class="status-grid">
+            <div><dt>监听端口</dt><dd id="udpPort">8080</dd></div>
+            <div><dt>本机IP</dt><dd id="localAddress">--</dd></div>
+            <div><dt>小车来源</dt><dd id="remoteAddress">--</dd></div>
+            <div><dt>参数包</dt><dd id="jsonPacketCount">0</dd></div>
+            <div><dt>道路帧</dt><dd id="roadPacketCount">0</dd></div>
+            <div><dt>丢帧估计</dt><dd id="dropCount">0</dd></div>
+            <div><dt>协议错误</dt><dd id="invalidPacketCount">0</dd></div>
+            <div><dt>当前模式</dt><dd id="driveState">--</dd></div>
+          </dl>
+        </article>
+
+        <article class="panel detection-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="section-label">TARGET DETECTION</p>
+              <h2>红块与目标板</h2>
+            </div>
+            <span id="targetBadge" class="badge badge-offline">未检测</span>
+          </div>
+          <canvas id="detectionCanvas" width="640" height="480"></canvas>
+          <div class="result-strip">
+            <div><span>识别结果</span><strong id="itemResult">1 / 直行</strong></div>
+            <div><span>红块</span><strong id="redRectText">--</strong></div>
+            <div><span>目标板</span><strong id="plateRectText">--</strong></div>
+          </div>
+        </article>
+
+        <article class="panel command-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="section-label">VOFA COMMAND</p>
+              <h2>调参指令</h2>
+            </div>
+          </div>
+          <div class="command-address">
+            <input id="carIp" class="input" value="192.168.43.6" aria-label="小车IP">
+            <input id="carPort" class="input port-input" value="8082" aria-label="命令端口">
+          </div>
+          <div class="command-entry">
+            <input id="commandInput" class="input grow" placeholder="#P=300;" aria-label="VOFA指令">
+            <button id="sendCommand" class="button" type="button">发送</button>
+          </div>
+          <div class="quick-commands">
+            <button type="button" data-command="#run=1;">发车</button>
+            <button type="button" data-command="#run=0;">停车</button>
+            <button type="button" data-command="#spd=20;">20RPS</button>
+            <button type="button" data-command="#spd=35;">35RPS</button>
+            <button type="button" data-command="#gyro=1;">陀螺仪开</button>
+            <button type="button" data-command="#gyro=0;">陀螺仪关</button>
+            <button type="button" data-command="#udp=0;">UDP关闭</button>
+            <button type="button" data-command="#udp=1;">仅波形</button>
+            <button type="button" data-command="#udp=2;">波形+道路</button>
+          </div>
+          <p id="commandStatus" class="muted">指令发送到小车UDP 8082端口</p>
+        </article>
+
+        <article class="panel params-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="section-label">LIVE PARAMETERS</p>
+              <h2>当前UDP参数</h2>
+            </div>
+            <input id="parameterFilter" class="filter-input" placeholder="筛选">
+          </div>
+          <div id="parameterList" class="parameter-list"></div>
+        </article>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
