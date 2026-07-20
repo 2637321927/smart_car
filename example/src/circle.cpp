@@ -162,7 +162,7 @@ return total_valid > 10;
 }
 void check_circle() {
     if (circle_type != CIRCLE_NONE 
-        //|| circle_entry_is_blocked()
+        ||circle_entry_is_blocked()
     ) {
         return;
     }
@@ -171,7 +171,7 @@ void check_circle() {
     if (Lpt0_found && !Lpt1_found && is_line_straight(rpts1an, rpts1s_num)) {
         if (Lpt0_rpts0s_id < rpts0s_num * 0.75) {
             circle_type = CIRCLE_LEFT_BEGIN;
-            //start_circle_enter_cooldown();
+            start_circle_enter_cooldown();
           // std::cout << "begin left circle" << std::endl;
         }
     }
@@ -179,7 +179,7 @@ void check_circle() {
     if (Lpt1_found && !Lpt0_found && is_line_straight(rpts0an, rpts0s_num)) {
         if (Lpt1_rpts1s_id < rpts1s_num * 0.75) {
             circle_type = CIRCLE_RIGHT_BEGIN;
-          //  start_circle_enter_cooldown();
+           start_circle_enter_cooldown();
           //std::cout << "begin right circle" << std::endl;
         }
     }
