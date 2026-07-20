@@ -69,7 +69,7 @@ struct SavedControl {
 constexpr int kInferFrames = 3;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
-constexpr int kRecognitionTestSpeedRps = 20;
+constexpr int kRecognitionTestSpeedRps = 35;
 constexpr float kBrakeStopThresholdRps = 1.0f;
 
 enum RecognitionFrameStatus {
