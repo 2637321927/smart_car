@@ -649,7 +649,7 @@ void detectRedPlate(cv::Mat& frame)
     // 初始化车牌矩形区域
     plate_rect = cv::Rect(0, 0, 0, 0);
 
-    // ===================== 1. 定义有效识别区域 =====================
+    // ===================== 1. 定义有效识别区域并裁剪 =====================
     // 识别区域左上角X坐标
     int rx = RECOG_LEFT;
     // 识别区域左上角Y坐标
@@ -658,58 +658,39 @@ void detectRedPlate(cv::Mat& frame)
     int rw = frame.cols - RECOG_LEFT - RECOG_RIGHT;
     // 识别区域高度 = 总高度 - 上下边距
     int rh = frame.rows - RECOG_TOP - RECOG_BOTTOM;
-    // 构建识别区域矩形（只在这个区域内检测，排除边缘干扰）
+    // 构建识别区域矩形
     cv::Rect recog_rect(rx, ry, rw, rh);
+    // 先裁剪出 ROI，后续所有操作都在这个小区域上进行，大幅减少计算量
+    cv::Mat roi = frame(recog_rect);
 
-    // ===================== 2. 颜色空间转换与红色提取 =====================
+    // ===================== 2. 颜色空间转换与红色提取（仅在 ROI 内） =====================
     cv::Mat hsv, mask1, mask2, mask;
-    // 将BGR图像转换为HSV颜色空间（HSV更适合颜色识别）
-    cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
+    cv::cvtColor(roi, hsv, cv::COLOR_BGR2HSV);
 
     // 红色在HSV中分为两段：0~10 和 160~179
-    // 提取第一段红色区域（低色相）
     cv::inRange(hsv, cv::Scalar(0, 120, 100), cv::Scalar(10, 255, 255), mask1);
-    // 提取第二段红色区域（高色相）
     cv::inRange(hsv, cv::Scalar(160, 120, 100), cv::Scalar(179, 255, 255), mask2);
-    // 合并两个红色掩码，得到完整红色区域
     mask = mask1 | mask2;
 
     // ===================== 3. 形态学操作去噪 =====================
-    // 创建3x3矩形结构元素
     cv::Mat k = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-    // 开运算：先腐蚀后膨胀，去除小噪点，保留红色区域轮廓
     cv::morphologyEx(mask, mask, cv::MORPH_OPEN, k);
 
     // ===================== 4. 查找轮廓，筛选最大红色色块 =====================
     std::vector<std::vector<cv::Point>> contours;
-    // 查找所有外轮廓
     cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-    int maxArea = 0;          // 记录最大轮廓面积
-    cv::Rect bestRect;        // 记录最优红色色块矩形
+    int maxArea = 0;
+    cv::Rect bestRect;  // 此时坐标相对于 ROI
 
-    // 遍历所有轮廓
     for (auto& cnt : contours)
     {
-        // 计算当前轮廓面积
         int area = cv::contourArea(cnt);
-        // 面积过小，视为噪点，跳过
         if (area < MIN_AREA) continue;
 
-        // 获取轮廓的外接矩形
         cv::Rect r = cv::boundingRect(cnt);
-        // 判断矩形是否完全在有效识别区域内
-        bool inside = (r.x >= recog_rect.x) &&
-            (r.y >= recog_rect.y) &&
-            (r.x + r.width <= recog_rect.x + recog_rect.width) &&
-            (r.y + r.height <= recog_rect.y + recog_rect.height);
-        // (r.y >= recog_rect.y) &&
-        // 不在有效区域内，跳过
-        //if (r.y < recog_rect.y&&r.height > 10&& r.y + r.height <= recog_rect.y + recog_rect.height)inside = 1;
-        if (!inside) continue;
-        
+        // 轮廓已在 ROI 内，不再需要 inside 检查
 
-        // 更新最大面积和最优矩形
         if (area > maxArea)
         {
             maxArea = area;
@@ -719,31 +700,29 @@ void detectRedPlate(cv::Mat& frame)
 
     // 未找到有效红色色块，直接返回
     if (maxArea <= 0) return;
-    // 保存找到的最大红色色块区域
+
+    // ===================== 5. 坐标还原到原图坐标系 =====================
+    // bestRect 的坐标是相对于 roi 的，加回 recog_rect 左上角偏移
     red_block_rect = bestRect;
+    red_block_rect.x += rx;
+    red_block_rect.y += ry;
+    // 顶部被 ROI 切掉的情况：把 y 顶到 ROI 上边界
     if (red_block_rect.y <= recog_rect.y) {
         int hy = red_block_rect.y + red_block_rect.height - recog_rect.y;
         red_block_rect.y = recog_rect.y;
         red_block_rect.height = hy;
     }
-    // ===================== 5. 根据红色色块定位上方车牌区域 =====================
-    // 车牌边长 = 红色色块宽度（假设车牌是正方形）
+
+    // ===================== 6. 根据红色色块定位上方车牌区域 =====================
     int side = red_block_rect.width;
-    // 车牌左上角X坐标 = 红色色块X坐标
     int px = red_block_rect.x;
-    // 车牌左上角Y坐标 = 红色色块上方（间隔2个像素）
     int py = red_block_rect.y - side - 2;
-    // 车牌宽度 = 红色色块宽度
     int pw = side;
-    // 车牌高度 = 红色色块宽度
     int ph = side;
 
-    // 判断计算出的车牌区域是否在图像范围内
     if (py >= 0 && px >= 0 && px + pw <= frame.cols && py + ph <= frame.rows)
     {
-        // 保存车牌区域
         plate_rect = cv::Rect(px, py, pw, ph);
-        // 标记检测到目标
         have_target = true;
     }
 }
