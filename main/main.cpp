@@ -416,6 +416,102 @@ if (sscanf(buf, "#udp=%d;", &itmp) == 1)
     printf("[VOFA] UDP调试模式=%d（%s）\n", udp_debug_mode, mode_name);
 }
 
+// ==================== 目标板高速绕行在线调参 ====================
+// 识别阶段的 dbRecSpd 只改变基准速度，普通方向环仍会继续产生左右差速。
+if (sscanf(buf, "#dbNormalSpd=%f;", &ftmp) == 1)
+{
+    drive_by_normal_speed_rps = ftmp < 0.0f ? 0.0f : ftmp;
+    printf("[VOFA] dbNormalSpd = %.2f RPS\n", drive_by_normal_speed_rps);
+}
+
+if (sscanf(buf, "#dbRecSpd=%f;", &ftmp) == 1)
+{
+    drive_by_recognition_speed_rps = ftmp < 0.0f ? 0.0f : ftmp;
+    printf("[VOFA] dbRecSpd = %.2f RPS\n", drive_by_recognition_speed_rps);
+}
+
+if (sscanf(buf, "#dbTurnAngle=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    drive_by_turn_angle_deg = ftmp > 90.0f ? 90.0f : ftmp;
+    printf("[VOFA] dbTurnAngle = %.2f deg\n", drive_by_turn_angle_deg);
+}
+
+if (sscanf(buf, "#dbPassDist=%f;", &ftmp) == 1)
+{
+    drive_by_pass_distance_m = ftmp < 0.0f ? 0.0f : ftmp;
+    printf("[VOFA] dbPassDist = %.3f m\n", drive_by_pass_distance_m);
+}
+
+if (sscanf(buf, "#dbExitDist=%f;", &ftmp) == 1)
+{
+    drive_by_exit_distance_m = ftmp < 0.0f ? 0.0f : ftmp;
+    printf("[VOFA] dbExitDist = %.3f m\n", drive_by_exit_distance_m);
+}
+
+if (sscanf(buf, "#dbSafeDist=%f;", &ftmp) == 1)
+{
+    drive_by_target_after_margin_m = ftmp < 0.0f ? 0.0f : ftmp;
+    printf("[VOFA] dbSafeDist = %.3f m\n", drive_by_target_after_margin_m);
+}
+
+if (sscanf(buf, "#dbRpsMps=%f;", &ftmp) == 1)
+{
+    drive_by_rps_to_mps = ftmp < 0.0f ? 0.0f : ftmp;
+    printf("[VOFA] dbRpsMps = %.5f\n", drive_by_rps_to_mps);
+}
+
+if (sscanf(buf, "#dbViewMax=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    drive_by_view_angle_max_deg = ftmp > 90.0f ? 90.0f : ftmp;
+    printf("[VOFA] dbViewMax = %.2f deg\n", drive_by_view_angle_max_deg);
+}
+
+if (sscanf(buf, "#dbViewWait=%d;", &itmp) == 1)
+{
+    if (itmp < 0) itmp = 0;
+    if (itmp > 2000) itmp = 2000;
+    drive_by_view_wait_timeout_ms = itmp;
+    printf("[VOFA] dbViewWait = %d ms\n", drive_by_view_wait_timeout_ms);
+}
+
+if (sscanf(buf, "#dbHKp=%f;", &ftmp) == 1)
+{
+    drive_by_heading_kp = ftmp;
+    printf("[VOFA] dbHKp = %.3f\n", drive_by_heading_kp);
+}
+
+if (sscanf(buf, "#dbHKd=%f;", &ftmp) == 1)
+{
+    drive_by_heading_kd = ftmp;
+    printf("[VOFA] dbHKd = %.3f\n", drive_by_heading_kd);
+}
+
+if (sscanf(buf, "#dbYawSign=%f;", &ftmp) == 1)
+{
+    drive_by_yaw_sign = ftmp >= 0.0f ? 1.0f : -1.0f;
+    printf("[VOFA] dbYawSign = %.1f\n", drive_by_yaw_sign);
+}
+
+if (sscanf(buf, "#dbTurnRps=%f;", &ftmp) == 1)
+{
+    drive_by_turn_speed_rps = cvRound(ftmp < 0.0f ? 0.0f : ftmp);
+    printf("[VOFA] dbTurnRps = %d\n", drive_by_turn_speed_rps);
+}
+
+if (sscanf(buf, "#dbForwardRps=%f;", &ftmp) == 1)
+{
+    drive_by_forward_speed_rps = cvRound(ftmp < 0.0f ? 0.0f : ftmp);
+    printf("[VOFA] dbForwardRps = %d\n", drive_by_forward_speed_rps);
+}
+
+if (sscanf(buf, "#dbExitRps=%f;", &ftmp) == 1)
+{
+    drive_by_exit_speed_rps = cvRound(ftmp < 0.0f ? 0.0f : ftmp);
+    printf("[VOFA] dbExitRps = %d\n", drive_by_exit_speed_rps);
+}
+
 // 环岛出环里程阈值，单位米。进入 RUNNING 态后累计行驶超过该距离则触发出环。
 if (sscanf(buf, "#circle_exit=%f;", &ftmp) == 1)
 {
@@ -725,10 +821,11 @@ void road_telemetry_send()
 } // namespace
 
 void udp_send(void){
-    char encoder_str[1200];
+    char encoder_str[1800];
     static uint32_t udp_sequence = 0;
     static const steady_clock::time_point udp_started_at = steady_clock::now();
     const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
+    const DriveByDebug &drive_debug = drive_by_get_debug();
     lq_timer_timeout_snapshot timeout_debug = {};
     lq_timer_timeout_get_snapshot(&timeout_debug);
     const cv::Rect red_rect = red_block_rect;
@@ -767,6 +864,23 @@ void udp_send(void){
              "\"drive_enabled\":%d,"
              "\"drive_busy\":%d,"
              "\"drive_state\":\"%s\","
+             "\"drive_abort_reason\":\"%s\","
+             "\"drive_recognizing\":%d,"
+             "\"drive_motion\":%d,"
+             "\"drive_yaw_deg\":%.2f,"
+             "\"drive_target_yaw_deg\":%.2f,"
+             "\"drive_heading_error_deg\":%.2f,"
+             "\"drive_track_heading_deg\":%.2f,"
+             "\"drive_target_track_heading_deg\":%.2f,"
+             "\"drive_view_angle_deg\":%.2f,"
+             "\"drive_target_distance_m\":%.3f,"
+             "\"drive_distance_since_trigger_m\":%.3f,"
+             "\"drive_phase_distance_m\":%.3f,"
+             "\"drive_target_yaw_rate_dps\":%.2f,"
+             "\"drive_turn_rps\":%.2f,"
+             "\"drive_geometry_valid\":%d,"
+             "\"drive_view_ready\":%d,"
+             "\"drive_infer_valid_count\":%d,"
              "\"have_target\":%d,"
              "\"item_flag\":%d,"
              "\"red_x\":%d,\"red_y\":%d,\"red_w\":%d,\"red_h\":%d,"
@@ -805,6 +919,23 @@ void udp_send(void){
              drive_by_is_enabled() ? 1 : 0,
              drive_by_is_busy() ? 1 : 0,
              drive_by_state_name(),
+             drive_by_abort_reason(),
+             drive_by_is_recognizing() ? 1 : 0,
+             drive_by_is_motion_phase() ? 1 : 0,
+             safe_float(drive_debug.yaw_deg),
+             safe_float(drive_debug.target_yaw_deg),
+             safe_float(drive_debug.heading_error_deg),
+             safe_float(drive_debug.track_heading_deg),
+             safe_float(drive_debug.target_track_heading_deg),
+             safe_float(drive_debug.view_angle_deg),
+             safe_float(drive_debug.target_distance_m),
+             safe_float(drive_debug.distance_since_trigger_m),
+             safe_float(drive_debug.phase_distance_m),
+             safe_float(drive_debug.target_yaw_rate_dps),
+             safe_float(drive_debug.turn_rps),
+             drive_debug.target_geometry_valid,
+             drive_debug.view_ready,
+             drive_debug.infer_valid_count,
              have_target ? 1 : 0,
              item_flag,
              red_rect.x, red_rect.y, red_rect.width, red_rect.height,
@@ -1007,22 +1138,15 @@ gyro_yaw_rate_control_init();
     });
 
     dir_timer.set_seconds_ms(8, []() {
-      // 发车后才让方向环根据图像误差修正左右轮目标速度。
-      // 目标板脚本执行时要暂停方向环，否则方向环会覆盖脚本给出的左右轮差速。
+      // K0 只是目标板功能开关，不应该在没有目标时关闭正常方向环。
+      // 红色触发后的观察/推理阶段也继续巡线，只把基准速度降为20RPS。
       if (front_ui_is_running() &&
-          !drive_by_is_busy() &&
-          !drive_by_is_enabled()) {
+          (!drive_by_is_busy() || drive_by_is_recognizing())) {
         PID_control_test(latest_error);
-      } else if (front_ui_is_running()) {
-        // K0动态识别测速模式要求左右目标相等：停用视觉PD和角速度环，
-        // 只保留两个独立速度环跟踪相同RPS，避免车辆主动转弯改变观察角度。
-        gyro_yaw_rate_control_reset();
-        latest_error = 0;
-        if (drive_by_is_enabled()) {
-          pwm1_duty_rps = set_speed_of_motor1_rps;
-          pwm2_duty_rps = set_speed_of_motor2_rps;
-        }
-      } else {
+      } else if (front_ui_is_running() && drive_by_is_motion_phase()) {
+        // S形运动阶段由 drive_by 航向闭环独占左右轮目标。
+        // 这里故意不 reset 角速度环，否则会清掉脚本正在使用的积分。
+      } else if (!front_ui_is_running()) {
         gyro_yaw_rate_control_reset();
         front_ui_hold_stop();
       }
@@ -1052,12 +1176,6 @@ while (1)
  // 目标板逻辑统一交给 drive_by 状态机；没发车时不检测，避免停车待命也触发脚本。
  if (front_ui_is_running() || drive_by_is_busy()) {
     drive_by_update(frame, ncnn);
- }
- if (drive_by_is_busy()) {
-    encoder_1=-enc1.encoder_get_count();// enc1 always gets a negative number
-    encoder_2=enc2.encoder_get_count();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    continue;
  }
  cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
@@ -1282,6 +1400,10 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
             else latest_error = filter_error(-error); 
         }
         
+ // 道路处理完成后更新目标位置、赛道切线和弯道参考方向。
+ // drive_by 在下一帧使用该缓存，避免为目标板逻辑复制整套寻线代码。
+ drive_by_update_track_geometry();
+
  // 发送控制算法实际使用的鸟瞰左/中/右线。每个包小于MTU，不启用JPEG图传。
  road_telemetry_send();
 

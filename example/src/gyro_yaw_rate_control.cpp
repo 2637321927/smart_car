@@ -271,6 +271,50 @@ float calc_target_yaw_rate(float vision_error)
     g_debug.target_yaw_rate_dps = target_yaw_rate;
     return target_yaw_rate;
 }
+
+float update_rate_target_yaw_rate(float target_yaw_rate)
+{
+    if (!g_gyro_ready) {
+        return 0.0f;
+    }
+
+    const float target_limit = std::fabs((float)gyro_target_max_dps);
+    target_yaw_rate = clampf(target_yaw_rate, -target_limit, target_limit);
+
+    // 绕行脚本和视觉外环最终都走这里，保证两种模式使用同一套角速度内环。
+    // 这里读取的是异步缓存，不会再次触发 MPU6050 ioctl。
+    const float cached_yaw_rate = gyro_yaw_rate_control_get_gyro_z_dps();
+    const bool gyro_fresh = gyro_yaw_rate_control_gyro_is_fresh();
+    const float actual_yaw_rate = gyro_fresh ? cached_yaw_rate : 0.0f;
+    const float rate_error = target_yaw_rate - actual_yaw_rate;
+
+    if (gyro_fresh) {
+        g_rate_integral += rate_error * kControlDt;
+        g_debug.integral_frozen = 0;
+    } else {
+        // 数据过期时不切回视觉 PD，但不允许旧数据继续积累 I。
+        g_debug.integral_frozen = 1;
+    }
+
+    const float turn_limit = std::fabs((float)gyro_turn_max_rps);
+    const float inner_ki = gyro_inner_ki;
+    if (std::fabs(inner_ki) > 1e-6f) {
+        const float integral_limit = turn_limit / std::fabs(inner_ki);
+        g_rate_integral = clampf(g_rate_integral, -integral_limit, integral_limit);
+    } else {
+        g_rate_integral = 0.0f;
+    }
+
+    float turn_rps = gyro_inner_kp * rate_error + inner_ki * g_rate_integral;
+    turn_rps *= gyro_turn_sign;
+    turn_rps = clampf(turn_rps, -turn_limit, turn_limit);
+
+    g_debug.target_yaw_rate_dps = target_yaw_rate;
+    g_debug.yaw_rate_error = rate_error;
+    g_debug.turn_rps = turn_rps;
+    g_debug.gyro_age_ms = (float)gyro_yaw_rate_control_gyro_age_ms();
+    return turn_rps;
+}
 } // namespace
 
 void gyro_yaw_rate_control_init(void)
@@ -337,7 +381,7 @@ void gyro_yaw_rate_control_init(void)
 
 void gyro_yaw_rate_control_reset(void)
 {
-    // Reset only control state. Async gyro reading keeps running in background.
+    // 完整复位：除了控制器历史量，也清空缓存的新鲜度标记。
     g_last_vision_error = 0.0f;
     g_rate_integral = 0.0f;
     g_debug.target_yaw_rate_dps = 0.0f;
@@ -351,6 +395,18 @@ void gyro_yaw_rate_control_reset(void)
         g_has_gyro_sample = false;
         update_worker_debug_locked(Clock::now());
     }
+}
+
+void gyro_yaw_rate_control_reset_controller(void)
+{
+    // 绕行进入 S 形时只清除控制器历史量，保留最近一次有效陀螺仪数据。
+    // 如果调用完整 reset，下一次异步采样到来前会短暂被判定为 stale。
+    g_last_vision_error = 0.0f;
+    g_rate_integral = 0.0f;
+    g_debug.target_yaw_rate_dps = 0.0f;
+    g_debug.yaw_rate_error = 0.0f;
+    g_debug.turn_rps = 0.0f;
+    g_debug.integral_frozen = 0;
 }
 
 bool gyro_yaw_rate_control_is_ready(void)
@@ -414,50 +470,12 @@ float gyro_yaw_rate_control_update(float vision_error)
     // Outer loop: vision error -> target yaw rate.
     const float target_yaw_rate = calc_target_yaw_rate(vision_error);
 
-    // Feedback now comes from the async cache, not a direct MPU6050 read.
-    const float cached_yaw_rate = gyro_yaw_rate_control_get_gyro_z_dps();
-    const bool gyro_fresh = gyro_yaw_rate_control_gyro_is_fresh();
+    return update_rate_target_yaw_rate(target_yaw_rate);
+}
 
-    // If a hardware read is stuck, the cache may be old for hundreds of ms.
-    // Do not use that stale value as feedback P input, or the car can keep
-    // correcting for a turn that has already ended. We keep driving by using
-    // the vision-generated target as an open-loop request until gyro recovers.
-    const float actual_yaw_rate = gyro_fresh ? cached_yaw_rate : 0.0f;
-
-    // Inner loop error: target yaw rate - actual yaw rate.
-    const float rate_error = target_yaw_rate - actual_yaw_rate;
-
-    // Do not switch back to visual PD when gyro data is stale. Keep the control
-    // mode continuous, but freeze I so stale data cannot grow integral error.
-    if (gyro_fresh) {
-        g_rate_integral += rate_error * kControlDt;
-        g_debug.integral_frozen = 0;
-    } else {
-        g_debug.integral_frozen = 1;
-    }
-
-    const float turn_limit = std::fabs((float)gyro_turn_max_rps);
-    const float inner_ki = gyro_inner_ki;
-    if (std::fabs(inner_ki) > 1e-6f) {
-        const float integral_limit = turn_limit / std::fabs(inner_ki);
-        g_rate_integral = clampf(g_rate_integral, -integral_limit, integral_limit);
-    } else {
-        g_rate_integral = 0.0f;
-    }
-
-    // Position PI. Output unit is RPS differential correction.
-    float turn_rps = gyro_inner_kp * rate_error + inner_ki * g_rate_integral;
-
-    // Output sign correction. Flip gyro_turn_sign if feedback corrects backward.
-    turn_rps *= gyro_turn_sign;
-
-    // Output limit protects speed loop and motors from a large one-shot command.
-    turn_rps = clampf(turn_rps, -turn_limit, turn_limit);
-
-    g_debug.yaw_rate_error = rate_error;
-    g_debug.turn_rps = turn_rps;
-    g_debug.gyro_age_ms = (float)gyro_yaw_rate_control_gyro_age_ms();
-    return turn_rps;
+float gyro_yaw_rate_control_update_target_yaw_rate(float target_yaw_rate_dps)
+{
+    return update_rate_target_yaw_rate(target_yaw_rate_dps);
 }
 
 const GyroYawRateDebug &gyro_yaw_rate_control_get_debug(void)

@@ -173,10 +173,10 @@ void draw_ui()
              set_speed_of_motor1_rps, set_speed_of_motor2_rps);
     draw_line(4, line, U16WHITE);
 
-    snprintf(line, sizeof(line), "TEST  :%s", drive_by_is_enabled() ? "ON" : "OFF");
+    snprintf(line, sizeof(line), "TARGET:%s", drive_by_is_enabled() ? "ON" : "OFF");
     draw_line(5, line, drive_by_is_enabled() ? U16GREEN : U16RED);
 
-    draw_line(6, "K0 TEST   K1 SPD", U16WHITE);
+    draw_line(6, "K0 TARGET K1 SPD", U16WHITE);
     draw_line(7, "K2 START/STOP", U16WHITE);
 }
 
@@ -226,11 +226,11 @@ void front_ui_poll()
 
     bool dirty = false;
 
-    // K0：临时动态识别测速开关。关闭时完全不检测目标板，不影响普通巡线。
+    // K0：目标板识别与绕行开关。关闭时完全不检测红色，不影响普通巡线。
     if (pressed_edge(key_prev, prev_state)) {
         drive_by_toggle_enable();
         if (drive_by_is_enabled()) {
-            // 当前K0临时作为动态识别测速开关，开启时固定使用35RPS。
+            // 目标板模式正常阶段固定35RPS，红色触发后由drive_by降到20RPS。
             select_speed_strategy(35);
         }
         dirty = true;
@@ -239,7 +239,7 @@ void front_ui_poll()
 
     // K1：下一个速度策略。
     if (pressed_edge(key_next, next_state)) {
-        // 测速模式要求每轮实验速度一致，因此K0开启期间忽略K1切档。
+        // 目标板模式的正常速度固定35RPS，因此K0开启期间忽略K1切档。
         if (!drive_by_is_enabled()) {
             select_next_strategy();
         }

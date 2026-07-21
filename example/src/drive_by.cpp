@@ -1,54 +1,96 @@
 #include "drive_by.hpp"
-#include "lq_all_demo.hpp"
+
 #include "front_ui.hpp"
+#include "gyro_yaw_rate_control.hpp"
+#include "img.hpp"
+#include "lq_all_demo.hpp"
+
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <string>
+
 #include <opencv2/imgproc.hpp>
 
 using DriveByClock = std::chrono::steady_clock;
 
+// ===================== 高速识别和 S 形绕行调参区 =====================
+// K0 开启但没有目标时按 35RPS 正常巡线；红色触发后只把“基准速度”降到
+// 20RPS，普通方向环仍会在该基准上叠加左右差速。
+volatile float drive_by_normal_speed_rps = 35.0f;
+volatile float drive_by_recognition_speed_rps = 20.0f;
+volatile float drive_by_rps_to_mps = 0.047f;
 
-// ===================== drive_by 绕行动作调参区 =====================
-// 这些默认值来自你推车绕行时的编码器曲线。
-// 脚本通过“速度环闭环目标 RPS + 固定持续时间”复现轨迹，不直接打 PWM。
-//
-// 姿态调节优先改时间，再小幅改速度：
-// 1. 转出不够/太多：先调 drive_by_turn_out_ms，再调 drive_by_turn_speed_rps。
-// 2. 横向绕行距离不够/太远：调 drive_by_forward_ms。
-// 3. 回正不够/过头：先调 drive_by_turn_back_ms，再调 drive_by_turn_speed_rps。
-// 4. 结束时还想向前补一点：调 drive_by_exit_speed_rps 和 drive_by_exit_forward_ms。
-//
-// 左绕会镜像右绕：
-// 左绕转出 = 左轮 inner、右轮 outer；右绕转出 = 左轮 outer、右轮 inner。
-int drive_by_turn_speed_rps = 3;          // 外侧轮转向速度，越大转得越猛，单位 rps
-int drive_by_turn_inner_speed_rps = 0;    // 内侧轮转向速度，0 表示近似单轮转向
-int drive_by_forward_speed_rps = 6;       // 绕开目标板时双轮前进速度，单位 rps
-int drive_by_exit_speed_rps = 0;          // 脚本结束前补偿前进速度，0 表示不补前进
-int drive_by_turn_out_ms = 600;          // 第一次向外转的持续时间，影响绕行起始姿态
-int drive_by_forward_ms = 400;            // 绕过目标板时直行持续时间，影响横向/前向绕行距离
-int drive_by_turn_back_ms = 800;          // 往回转的持续时间，影响回正姿态
-int drive_by_exit_forward_ms = 150;       // 回正后补偿前进时间
-int drive_by_stop_ms = 200;               // 第三帧结束后闭环减速的最大等待时间
-int drive_by_infer_timeout_ms = 1000;     // 旧绕行脚本推理超时，当前动态三帧测试不使用
-int drive_by_cooldown_ms =1000;             // 脚本完成后的再次触发冷却，0 表示目标离开画面即可解锁
+// 这些整数变量保留原名称，避免之前的调参经验失效。闭环版本中
+// drive_by_turn_speed_rps 表示转向阶段的前进基准速度，不再表示外侧轮速度。
+int drive_by_turn_speed_rps = 3;
+int drive_by_turn_inner_speed_rps = 0; // 兼容旧脚本，新的角度闭环不直接使用。
+int drive_by_forward_speed_rps = 6;
+int drive_by_exit_speed_rps = 6;
+int drive_by_turn_out_ms = 600;        // 兼容旧参数，新的状态切换主要看角度。
+int drive_by_forward_ms = 400;         // 兼容旧参数，新的状态切换主要看距离。
+int drive_by_turn_back_ms = 800;       // 兼容旧参数，新的状态切换主要看角度。
+int drive_by_exit_forward_ms = 150;    // 兼容旧参数，新的状态切换主要看角度。
+int drive_by_stop_ms = 200;            // 兼容旧识别测试，不再用于识别后停车。
+int drive_by_infer_timeout_ms = 500;
+int drive_by_cooldown_ms = 1000;
+
+volatile float drive_by_turn_angle_deg = 25.0f;
+volatile float drive_by_pass_distance_m = 0.80f;
+volatile float drive_by_exit_distance_m = 0.15f;
+volatile float drive_by_target_after_margin_m = 0.30f;
+volatile float drive_by_view_angle_max_deg = 45.0f;
+volatile int drive_by_view_wait_timeout_ms = 120;
+volatile float drive_by_heading_kp = 3.0f;
+volatile float drive_by_heading_kd = 0.8f;
+volatile float drive_by_heading_max_dps = 120.0f;
+volatile float drive_by_heading_tolerance_deg = 2.0f;
+volatile float drive_by_rate_tolerance_dps = 20.0f;
+volatile int drive_by_gyro_stale_ms = 60;
+volatile float drive_by_yaw_sign = -1.0f;
+volatile float drive_by_track_heading_alpha = 0.80f;
 
 namespace {
 
+constexpr int kInferFrames = 3;
+constexpr int kSaveSize = 96;
+constexpr int kDetectFrameInterval = 2;
+constexpr int kHeadingSettleCycles = 3;
+// 默认通过速度只有6RPS（约0.282m/s），走完约1.1m可能需要接近4秒。
+// 8秒只是防止状态机永久卡住，不参与正常阶段切换。
+constexpr int kMotionPhaseTimeoutMs = 8000;
+constexpr float kTrackTangentWindowM = 0.10f;
+constexpr float kMaxIntegrationDtS = 0.10f;
+constexpr float kMinWheelTargetRps = -10.0f;
+constexpr float kMaxWheelTargetRps = 200.0f;
+
 enum DriveByState {
     DB_IDLE,
-    DB_STOPPING,
+    DB_WAIT_VIEW,
     DB_INFER,
-    DB_TEST_BRAKING,
-    DB_LEFT_TURN_OUT,
-    DB_LEFT_FORWARD,
-    DB_LEFT_TURN_BACK,
-    DB_LEFT_EXIT_FORWARD,
-    DB_RIGHT_TURN_OUT,
-    DB_RIGHT_FORWARD,
-    DB_RIGHT_TURN_BACK,
-    DB_RIGHT_EXIT_FORWARD,
+    DB_SHIFT_OUT_A,
+    DB_SHIFT_OUT_B,
+    DB_PASS_TARGET,
+    DB_SHIFT_IN_A,
+    DB_SHIFT_IN_B,
+};
+
+enum DriveByAbortReason {
+    DB_ABORT_NONE,
+    DB_ABORT_VIEW_TIMEOUT,
+    DB_ABORT_NO_TARGET_GEOMETRY,
+    DB_ABORT_GYRO_NOT_READY,
+    DB_ABORT_GYRO_STALE,
+    DB_ABORT_PHASE_TIMEOUT,
+};
+
+enum RecognitionFrameStatus {
+    RECOG_FRAME_NOT_PROCESSED,
+    RECOG_FRAME_OK,
+    RECOG_FRAME_NO_RED,
+    RECOG_FRAME_INVALID_ROI,
+    RECOG_FRAME_UNKNOWN_LABEL,
 };
 
 struct SavedControl {
@@ -66,22 +108,8 @@ struct SavedControl {
     bool valid = false;
 };
 
-constexpr int kInferFrames = 3;
-constexpr int kSaveSize = 96;
-constexpr int kDetectFrameInterval = 2;
-constexpr int kRecognitionTestSpeedRps = 20;
-constexpr float kBrakeStopThresholdRps = 1.0f;
-
-enum RecognitionFrameStatus {
-    TEST_FRAME_NOT_PROCESSED,
-    TEST_FRAME_OK,
-    TEST_FRAME_NO_RED,
-    TEST_FRAME_INVALID_ROI,
-    TEST_FRAME_UNKNOWN_LABEL,
-};
-
 struct RecognitionFrameRecord {
-    RecognitionFrameStatus status = TEST_FRAME_NOT_PROCESSED;
+    RecognitionFrameStatus status = RECOG_FRAME_NOT_PROCESSED;
     std::string label;
     int mapped_result = 1;
     double detect_ms = 0.0;
@@ -91,7 +119,7 @@ struct RecognitionFrameRecord {
     double since_trigger_ms = 0.0;
 };
 
-struct RecognitionTestReport {
+struct RecognitionReport {
     RecognitionFrameRecord frames[kInferFrames];
     int frame_count = 0;
     int valid_count = 0;
@@ -99,26 +127,57 @@ struct RecognitionTestReport {
     double trigger_detect_ms = 0.0;
     double infer_sum_ms = 0.0;
     double total_ms = 0.0;
-    double braking_ms = 0.0;
     float trigger_left_rps = 0.0f;
     float trigger_right_rps = 0.0f;
     float finish_left_rps = 0.0f;
     float finish_right_rps = 0.0f;
-    float before_reset_left_rps = 0.0f;
-    float before_reset_right_rps = 0.0f;
 };
 
 volatile bool g_drive_by_enable = false;
 volatile bool g_drive_by_busy = false;
 bool g_seen_lock = false;
+bool g_target_geometry_captured = false;
+bool g_track_reference_valid = false;
+bool g_current_track_heading_valid = false;
 DriveByState g_state = DB_IDLE;
+DriveByAbortReason g_abort_reason = DB_ABORT_NONE;
 DriveByClock::time_point g_state_start = DriveByClock::now();
+DriveByClock::time_point g_session_start = DriveByClock::now();
+DriveByClock::time_point g_last_integration_time = DriveByClock::now();
 DriveByClock::time_point g_cooldown_start = DriveByClock::now();
-int g_frame_counter = 0;
-int g_votes[3] = {0, 0, 0};
+int g_detect_frame_counter = 0;
+int g_heading_settle_count = 0;
+int g_turn_side = 0;
+float g_yaw_deg = 0.0f;
+float g_distance_since_trigger_m = 0.0f;
+float g_phase_distance_m = 0.0f;
+float g_current_track_heading_relative_deg = 0.0f;
+float g_track_heading_reference_deg = 0.0f;
+float g_target_track_heading_global_deg = 0.0f;
+float g_target_distance_at_trigger_m = 0.0f;
 SavedControl g_saved;
-RecognitionTestReport g_test_report;
-DriveByClock::time_point g_test_trigger_time = DriveByClock::now();
+RecognitionReport g_report;
+DriveByDebug g_debug = {};
+
+float clampf(float value, float min_value, float max_value)
+{
+    if (value < min_value) return min_value;
+    if (value > max_value) return max_value;
+    return value;
+}
+
+float normalize_angle_deg(float angle_deg)
+{
+    while (angle_deg > 180.0f) angle_deg -= 360.0f;
+    while (angle_deg < -180.0f) angle_deg += 360.0f;
+    return angle_deg;
+}
+
+float blend_angle_deg(float old_angle, float new_angle, float old_weight)
+{
+    const float delta = normalize_angle_deg(new_angle - old_angle);
+    return normalize_angle_deg(old_angle + (1.0f - old_weight) * delta);
+}
 
 long long elapsed_ms(DriveByClock::time_point start)
 {
@@ -132,57 +191,58 @@ double duration_ms(DriveByClock::time_point start, DriveByClock::time_point end)
     return std::chrono::duration<double, std::milli>(end - start).count();
 }
 
+const char *state_name(DriveByState state)
+{
+    switch (state) {
+    case DB_IDLE: return "IDLE";
+    case DB_WAIT_VIEW: return "WAIT_VIEW";
+    case DB_INFER: return "INFER";
+    case DB_SHIFT_OUT_A: return "SHIFT_OUT_A";
+    case DB_SHIFT_OUT_B: return "SHIFT_OUT_B";
+    case DB_PASS_TARGET: return "PASS_TARGET";
+    case DB_SHIFT_IN_A: return "SHIFT_IN_A";
+    case DB_SHIFT_IN_B: return "SHIFT_IN_B";
+    default: return "UNKNOWN";
+    }
+}
+
+const char *abort_reason_name(DriveByAbortReason reason)
+{
+    switch (reason) {
+    case DB_ABORT_NONE: return "none";
+    case DB_ABORT_VIEW_TIMEOUT: return "view_timeout";
+    case DB_ABORT_NO_TARGET_GEOMETRY: return "target_geometry_invalid";
+    case DB_ABORT_GYRO_NOT_READY: return "gyro_not_ready";
+    case DB_ABORT_GYRO_STALE: return "gyro_stale";
+    case DB_ABORT_PHASE_TIMEOUT: return "phase_timeout";
+    default: return "unknown";
+    }
+}
+
 const char *frame_status_name(RecognitionFrameStatus status)
 {
     switch (status) {
-    case TEST_FRAME_OK: return "成功";
-    case TEST_FRAME_NO_RED: return "未检测到红色";
-    case TEST_FRAME_INVALID_ROI: return "目标板区域无效";
-    case TEST_FRAME_UNKNOWN_LABEL: return "未知类别";
+    case RECOG_FRAME_OK: return "成功";
+    case RECOG_FRAME_NO_RED: return "未检测到红色";
+    case RECOG_FRAME_INVALID_ROI: return "目标板区域无效";
+    case RECOG_FRAME_UNKNOWN_LABEL: return "未知类别";
     default: return "未处理";
     }
 }
 
 const char *label_chinese_name(const std::string& label)
 {
-    if (label == "weapon") {
-        return "武器";
-    }
-    if (label == "vehicle") {
-        return "车辆";
-    }
-    if (label == "supplies") {
-        return "物资";
-    }
+    if (label == "weapon") return "武器";
+    if (label == "vehicle") return "车辆";
+    if (label == "supplies") return "物资";
     return "未知类别";
 }
 
 const char *result_action_name(int result)
 {
-    switch (result) {
-    case 0: return "左绕";
-    case 2: return "右绕";
-    default: return "直行";
-    }
-}
-
-const char *state_name(DriveByState state)
-{
-    switch (state) {
-    case DB_IDLE: return "IDLE";
-    case DB_STOPPING: return "STOPPING";
-    case DB_INFER: return "INFER";
-    case DB_TEST_BRAKING: return "TEST_BRAKING";
-    case DB_LEFT_TURN_OUT: return "LEFT_TURN_OUT";
-    case DB_LEFT_FORWARD: return "LEFT_FORWARD";
-    case DB_LEFT_TURN_BACK: return "LEFT_TURN_BACK";
-    case DB_LEFT_EXIT_FORWARD: return "LEFT_EXIT_FORWARD";
-    case DB_RIGHT_TURN_OUT: return "RIGHT_TURN_OUT";
-    case DB_RIGHT_FORWARD: return "RIGHT_FORWARD";
-    case DB_RIGHT_TURN_BACK: return "RIGHT_TURN_BACK";
-    case DB_RIGHT_EXIT_FORWARD: return "RIGHT_EXIT_FORWARD";
-    default: return "UNKNOWN";
-    }
+    if (result == 0) return "左绕";
+    if (result == 2) return "右绕";
+    return "直行";
 }
 
 void save_control_once()
@@ -222,138 +282,54 @@ void restore_control()
     dir_D = g_saved.dir_d;
     AIM = g_saved.aim;
     spd_slow_ratio = g_saved.slow_ratio;
-
-    // 不恢复旧 error，避免脚本结束后一瞬间按过期误差猛打方向。
-    latest_error = 0;
     g_saved.valid = false;
 }
 
-void command_wheel_speed(int left_rps, int right_rps)
+void command_normal_base_speed()
 {
-    // 这里只写目标 RPS；真正的闭环跟踪由 3ms 速度环 test_enc_and_motor_rps() 完成。
-    // set_speed* 同步写，方便 TFT/VOFA 调试时看到脚本正在给什么目标速度。
-    set_speed_of_motor1_rps = left_rps;
-    set_speed_of_motor2_rps = right_rps;
+    set_speed_of_motor1_rps = drive_by_normal_speed_rps;
+    set_speed_of_motor2_rps = drive_by_normal_speed_rps;
+}
+
+void command_recognition_base_speed()
+{
+    // 只改变基准速度，保留方向环刚刚给出的左右差速。
+    // dir_timer 下一次运行时会继续用最新视觉误差更新该差速。
+    float differential = (pwm1_duty_rps - pwm2_duty_rps) * 0.5f;
+    if (!std::isfinite(differential)) {
+        differential = 0.0f;
+    }
+
+    const float base_rps = drive_by_recognition_speed_rps;
+    set_speed_of_motor1_rps = base_rps;
+    set_speed_of_motor2_rps = base_rps;
+    pwm1_duty_rps = base_rps + differential;
+    pwm2_duty_rps = base_rps - differential;
+}
+
+void command_motion_wheels(float base_rps, float turn_rps)
+{
+    // 绕行运动阶段由航向闭环独占左右轮目标，普通方向环此时不会再写输出。
+    const float left_rps = clampf(base_rps + turn_rps,
+                                  kMinWheelTargetRps,
+                                  kMaxWheelTargetRps);
+    const float right_rps = clampf(base_rps - turn_rps,
+                                   kMinWheelTargetRps,
+                                   kMaxWheelTargetRps);
+    set_speed_of_motor1_rps = base_rps;
+    set_speed_of_motor2_rps = base_rps;
     pwm1_duty_rps = left_rps;
     pwm2_duty_rps = right_rps;
-    latest_error = 0;
 }
 
-void command_stop()
+bool should_detect_this_frame()
 {
-    command_wheel_speed(0, 0);
-    PID_control_test(0);
-}
-
-void command_recognition_test_cruise()
-{
-    // 测速模式只允许直行：左右轮目标严格相等，不调用方向环产生差速。
-    // 两个独立速度环仍会分别修正各自 PWM，因此实际编码器值允许存在小误差。
-    set_speed_of_motor1_rps = kRecognitionTestSpeedRps;
-    set_speed_of_motor2_rps = kRecognitionTestSpeedRps;
-    pwm1_duty_rps = kRecognitionTestSpeedRps;
-    pwm2_duty_rps = kRecognitionTestSpeedRps;
-    latest_error = 0;
-}
-
-void enter_state(DriveByState next)
-{
-    g_state = next;
-    g_state_start = DriveByClock::now();
-
-    switch (next) {
-    case DB_STOPPING:
-        command_stop();
-        break;
-    case DB_INFER:
-        g_votes[0] = 0;
-        g_votes[1] = 0;
-        g_votes[2] = 0;
-        command_stop();
-        break;
-    case DB_LEFT_TURN_OUT:
-        command_wheel_speed(drive_by_turn_inner_speed_rps, drive_by_turn_speed_rps);
-        break;
-    case DB_LEFT_FORWARD:
-        command_wheel_speed(drive_by_forward_speed_rps, drive_by_forward_speed_rps);
-        break;
-    case DB_LEFT_TURN_BACK:
-        command_wheel_speed(drive_by_turn_speed_rps, drive_by_turn_inner_speed_rps);
-        break;
-    case DB_LEFT_EXIT_FORWARD:
-        command_wheel_speed(drive_by_exit_speed_rps, drive_by_exit_speed_rps);
-        break;
-    case DB_RIGHT_TURN_OUT:
-        command_wheel_speed(drive_by_turn_speed_rps, drive_by_turn_inner_speed_rps);
-        break;
-    case DB_RIGHT_FORWARD:
-        command_wheel_speed(drive_by_forward_speed_rps, drive_by_forward_speed_rps);
-        break;
-    case DB_RIGHT_TURN_BACK:
-        command_wheel_speed(drive_by_turn_inner_speed_rps, drive_by_turn_speed_rps);
-        break;
-    case DB_RIGHT_EXIT_FORWARD:
-        command_wheel_speed(drive_by_exit_speed_rps, drive_by_exit_speed_rps);
-        break;
-    default:
-        break;
+    ++g_detect_frame_counter;
+    if (g_detect_frame_counter < kDetectFrameInterval) {
+        return false;
     }
-
-    printf("[drive_by] state=%s\n", state_name(g_state));
-}
-
-void finish_script()
-{
-    restore_control();
-    g_drive_by_busy = false;
-    g_state = DB_IDLE;
-    g_cooldown_start = DriveByClock::now();
-    printf("[drive_by] finish, item_flag=%d\n", item_flag);
-}
-
-void start_recognition_test(double trigger_detect_ms)
-{
-    save_control_once();
-    g_drive_by_busy = true;
-    g_seen_lock = true;
-    item_flag = 1;
-    g_state = DB_INFER;
-    g_state_start = DriveByClock::now();
-    g_test_trigger_time = g_state_start;
-    g_test_report = RecognitionTestReport{};
-    g_test_report.trigger_detect_ms = trigger_detect_ms;
-    g_test_report.trigger_left_rps = encoder1_speed_avg;
-    g_test_report.trigger_right_rps = encoder2_speed_avg;
-    g_votes[0] = 0;
-    g_votes[1] = 0;
-    g_votes[2] = 0;
-    command_recognition_test_cruise();
-}
-
-void reset_runtime(bool restore_outputs)
-{
-    if (restore_outputs) {
-        restore_control();
-    }
-    g_drive_by_busy = false;
-    g_seen_lock = false;
-    g_state = DB_IDLE;
-    g_frame_counter = 0;
-    g_votes[0] = 0;
-    g_votes[1] = 0;
-    g_votes[2] = 0;
-    g_test_report = RecognitionTestReport{};
-    have_target = false;
-}
-
-bool should_check_this_frame()
-{
-    g_frame_counter++;
-    if (g_frame_counter >= kDetectFrameInterval) {
-        g_frame_counter = 0;
-        return true;
-    }
-    return false;
+    g_detect_frame_counter = 0;
+    return true;
 }
 
 bool make_plate_roi(cv::Mat& frame, cv::Mat& roi)
@@ -362,9 +338,9 @@ bool make_plate_roi(cv::Mat& frame, cv::Mat& roi)
         return false;
     }
 
-    cv::Rect image_rect(0, 0, frame.cols, frame.rows);
-    cv::Rect safe_rect = plate_rect & image_rect;
-    if (safe_rect.width <= 0 || safe_rect.height <= 0) {
+    const cv::Rect image_rect(0, 0, frame.cols, frame.rows);
+    const cv::Rect safe_rect = plate_rect & image_rect;
+    if (safe_rect.width != plate_rect.width || safe_rect.height != plate_rect.height) {
         return false;
     }
 
@@ -375,30 +351,29 @@ bool make_plate_roi(cv::Mat& frame, cv::Mat& roi)
 
 int map_infer_result(const std::string& result)
 {
-    if (result == "weapon") {
-        return 0;
-    }
-    if (result == "supplies") {
-        return 2;
-    }
+    if (result == "weapon") return 0;
+    if (result == "supplies") return 2;
     return 1;
+}
+
+bool is_known_infer_result(const std::string& result)
+{
+    return result == "weapon" || result == "vehicle" || result == "supplies";
 }
 
 int choose_vote_result()
 {
     int best = 1;
-    int best_votes = g_votes[1];
+    int best_votes = g_report.votes[1];
     bool tie = false;
 
-    for (int i = 0; i < 3; ++i) {
-        if (i == best) {
-            continue;
-        }
-        if (g_votes[i] > best_votes) {
-            best = i;
-            best_votes = g_votes[i];
+    for (int index = 0; index < 3; ++index) {
+        if (index == best) continue;
+        if (g_report.votes[index] > best_votes) {
+            best = index;
+            best_votes = g_report.votes[index];
             tie = false;
-        } else if (g_votes[i] == best_votes) {
+        } else if (g_report.votes[index] == best_votes) {
             tie = true;
         }
     }
@@ -409,286 +384,536 @@ int choose_vote_result()
     return best;
 }
 
-bool is_known_infer_result(const std::string& result)
-{
-    return result == "weapon" || result == "vehicle" || result == "supplies";
-}
-
 void finish_frame_record(RecognitionFrameRecord& record,
                          DriveByClock::time_point frame_start)
 {
     const DriveByClock::time_point frame_end = DriveByClock::now();
     record.frame_ms = duration_ms(frame_start, frame_end);
-    record.since_trigger_ms = duration_ms(g_test_trigger_time, frame_end);
+    record.since_trigger_ms = duration_ms(g_session_start, frame_end);
 }
 
-void process_recognition_test_frame(cv::Mat& frame,
-                                    LQ_NCNN& ncnn,
-                                    bool reuse_trigger_detection)
+void process_inference_frame(cv::Mat& frame,
+                             LQ_NCNN& ncnn,
+                             bool reuse_red_detection,
+                             double reused_detect_ms)
 {
-    if (g_test_report.frame_count >= kInferFrames) {
+    if (g_report.frame_count >= kInferFrames) {
         return;
     }
 
-    RecognitionFrameRecord& record =
-        g_test_report.frames[g_test_report.frame_count];
-    g_test_report.frame_count++;
+    RecognitionFrameRecord& record = g_report.frames[g_report.frame_count++];
     const DriveByClock::time_point frame_start = DriveByClock::now();
-
-    // 第1帧复用刚刚触发测试时得到的 plate_rect，避免同一帧重复做红色检测。
-    // 第2、3帧必须重新检测，才能真实观察运动中红色和目标板 ROI 是否稳定。
-    if (!reuse_trigger_detection) {
+    if (reuse_red_detection) {
+        // 触发帧已经完成红色检测，直接复用矩形和耗时，避免同一帧重复做 HSV 与轮廓搜索。
+        record.detect_ms = reused_detect_ms;
+    } else {
         const DriveByClock::time_point detect_start = DriveByClock::now();
         detectRedPlate(frame);
-        const DriveByClock::time_point detect_end = DriveByClock::now();
-        record.detect_ms = duration_ms(detect_start, detect_end);
+        record.detect_ms = duration_ms(detect_start, DriveByClock::now());
+    }
 
-        if (!have_target) {
-            record.status = TEST_FRAME_NO_RED;
-            finish_frame_record(record, frame_start);
-            return;
-        }
+    if (!have_target) {
+        record.status = RECOG_FRAME_NO_RED;
+        finish_frame_record(record, frame_start);
+        return;
     }
 
     cv::Mat roi;
     const DriveByClock::time_point prepare_start = DriveByClock::now();
     if (!make_plate_roi(frame, roi)) {
         record.prepare_ms = duration_ms(prepare_start, DriveByClock::now());
-        record.status = TEST_FRAME_INVALID_ROI;
+        record.status = RECOG_FRAME_INVALID_ROI;
         finish_frame_record(record, frame_start);
         return;
     }
-    const DriveByClock::time_point prepare_end = DriveByClock::now();
-    record.prepare_ms = duration_ms(prepare_start, prepare_end);
+    record.prepare_ms = duration_ms(prepare_start, DriveByClock::now());
 
     const DriveByClock::time_point infer_start = DriveByClock::now();
     record.label = ncnn.Infer(roi);
-    const DriveByClock::time_point infer_end = DriveByClock::now();
-    record.infer_ms = duration_ms(infer_start, infer_end);
+    record.infer_ms = duration_ms(infer_start, DriveByClock::now());
     record.mapped_result = map_infer_result(record.label);
 
     if (is_known_infer_result(record.label)) {
-        record.status = TEST_FRAME_OK;
-        g_votes[record.mapped_result]++;
-        g_test_report.votes[record.mapped_result]++;
-        g_test_report.valid_count++;
-        g_test_report.infer_sum_ms += record.infer_ms;
+        record.status = RECOG_FRAME_OK;
+        ++g_report.votes[record.mapped_result];
+        ++g_report.valid_count;
+        g_report.infer_sum_ms += record.infer_ms;
     } else {
-        record.status = TEST_FRAME_UNKNOWN_LABEL;
+        record.status = RECOG_FRAME_UNKNOWN_LABEL;
     }
 
+    g_debug.infer_valid_count = g_report.valid_count;
     finish_frame_record(record, frame_start);
 }
 
-void print_recognition_test_report(const RecognitionTestReport& report,
-                                   int final_result)
+void print_recognition_report(int final_result)
 {
     printf("[识别测试] 检测到红色：检测耗时=%.2f毫秒，左轮=%.2fRPS，右轮=%.2fRPS\n",
-           report.trigger_detect_ms,
-           report.trigger_left_rps,
-           report.trigger_right_rps);
+           g_report.trigger_detect_ms,
+           g_report.trigger_left_rps,
+           g_report.trigger_right_rps);
 
-    for (int index = 0; index < report.frame_count; ++index) {
-        const RecognitionFrameRecord& record = report.frames[index];
+    for (int index = 0; index < g_report.frame_count; ++index) {
+        const RecognitionFrameRecord& record = g_report.frames[index];
         printf("[识别测试] 第%d/%d帧：%s\n",
                index + 1,
                kInferFrames,
                frame_status_name(record.status));
-
         if (!record.label.empty()) {
-            printf("  模型标签=%s（%s）\n",
+            printf("  模型标签=%s（%s），识别结果=%d（%s）\n",
                    record.label.c_str(),
-                   label_chinese_name(record.label));
-            printf("  识别结果=%d（%s）\n",
+                   label_chinese_name(record.label),
                    record.mapped_result,
                    result_action_name(record.mapped_result));
         }
-
-        printf("  红色检测=%.2f毫秒，图像准备=%.2f毫秒，模型推理=%.2f毫秒\n",
+        printf("  红色检测=%.2f毫秒，图像准备=%.2f毫秒，模型推理=%.2f毫秒，累计=%.2f毫秒\n",
                record.detect_ms,
                record.prepare_ms,
-               record.infer_ms);
-        printf("  单帧处理=%.2f毫秒，触发后累计=%.2f毫秒\n",
-               record.frame_ms,
+               record.infer_ms,
                record.since_trigger_ms);
     }
 
-    const char *stability = "无有效结果";
-    if (report.valid_count == kInferFrames) {
-        stability = "成功";
-    } else if (report.valid_count > 0) {
-        stability = "部分成功";
+    printf("[识别测试] 最终结果=%d（%s），投票：左绕=%d，直行=%d，右绕=%d，有效帧=%d/%d\n",
+           final_result,
+           result_action_name(final_result),
+           g_report.votes[0],
+           g_report.votes[1],
+           g_report.votes[2],
+           g_report.valid_count,
+           kInferFrames);
+    printf("[识别测试] 三帧总时间=%.2f毫秒，推理合计=%.2f毫秒，结束轮速=(%.2f, %.2f)RPS\n",
+           g_report.total_ms,
+           g_report.infer_sum_ms,
+           g_report.finish_left_rps,
+           g_report.finish_right_rps);
+    if (g_abort_reason != DB_ABORT_NONE) {
+        printf("[绕行脚本] 已退出：原因=%s\n", abort_reason_name(g_abort_reason));
     }
-
-    printf("[识别测试] 三帧汇总\n");
-    printf("  最终结果=%d（%s）\n", final_result, result_action_name(final_result));
-    printf("  投票结果：左绕=%d，直行=%d，右绕=%d\n",
-           report.votes[0], report.votes[1], report.votes[2]);
-    printf("  有效帧数=%d/%d\n", report.valid_count, kInferFrames);
-    printf("  推理耗时合计=%.2f毫秒，三帧总时间=%.2f毫秒\n",
-           report.infer_sum_ms,
-           report.total_ms);
-    printf("  稳定性评价=%s\n", stability);
-    printf("  第三帧结束时：左轮=%.2fRPS，右轮=%.2fRPS\n",
-           report.finish_left_rps,
-           report.finish_right_rps);
-    printf("  闭环减速保持=%.2f毫秒，复位run前：左轮=%.2fRPS，右轮=%.2fRPS\n",
-           report.braking_ms,
-           report.before_reset_left_rps,
-           report.before_reset_right_rps);
-    printf("[识别测试] 已停车：左轮目标=%.2fRPS，右轮目标=%.2fRPS，PWM目标=(%.2f, %.2f)\n",
-           static_cast<double>(set_speed_of_motor1_rps),
-           static_cast<double>(set_speed_of_motor2_rps),
-           static_cast<double>(pwm1_duty_rps),
-           static_cast<double>(pwm2_duty_rps));
 }
 
-void begin_recognition_test_braking()
+bool compute_heading_from_line(int center_index, float *heading_deg)
 {
-    g_test_report.total_ms = duration_ms(g_test_trigger_time, DriveByClock::now());
-    g_test_report.finish_left_rps = encoder1_speed_avg;
-    g_test_report.finish_right_rps = encoder2_speed_avg;
-    item_flag = choose_vote_result();
-
-    // 第三帧结束后先把左右目标速度同时置0，但暂不清除run。
-    // 此时3ms速度环仍然运行，可以主动把轮速拉到0，而不是直接断PWM滑行。
-    g_state = DB_TEST_BRAKING;
-    g_state_start = DriveByClock::now();
-    command_wheel_speed(0, 0);
-}
-
-void finish_recognition_test()
-{
-    g_test_report.braking_ms = duration_ms(g_state_start, DriveByClock::now());
-    g_test_report.before_reset_left_rps = encoder1_speed_avg;
-    g_test_report.before_reset_right_rps = encoder2_speed_avg;
-
-    // front_ui_stop() 会取消 drive_by 并清空运行状态，因此先复制报告。
-    // 停车必须早于 printf，避免控制台输出延迟停车命令。
-    const RecognitionTestReport report = g_test_report;
-    const int final_result = item_flag;
-    // 本测试结束后必须保持停车，不需要在 cancel 中短暂恢复触发前的35RPS目标。
-    g_saved.valid = false;
-    // 正常完成不是“中止”，先清 busy，避免 front_ui_stop() 输出中止提示。
-    g_drive_by_busy = false;
-    front_ui_stop();
-    print_recognition_test_report(report, final_result);
-}
-
-bool update_idle_detection(cv::Mat& frame)
-{
-    if (!should_check_this_frame()) {
+    if (heading_deg == nullptr || rptsn_num < 3 || sample_dist <= 0.0f) {
         return false;
     }
 
-    const DriveByClock::time_point detect_start = DriveByClock::now();
-    detectRedPlate(frame);
-    const DriveByClock::time_point detect_end = DriveByClock::now();
+    int half_window = (int)std::round(kTrackTangentWindowM / sample_dist);
+    if (half_window < 1) half_window = 1;
+    const int previous_index = std::max(0, center_index - half_window);
+    const int next_index = std::min(rptsn_num - 1, center_index + half_window);
+    if (next_index <= previous_index) {
+        return false;
+    }
 
-    if (g_seen_lock) {
-        if (!have_target && elapsed_ms(g_cooldown_start) >= drive_by_cooldown_ms) {
-            g_seen_lock = false;
-            printf("[drive_by] target lock cleared\n");
+    const float dx = rptsn[next_index][0] - rptsn[previous_index][0];
+    const float forward = rptsn[previous_index][1] - rptsn[next_index][1];
+    if (!std::isfinite(dx) || !std::isfinite(forward) ||
+        std::fabs(dx) + std::fabs(forward) < 1e-3f) {
+        return false;
+    }
+
+    *heading_deg = std::atan2(dx, forward) * 180.0f / PI;
+    return std::isfinite(*heading_deg);
+}
+
+bool compute_current_track_heading(float *heading_deg)
+{
+    return compute_heading_from_line(0, heading_deg);
+}
+
+bool compute_target_geometry(float *track_heading_deg,
+                             float *view_angle_deg,
+                             float *target_distance_m)
+{
+    if (red_block_rect.width <= 0 || red_block_rect.height <= 0 || rptsn_num < 3) {
+        return false;
+    }
+
+    const int target_pixel_x = clip(red_block_rect.x + red_block_rect.width / 2,
+                                    0,
+                                    IMG_W - 1);
+    const int target_pixel_y = clip(red_block_rect.y + red_block_rect.height,
+                                    0,
+                                    IMG_H - 1);
+    const float target_x = mapx[target_pixel_y][target_pixel_x];
+    const float target_y = mapy[target_pixel_y][target_pixel_x];
+    const float vehicle_x = mapx[(int)(IMG_H * 0.78f)][IMG_W / 2];
+    const float vehicle_y = mapy[(int)(IMG_H * 0.78f)][IMG_W / 2];
+    if (!std::isfinite(target_x) || !std::isfinite(target_y) ||
+        !std::isfinite(vehicle_x) || !std::isfinite(vehicle_y)) {
+        return false;
+    }
+
+    int nearest_index = -1;
+    float nearest_distance_sq = 1e30f;
+    for (int index = 0; index < rptsn_num; ++index) {
+        const float dx = rptsn[index][0] - target_x;
+        const float dy = rptsn[index][1] - target_y;
+        const float distance_sq = dx * dx + dy * dy;
+        if (distance_sq < nearest_distance_sq) {
+            nearest_distance_sq = distance_sq;
+            nearest_index = index;
         }
+    }
+    if (nearest_index < 0 || !compute_heading_from_line(nearest_index, track_heading_deg)) {
         return false;
     }
 
-    if (have_target) {
-        start_recognition_test(duration_ms(detect_start, detect_end));
-        return true;
+    const float view_heading_deg =
+        std::atan2(target_x - vehicle_x, vehicle_y - target_y) * 180.0f / PI;
+    float angle_difference = std::fabs(normalize_angle_deg(
+        *track_heading_deg - view_heading_deg));
+    if (angle_difference > 90.0f) {
+        angle_difference = 180.0f - angle_difference;
     }
 
-    return false;
+    *view_angle_deg = angle_difference;
+    *target_distance_m = nearest_index * sample_dist;
+    return std::isfinite(*view_angle_deg) && std::isfinite(*target_distance_m);
 }
 
-void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
+void integrate_session_motion()
+{
+    const DriveByClock::time_point now = DriveByClock::now();
+    float dt_s = std::chrono::duration<float>(now - g_last_integration_time).count();
+    g_last_integration_time = now;
+    if (dt_s <= 0.0f) {
+        return;
+    }
+    if (dt_s > kMaxIntegrationDtS) {
+        dt_s = kMaxIntegrationDtS;
+    }
+
+    if (gyro_yaw_rate_control_is_ready() && gyro_yaw_rate_control_gyro_is_fresh()) {
+        g_yaw_deg = normalize_angle_deg(
+            g_yaw_deg + gyro_yaw_rate_control_get_gyro_z_dps() * dt_s);
+    }
+
+    float average_rps = (encoder1_speed_avg + encoder2_speed_avg) * 0.5f;
+    if (!std::isfinite(average_rps) || average_rps < 0.0f) {
+        average_rps = 0.0f;
+    }
+    const float distance_increment = average_rps * drive_by_rps_to_mps * dt_s;
+    g_distance_since_trigger_m += distance_increment;
+    if (drive_by_is_motion_phase()) {
+        g_phase_distance_m += distance_increment;
+    }
+
+    g_debug.yaw_deg = g_yaw_deg;
+    g_debug.distance_since_trigger_m = g_distance_since_trigger_m;
+    g_debug.phase_distance_m = g_phase_distance_m;
+}
+
+void enter_state(DriveByState next)
+{
+    g_state = next;
+    g_state_start = DriveByClock::now();
+    g_phase_distance_m = 0.0f;
+    g_heading_settle_count = 0;
+    g_debug.phase_distance_m = 0.0f;
+}
+
+void reset_runtime(bool restore_outputs)
+{
+    if (restore_outputs) {
+        restore_control();
+    }
+    gyro_yaw_rate_control_reset_controller();
+    g_drive_by_busy = false;
+    g_seen_lock = false;
+    g_target_geometry_captured = false;
+    g_track_reference_valid = false;
+    g_current_track_heading_valid = false;
+    g_state = DB_IDLE;
+    g_abort_reason = DB_ABORT_NONE;
+    g_detect_frame_counter = 0;
+    g_heading_settle_count = 0;
+    g_turn_side = 0;
+    g_yaw_deg = 0.0f;
+    g_distance_since_trigger_m = 0.0f;
+    g_phase_distance_m = 0.0f;
+    g_report = RecognitionReport{};
+    g_debug = DriveByDebug{};
+    have_target = false;
+}
+
+void finish_session(DriveByAbortReason reason)
+{
+    g_abort_reason = reason;
+    g_debug.abort_reason = (int)reason;
+    // 正常左右绕行可能在推理结束几秒后才完成，不能把整段绕行时间误写成
+    // “三帧总时间”。只有尚未完成三帧（例如观察角度超时）时才在这里补值。
+    if (g_report.total_ms <= 0.0) {
+        g_report.total_ms = duration_ms(g_session_start, DriveByClock::now());
+        g_report.finish_left_rps = encoder1_speed_avg;
+        g_report.finish_right_rps = encoder2_speed_avg;
+    }
+
+    // 先恢复控制权并把 busy 清掉，再输出报告，避免 printf 延迟下一次方向控制。
+    restore_control();
+    gyro_yaw_rate_control_reset_controller();
+    g_drive_by_busy = false;
+    g_state = DB_IDLE;
+    g_cooldown_start = DriveByClock::now();
+    print_recognition_report(item_flag);
+}
+
+void start_target_session(double trigger_detect_ms)
+{
+    save_control_once();
+    g_drive_by_busy = true;
+    g_seen_lock = true;
+    g_target_geometry_captured = false;
+    g_track_reference_valid = false;
+    g_current_track_heading_valid = false;
+    g_abort_reason = DB_ABORT_NONE;
+    item_flag = 1;
+    g_session_start = DriveByClock::now();
+    g_last_integration_time = g_session_start;
+    g_yaw_deg = 0.0f;
+    g_distance_since_trigger_m = 0.0f;
+    g_phase_distance_m = 0.0f;
+    g_report = RecognitionReport{};
+    g_report.trigger_detect_ms = trigger_detect_ms;
+    g_report.trigger_left_rps = encoder1_speed_avg;
+    g_report.trigger_right_rps = encoder2_speed_avg;
+    g_debug = DriveByDebug{};
+    command_recognition_base_speed();
+    enter_state(DB_WAIT_VIEW);
+}
+
+void begin_motion_script(int result)
+{
+    if (!g_target_geometry_captured) {
+        item_flag = 1;
+        finish_session(DB_ABORT_NO_TARGET_GEOMETRY);
+        return;
+    }
+    if (!gyro_yaw_rate_control_is_ready()) {
+        item_flag = 1;
+        finish_session(DB_ABORT_GYRO_NOT_READY);
+        return;
+    }
+    if (gyro_yaw_rate_control_gyro_age_ms() > drive_by_gyro_stale_ms) {
+        item_flag = 1;
+        finish_session(DB_ABORT_GYRO_STALE);
+        return;
+    }
+
+    // 左绕和右绕只改变相对赛道切线的偏角符号。
+    g_turn_side = result == 0 ? 1 : -1;
+    g_track_heading_reference_deg = g_target_track_heading_global_deg;
+    g_track_reference_valid = true;
+    gyro_yaw_rate_control_reset_controller();
+    enter_state(DB_SHIFT_OUT_A);
+}
+
+bool heading_is_settled(float heading_error_deg, float gyro_dps)
+{
+    if (std::fabs(heading_error_deg) <= drive_by_heading_tolerance_deg &&
+        std::fabs(gyro_dps) <= drive_by_rate_tolerance_dps) {
+        ++g_heading_settle_count;
+    } else {
+        g_heading_settle_count = 0;
+    }
+    return g_heading_settle_count >= kHeadingSettleCycles;
+}
+
+float phase_offset_deg()
+{
+    const float side_offset = g_turn_side * drive_by_yaw_sign * drive_by_turn_angle_deg;
+    switch (g_state) {
+    case DB_SHIFT_OUT_A: return side_offset;
+    case DB_SHIFT_IN_A: return -side_offset;
+    default: return 0.0f;
+    }
+}
+
+float phase_base_speed_rps()
 {
     switch (g_state) {
-    case DB_STOPPING:
-        command_stop();
-        if (elapsed_ms(g_state_start) >= drive_by_stop_ms) {
-            enter_state(DB_INFER);
+    case DB_PASS_TARGET: return (float)drive_by_forward_speed_rps;
+    case DB_SHIFT_IN_B: return (float)drive_by_exit_speed_rps;
+    default: return (float)drive_by_turn_speed_rps;
+    }
+}
+
+void update_motion_state()
+{
+    if (!gyro_yaw_rate_control_is_ready()) {
+        item_flag = 1;
+        finish_session(DB_ABORT_GYRO_NOT_READY);
+        return;
+    }
+    if (gyro_yaw_rate_control_gyro_age_ms() > drive_by_gyro_stale_ms) {
+        item_flag = 1;
+        finish_session(DB_ABORT_GYRO_STALE);
+        return;
+    }
+    if (elapsed_ms(g_state_start) > kMotionPhaseTimeoutMs) {
+        item_flag = 1;
+        finish_session(DB_ABORT_PHASE_TIMEOUT);
+        return;
+    }
+
+    const float gyro_dps = gyro_yaw_rate_control_get_gyro_z_dps();
+    const float target_yaw_deg = normalize_angle_deg(
+        g_track_heading_reference_deg + phase_offset_deg());
+    const float heading_error_deg = normalize_angle_deg(target_yaw_deg - g_yaw_deg);
+    float target_yaw_rate_dps =
+        drive_by_heading_kp * heading_error_deg - drive_by_heading_kd * gyro_dps;
+    const float rate_limit = std::fabs((float)drive_by_heading_max_dps);
+    target_yaw_rate_dps = clampf(target_yaw_rate_dps, -rate_limit, rate_limit);
+    const float turn_rps =
+        gyro_yaw_rate_control_update_target_yaw_rate(target_yaw_rate_dps);
+    command_motion_wheels(phase_base_speed_rps(), turn_rps);
+
+    g_debug.yaw_deg = g_yaw_deg;
+    g_debug.target_yaw_deg = target_yaw_deg;
+    g_debug.heading_error_deg = heading_error_deg;
+    g_debug.track_heading_deg = g_track_heading_reference_deg;
+    g_debug.target_yaw_rate_dps = target_yaw_rate_dps;
+    g_debug.turn_rps = turn_rps;
+
+    switch (g_state) {
+    case DB_SHIFT_OUT_A:
+        if (heading_is_settled(heading_error_deg, gyro_dps)) {
+            enter_state(DB_SHIFT_OUT_B);
         }
         break;
 
-    case DB_INFER:
-        // 三帧完成前保持35RPS直行；不等待三次成功，失败帧同样计数。
-        command_recognition_test_cruise();
-        process_recognition_test_frame(frame, ncnn, false);
-        if (g_test_report.frame_count >= kInferFrames) {
-            begin_recognition_test_braking();
+    case DB_SHIFT_OUT_B:
+        if (heading_is_settled(heading_error_deg, gyro_dps)) {
+            enter_state(DB_PASS_TARGET);
         }
         break;
 
-    case DB_TEST_BRAKING:
-        // run仍为1，速度环继续工作；这里只反复保证左右目标保持0。
-        command_wheel_speed(0, 0);
-        if ((std::fabs(encoder1_speed_avg) <= kBrakeStopThresholdRps &&
-             std::fabs(encoder2_speed_avg) <= kBrakeStopThresholdRps) ||
-            elapsed_ms(g_state_start) >= drive_by_stop_ms) {
-            finish_recognition_test();
+    case DB_PASS_TARGET: {
+        const float pass_end_distance =
+            g_target_distance_at_trigger_m + drive_by_target_after_margin_m;
+        if (g_distance_since_trigger_m >= pass_end_distance) {
+            enter_state(DB_SHIFT_IN_A);
+        }
+        break;
+    }
+
+    case DB_SHIFT_IN_A:
+        if (heading_is_settled(heading_error_deg, gyro_dps)) {
+            enter_state(DB_SHIFT_IN_B);
         }
         break;
 
-    case DB_LEFT_TURN_OUT:
-        command_wheel_speed(drive_by_turn_inner_speed_rps, drive_by_turn_speed_rps);
-        if (elapsed_ms(g_state_start) >= drive_by_turn_out_ms) {
-            enter_state(DB_LEFT_FORWARD);
-        }
-        break;
-
-    case DB_LEFT_FORWARD:
-        command_wheel_speed(drive_by_forward_speed_rps, drive_by_forward_speed_rps);
-        if (elapsed_ms(g_state_start) >= drive_by_forward_ms) {
-            enter_state(DB_LEFT_TURN_BACK);
-        }
-        break;
-
-    case DB_LEFT_TURN_BACK:
-        command_wheel_speed(drive_by_turn_speed_rps, drive_by_turn_inner_speed_rps);
-        if (elapsed_ms(g_state_start) >= drive_by_turn_back_ms) {
-            enter_state(DB_LEFT_EXIT_FORWARD);
-        }
-        break;
-
-    case DB_LEFT_EXIT_FORWARD:
-        command_wheel_speed(drive_by_exit_speed_rps, drive_by_exit_speed_rps);
-        if (elapsed_ms(g_state_start) >= drive_by_exit_forward_ms) {
-            finish_script();
-        }
-        break;
-
-    case DB_RIGHT_TURN_OUT:
-        command_wheel_speed(drive_by_turn_speed_rps, drive_by_turn_inner_speed_rps);
-        if (elapsed_ms(g_state_start) >= drive_by_turn_out_ms) {
-            enter_state(DB_RIGHT_FORWARD);
-        }
-        break;
-
-    case DB_RIGHT_FORWARD:
-        command_wheel_speed(drive_by_forward_speed_rps, drive_by_forward_speed_rps);
-        if (elapsed_ms(g_state_start) >= drive_by_forward_ms) {
-            enter_state(DB_RIGHT_TURN_BACK);
-        }
-        break;
-
-    case DB_RIGHT_TURN_BACK:
-        command_wheel_speed(drive_by_turn_inner_speed_rps, drive_by_turn_speed_rps);
-        if (elapsed_ms(g_state_start) >= drive_by_turn_back_ms) {
-            enter_state(DB_RIGHT_EXIT_FORWARD);
-        }
-        break;
-
-    case DB_RIGHT_EXIT_FORWARD:
-        command_wheel_speed(drive_by_exit_speed_rps, drive_by_exit_speed_rps);
-        if (elapsed_ms(g_state_start) >= drive_by_exit_forward_ms) {
-            finish_script();
+    case DB_SHIFT_IN_B:
+        if (heading_is_settled(heading_error_deg, gyro_dps) &&
+            g_phase_distance_m >= drive_by_exit_distance_m) {
+            finish_session(DB_ABORT_NONE);
         }
         break;
 
     default:
-        finish_script();
         break;
+    }
+}
+
+void complete_inference()
+{
+    g_report.total_ms = duration_ms(g_session_start, DriveByClock::now());
+    g_report.finish_left_rps = encoder1_speed_avg;
+    g_report.finish_right_rps = encoder2_speed_avg;
+    item_flag = choose_vote_result();
+
+    if (item_flag == 1) {
+        finish_session(DB_ABORT_NONE);
+        return;
+    }
+    begin_motion_script(item_flag);
+}
+
+void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
+{
+    integrate_session_motion();
+
+    switch (g_state) {
+    case DB_WAIT_VIEW:
+        command_recognition_base_speed();
+        {
+            bool detected_this_frame = false;
+            double detect_ms = 0.0;
+            if (should_detect_this_frame()) {
+                const DriveByClock::time_point detect_start = DriveByClock::now();
+                detectRedPlate(frame);
+                detect_ms = duration_ms(detect_start, DriveByClock::now());
+                detected_this_frame = true;
+
+                // 主循环的道路结果来自上一张相机帧，时间上只差一个帧周期。
+                // 这里立即更新观察夹角，使合格的当前帧可以直接成为第1帧推理。
+                drive_by_update_track_geometry();
+            }
+            if (g_debug.view_ready != 0 && have_target) {
+                enter_state(DB_INFER);
+                process_inference_frame(frame, ncnn, detected_this_frame, detect_ms);
+                if (g_report.frame_count >= kInferFrames) {
+                    complete_inference();
+                }
+            } else if (elapsed_ms(g_state_start) >= drive_by_view_wait_timeout_ms) {
+                item_flag = 1;
+                finish_session(DB_ABORT_VIEW_TIMEOUT);
+            }
+        }
+        break;
+
+    case DB_INFER:
+        command_recognition_base_speed();
+        process_inference_frame(frame, ncnn, false, 0.0);
+        if (g_report.frame_count >= kInferFrames) {
+            complete_inference();
+        } else if (elapsed_ms(g_state_start) >= drive_by_infer_timeout_ms) {
+            item_flag = 1;
+            finish_session(DB_ABORT_VIEW_TIMEOUT);
+        }
+        break;
+
+    case DB_SHIFT_OUT_A:
+    case DB_SHIFT_OUT_B:
+    case DB_PASS_TARGET:
+    case DB_SHIFT_IN_A:
+    case DB_SHIFT_IN_B:
+        update_motion_state();
+        break;
+
+    default:
+        finish_session(DB_ABORT_PHASE_TIMEOUT);
+        break;
+    }
+}
+
+void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
+{
+    if (!should_detect_this_frame()) {
+        return;
+    }
+
+    const DriveByClock::time_point detect_start = DriveByClock::now();
+    detectRedPlate(frame);
+    const double detect_ms = duration_ms(detect_start, DriveByClock::now());
+
+    if (g_seen_lock) {
+        if (!have_target && elapsed_ms(g_cooldown_start) >= drive_by_cooldown_ms) {
+            g_seen_lock = false;
+        }
+        return;
+    }
+
+    if (have_target) {
+        start_target_session(detect_ms);
+
+        // 复用上一帧已经提取好的道路中线，立即计算本触发帧的目标几何。
+        // 若观察角已经合格，本帧直接作为第1帧，不再额外等待一个相机周期。
+        drive_by_update_track_geometry();
+        if (g_debug.view_ready != 0) {
+            enter_state(DB_INFER);
+            process_inference_frame(frame, ncnn, true, detect_ms);
+        }
     }
 }
 
@@ -708,7 +933,6 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
         }
         return;
     }
-
     if (frame.empty()) {
         return;
     }
@@ -716,18 +940,93 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
     if (g_drive_by_busy) {
         update_busy_state(frame, ncnn);
     } else {
-        // K0测速模式启用后持续锁定35RPS直行，防止K1或VOFA残留速度影响实验。
-        command_recognition_test_cruise();
-        if (update_idle_detection(frame)) {
-            // 触发帧就是第1帧，直接复用当前 plate_rect，不等下一张图。
-            process_recognition_test_frame(frame, ncnn, true);
+        command_normal_base_speed();
+        update_idle_detection(frame, ncnn);
+    }
+}
+
+void drive_by_update_track_geometry()
+{
+    if (!g_drive_by_busy) {
+        return;
+    }
+
+    float current_heading_relative_deg = 0.0f;
+    g_current_track_heading_valid =
+        compute_current_track_heading(&current_heading_relative_deg);
+    if (g_current_track_heading_valid) {
+        g_current_track_heading_relative_deg = current_heading_relative_deg;
+        const float measured_global_heading = normalize_angle_deg(
+            g_yaw_deg + current_heading_relative_deg);
+        if (drive_by_is_motion_phase()) {
+            if (!g_track_reference_valid) {
+                g_track_heading_reference_deg = measured_global_heading;
+                g_track_reference_valid = true;
+            } else {
+                const float alpha = clampf(drive_by_track_heading_alpha, 0.0f, 1.0f);
+                g_track_heading_reference_deg = blend_angle_deg(
+                    g_track_heading_reference_deg,
+                    measured_global_heading,
+                    alpha);
+            }
         }
     }
+
+    // 目标位置和观察夹角只在识别阶段需要。进入S形后目标几何已经锁定，
+    // 每帧只更新当前赛道切线，避免重复遍历整条中线。
+    float target_track_heading_relative_deg = 0.0f;
+    float view_angle_deg = g_debug.view_angle_deg;
+    float target_distance_now_m = 0.0f;
+    const bool target_geometry_valid = !drive_by_is_motion_phase() &&
+        compute_target_geometry(&target_track_heading_relative_deg,
+                                &view_angle_deg,
+                                &target_distance_now_m);
+
+    if (target_geometry_valid) {
+        g_debug.view_angle_deg = view_angle_deg;
+        if (!g_target_geometry_captured) {
+            // 如果几何信息在触发后的下一帧才可用，需要把已经走过的距离加回来，
+            // 才能得到“红色触发瞬间到目标”的沿线距离。
+            g_target_distance_at_trigger_m =
+                target_distance_now_m + g_distance_since_trigger_m;
+            g_target_track_heading_global_deg = normalize_angle_deg(
+                g_yaw_deg + target_track_heading_relative_deg);
+            g_target_geometry_captured = true;
+        }
+    }
+
+    g_debug.target_geometry_valid = g_target_geometry_captured ? 1 : 0;
+    g_debug.target_track_heading_deg = g_target_track_heading_global_deg;
+    g_debug.target_distance_m = g_target_geometry_captured
+        ? g_target_distance_at_trigger_m
+        : drive_by_pass_distance_m;
+    g_debug.track_heading_deg = g_track_heading_reference_deg;
+    g_debug.view_ready = !drive_by_is_motion_phase() &&
+        target_geometry_valid &&
+        plate_rect.width > 0 && plate_rect.height > 0 &&
+        view_angle_deg <= drive_by_view_angle_max_deg
+        ? 1
+        : 0;
 }
 
 bool drive_by_is_busy()
 {
     return g_drive_by_busy;
+}
+
+bool drive_by_is_recognizing()
+{
+    return g_drive_by_busy && (g_state == DB_WAIT_VIEW || g_state == DB_INFER);
+}
+
+bool drive_by_is_motion_phase()
+{
+    return g_drive_by_busy &&
+        (g_state == DB_SHIFT_OUT_A ||
+         g_state == DB_SHIFT_OUT_B ||
+         g_state == DB_PASS_TARGET ||
+         g_state == DB_SHIFT_IN_A ||
+         g_state == DB_SHIFT_IN_B);
 }
 
 bool drive_by_is_enabled()
@@ -740,7 +1039,6 @@ void drive_by_set_enable(bool enable)
     if (g_drive_by_enable == enable) {
         return;
     }
-
     g_drive_by_enable = enable;
     if (!enable) {
         reset_runtime(true);
@@ -763,4 +1061,14 @@ bool drive_by_cancel()
 const char *drive_by_state_name()
 {
     return state_name(g_state);
+}
+
+const char *drive_by_abort_reason()
+{
+    return abort_reason_name(g_abort_reason);
+}
+
+const DriveByDebug &drive_by_get_debug()
+{
+    return g_debug;
 }

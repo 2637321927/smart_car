@@ -7,7 +7,8 @@
 typedef signed short       sint16;
 //#include <mutex> 
 extern bool have_target;
- extern cv::Rect plate_rect;  
+extern cv::Rect red_block_rect;
+extern cv::Rect plate_rect;
 extern int item_flag;
 //extern std::mutex g_mutex;  // 全局锁
 extern int marker_status;  

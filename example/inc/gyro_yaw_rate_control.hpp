@@ -87,6 +87,10 @@ void gyro_yaw_rate_control_init(void);
 // 发车、停车、目标板脚本接管时都应该调用，避免残留转向量。
 void gyro_yaw_rate_control_reset(void);
 
+// 只清空角速度控制器的历史误差和积分，不清空异步陀螺仪缓存。
+// 绕行脚本进入 S 形时使用，避免 reset 后等待下一次硬件采样。
+void gyro_yaw_rate_control_reset_controller(void);
+
 // 返回 MPU6050 是否初始化并完成零偏标定。
 bool gyro_yaw_rate_control_is_ready(void);
 
@@ -107,6 +111,10 @@ int gyro_yaw_rate_control_gyro_age_ms(void);
 //   pwm1_duty_rps = base_speed + turn_rps;
 //   pwm2_duty_rps = base_speed - turn_rps;
 float gyro_yaw_rate_control_update(float vision_error);
+
+// 绕行脚本直接给出目标角速度时使用。
+// 该接口只绕过“视觉误差 -> 目标角速度”外环，仍复用现有角速度内环。
+float gyro_yaw_rate_control_update_target_yaw_rate(float target_yaw_rate_dps);
 
 const GyroYawRateDebug &gyro_yaw_rate_control_get_debug(void);
 void gyro_yaw_rate_control_print_debug(int interval_count);
