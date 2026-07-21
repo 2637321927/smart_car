@@ -6,6 +6,7 @@
 #include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
 #include "drive_by.hpp"  // 目标板触发后的固定动作脚本
 #include "gyro_yaw_rate_control.hpp"  // MPU6050 角速度环 demo
+#include "odometry.hpp"              // 编码器里程计（环岛出环距离）
 #include <chrono>
 #include <cstdint>
 #include <fcntl.h>
@@ -16,6 +17,7 @@ using namespace std::chrono;
 volatile float AIM =0.25;
 int item_flag=1;
 bool need_exit = false;
+extern volatile float circle_exit_distance_m;  // 环岛出环距离阈值（定义在 circle.cpp）
 // 全局互斥锁（解决多线程冲突）
 //std::mutex g_mutex;
 //begin to test timer
@@ -415,6 +417,15 @@ if (sscanf(buf, "#udp=%d;", &itmp) == 1)
     printf("[VOFA] UDP调试模式=%d（%s）\n", udp_debug_mode, mode_name);
 }
 
+// 环岛出环里程阈值，单位米。进入 RUNNING 态后累计行驶超过该距离则触发出环。
+if (sscanf(buf, "#circle_exit=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.10f) ftmp = 0.10f;
+    if (ftmp > 3.00f) ftmp = 3.00f;
+    circle_exit_distance_m = ftmp;
+    printf("[VOFA] circle_exit_distance_m = %.3f m\n", circle_exit_distance_m);
+}
+
 // VOFA command example: #AIM=0.30;
 // AIM is the forward look-ahead distance in meters. The image-processing loop
 // copies it to aim_distance before selecting the tracking target point.
@@ -763,6 +774,7 @@ void udp_send(void){
              "\"plate_x\":%d,\"plate_y\":%d,\"plate_w\":%d,\"plate_h\":%d,"
              "\"left_n\":%d,\"mid_n\":%d,\"right_n\":%d,"
              "\"circle_type\":%d,\"cross_type\":%d,\"track_type\":%d,"
+             "\"circle_exit_m\":%.3f,\"odom_m\":%.3f,"
              "\"AIM\":%.3f"
              "}",
              ++udp_sequence,
@@ -802,6 +814,8 @@ void udp_send(void){
              static_cast<int>(circle_type),
              static_cast<int>(cross_type),
              static_cast<int>(track_type),
+             safe_float(circle_exit_distance_m),
+             safe_float(odometry_get_distance()),
              safe_float(AIM));
 
 // 截断的JSON没有调试价值，直接丢弃，避免PC端把它统计为协议错误。

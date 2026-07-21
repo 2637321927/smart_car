@@ -20,8 +20,8 @@
 #define WHEEL_CIRCUMFERENCE_M    (3.1415926f * WHEEL_DIAMETER_M)
 
 // 环岛出环距离阈值（米），即进入环岛后跑多远就出环。
-// 实际值需要根据赛道环岛弧长实测调整。
-#define CIRCLE_EXIT_DISTANCE_M   (0.50f)
+// 可通过 VOFA #circle_exit=0.50; 在线调参。
+extern volatile float circle_exit_distance_m;
 
 // ========== API ==========
 

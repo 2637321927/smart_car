@@ -353,6 +353,26 @@ function pushTrend(receivedAt, params) {
   while (state.trend.length && state.trend[0].t < cutoff) state.trend.shift();
 }
 
+function buildReplayTrend(currentTime) {
+  const events = state.replay.events;
+  state.trend = [];
+  if (!events.length) return;
+  const cutoff = currentTime - 10000;
+  for (const event of events) {
+    if (event.type !== 'params') continue;
+    if (event.t > currentTime) break;
+    if (event.t < cutoff) continue;
+    const p = event.data;
+    const number = (key) => Number(p[key] || 0);
+    state.trend.push({
+      t: event.t,
+      actual: (number('encoder1_speed_avg') + number('encoder2_speed_avg')) / 2,
+      target: (number('ex_rps1') + number('ex_rps2')) / 2,
+      error: number('latest_error'),
+    });
+  }
+}
+
 function drawTrend() {
   const canvas = elements.trendCanvas;
   const context = canvas.getContext('2d');
@@ -472,12 +492,14 @@ function setMode(mode) {
   elements.modeBadge.classList.toggle('badge-alert', mode === 'replay');
   if (mode === 'live') {
     pauseReplay();
+    state.trend = [];
     state.displayParams = state.liveParams;
     state.displayRoad = state.liveRoad;
     renderParameters(state.displayParams || {});
     updateSummary();
     drawRoad();
     drawDetection();
+    drawTrend();
   }
 }
 
@@ -509,6 +531,8 @@ function applyReplayTime(time) {
   elements.playbackTime.textContent = formatTime(clamped);
   if (params) applyParams(events[index]?.receivedAt || 0, params, true);
   if (road) applyRoad(events[index]?.receivedAt || 0, road, true);
+  buildReplayTrend(clamped);
+  drawTrend();
 }
 
 function replayTick(now) {

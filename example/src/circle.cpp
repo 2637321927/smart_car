@@ -22,6 +22,9 @@ enum circle_type_e circle_type = CIRCLE_NONE;
 // 编码器，用于防止一些重复触发等。
 int64_t circle_encoder;
 
+// 环岛出环距离阈值（米），可在 VOFA 中通过 #circle_exit=... 在线调参
+volatile float circle_exit_distance_m = 0.50f;
+
 int none_left_line = 0, none_right_line = 0;
 int have_left_line = 0, have_right_line = 0;
 
@@ -241,19 +244,19 @@ void run_circle() {
             float avg_rps = (fabs(encoder1_speed_avg) + fabs(encoder2_speed_avg)) / 2.0f;
             odometry_update(avg_rps, dt);
 
-            if (odometry_get_distance() > CIRCLE_EXIT_DISTANCE_M) {
+            if (odometry_get_distance() > circle_exit_distance_m) {
                 std::cout<<"dis_out"<<std::endl;
                 circle_type = CIRCLE_LEFT_OUT;
             }
         }
         // ===================================
 
-        if (Lpt1_found) rpts1s_num = rptsc1_num = Lpt1_rpts1s_id;
-        //外环拐点(右L点)
-        if ((Lpt1_found && Lpt1_rpts1s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
-            std::cout<<"L_out"<<std::endl;
-            circle_type = CIRCLE_LEFT_OUT;
-        }
+        // （已注释）外环拐点(右L角点)判断出环 —— 改为仅依赖里程计出环
+        // if (Lpt1_found) rpts1s_num = rptsc1_num = Lpt1_rpts1s_id;
+        // if ((Lpt1_found && Lpt1_rpts1s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
+        //     std::cout<<"L_out"<<std::endl;
+        //     circle_type = CIRCLE_LEFT_OUT;
+        // }
     }
     //出环，寻内圆
     else if (circle_type == CIRCLE_LEFT_OUT) {
@@ -336,19 +339,19 @@ void run_circle() {
             float avg_rps = (fabs(encoder1_speed_avg) + fabs(encoder2_speed_avg)) / 2.0f;
             odometry_update(avg_rps, dt);
 
-            if (odometry_get_distance() > CIRCLE_EXIT_DISTANCE_M) {
+            if (odometry_get_distance() > circle_exit_distance_m) {
                 std::cout<<"dis_out"<<std::endl;
                 circle_type = CIRCLE_RIGHT_OUT;
             }
         }
         // ===================================
 
-        //外环存在拐点,可再加拐点距离判据(左L点)s
-        if (Lpt0_found) rpts0s_num = rptsc0_num = Lpt0_rpts0s_id;
-        if ((Lpt0_found && Lpt0_rpts0s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
-            std::cout<<"L_out"<<std::endl;
-            circle_type = CIRCLE_RIGHT_OUT;
-        }
+        // （已注释）外环存在拐点(左L角点)判断出环 —— 改为仅依赖里程计出环
+        // if (Lpt0_found) rpts0s_num = rptsc0_num = Lpt0_rpts0s_id;
+        // if ((Lpt0_found && Lpt0_rpts0s_id < 0.4 / sample_dist)||std::chrono::steady_clock::now() - last_circle_enter_time >=kCircleOUTCooldown) {
+        //     std::cout<<"L_out"<<std::endl;
+        //     circle_type = CIRCLE_RIGHT_OUT;
+        // }
     }
     //出环，寻内圆
     else if (circle_type == CIRCLE_RIGHT_OUT) {
