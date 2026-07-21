@@ -58,7 +58,7 @@ uint8_t Last_Left_Down_Point_finish_flag  = 0;  // 本次与上次是同一个�
 // 每列白色像素统计
 // ====================
 sint16 White_Column[LCDW]; 
-const std::string TARGET_IP    = "192.168.43.146";
+const std::string TARGET_IP    = "192.168.43.213";
 //192.168.43.146 huawei
 //192.168.43.213 lianxiang
 // UDP目标端口
