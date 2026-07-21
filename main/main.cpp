@@ -406,11 +406,12 @@ if (sscanf(buf, "#spd=%f;", &ftmp) == 1)
 if (sscanf(buf, "#udp=%d;", &itmp) == 1)
 {
     if (itmp < 0) itmp = 0;
-    if (itmp > 2) itmp = 2;
+    if (itmp > 3) itmp = 3;
     udp_debug_mode = itmp;
     const char *mode_name = udp_debug_mode == 0
         ? "关闭"
-        : (udp_debug_mode == 1 ? "仅波形" : "波形和道路三线");
+        : (udp_debug_mode == 1 ? "仅波形"
+            : (udp_debug_mode == 2 ? "仅道路三线" : "波形和道路三线"));
     printf("[VOFA] UDP调试模式=%d（%s）\n", udp_debug_mode, mode_name);
 }
 
@@ -986,7 +987,7 @@ gyro_yaw_rate_control_init();
     });
 
      udp_timer.set_seconds_ms(12, []() {
-    if (udp_debug_mode >= 1) {
+    if (udp_debug_mode == 1 || udp_debug_mode == 3) {
       udp_send();
     }
 
