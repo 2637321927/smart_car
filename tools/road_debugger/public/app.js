@@ -42,6 +42,8 @@ const elements = {
   timeline: $('timeline'),
   playbackTime: $('playbackTime'),
   playbackSpeed: $('playbackSpeed'),
+  scopeModeText: $('scopeModeText'),
+  parameterTimestamp: $('parameterTimestamp'),
   carIp: $('carIp'),
   carPort: $('carPort'),
   commandInput: $('commandInput'),
@@ -80,6 +82,23 @@ const PARAMETER_LABELS = {
   drive_enabled: '识别模式开关',
   drive_busy: '识别流程忙',
   drive_state: '识别状态',
+  drive_abort_reason: '绕行退出原因',
+  drive_recognizing: '识别阶段',
+  drive_motion: '绕行运动阶段',
+  drive_yaw_deg: '绕行累计航向',
+  drive_target_yaw_deg: '绕行目标航向',
+  drive_heading_error_deg: '绕行航向误差',
+  drive_track_heading_deg: '当前赛道航向',
+  drive_target_track_heading_deg: '目标处赛道航向',
+  drive_view_angle_deg: '目标观察夹角',
+  drive_target_distance_m: '触发时目标距离',
+  drive_distance_since_trigger_m: '触发后累计距离',
+  drive_phase_distance_m: '当前阶段距离',
+  drive_target_yaw_rate_dps: '绕行目标角速度',
+  drive_turn_rps: '绕行差速输出',
+  drive_geometry_valid: '目标几何有效',
+  drive_view_ready: '观察角度合格',
+  drive_infer_valid_count: '有效识别帧数',
   have_target: '检测到目标',
   item_flag: '识别结果',
   red_x: '红块X',
@@ -108,15 +127,20 @@ const state = {
   liveRoad: null,
   displayParams: null,
   displayRoad: null,
+  displayParamTime: null,
+  displayRoadTime: null,
   lastPacketAt: 0,
   lastRoadAt: 0,
   previousRoadSequence: null,
   droppedRoadFrames: 0,
   trend: [],
+  liveTrend: [],
   serverStatus: null,
   recording: { active: false },
   replay: {
     events: [],
+    paramEvents: [],
+    roadEvents: [],
     duration: 0,
     currentTime: 0,
     playing: false,
@@ -127,6 +151,8 @@ const state = {
 };
 
 let toastTimer = 0;
+let parameterLayoutKey = '';
+let parameterRows = new Map();
 
 function showToast(message) {
   elements.toast.textContent = message;
@@ -146,7 +172,9 @@ function formatTime(milliseconds) {
 function formatValue(key, value) {
   if (value === null || value === undefined) return '--';
   if (typeof value === 'boolean') return value ? '是' : '否';
-  if (key === 'run' || key === 'drive_enabled' || key === 'drive_busy' || key === 'have_target') {
+  if (key === 'run' || key === 'drive_enabled' || key === 'drive_busy' || key === 'have_target' ||
+      key === 'drive_recognizing' || key === 'drive_motion' || key === 'drive_geometry_valid' ||
+      key === 'drive_view_ready') {
     return Number(value) ? '是' : '否';
   }
   if (key === 'item_flag') return `${value} / ${ITEM_NAMES[value] || '未知'}`;
@@ -162,22 +190,33 @@ function renderParameters(params) {
     ? [...PARAMETER_ORDER.filter((key) => key in params), ...Object.keys(params).filter((key) => !PARAMETER_ORDER.includes(key)).sort()]
     : [];
 
-  elements.parameterList.replaceChildren(...keys
-    .filter((key) => {
-      const label = PARAMETER_LABELS[key] || key;
-      return !filter || key.toLowerCase().includes(filter) || label.toLowerCase().includes(filter);
-    })
-    .map((key) => {
+  const visibleKeys = keys.filter((key) => {
+    const label = PARAMETER_LABELS[key] || key;
+    return !filter || key.toLowerCase().includes(filter) || label.toLowerCase().includes(filter);
+  });
+  const layoutKey = `${filter}\u0000${visibleKeys.join('\u0000')}`;
+
+  if (layoutKey !== parameterLayoutKey) {
+    parameterRows = new Map();
+    const rows = visibleKeys.map((key) => {
       const row = document.createElement('div');
       row.className = 'parameter-row';
       const label = document.createElement('span');
       label.textContent = PARAMETER_LABELS[key] || key;
       label.title = key;
       const value = document.createElement('strong');
-      value.textContent = formatValue(key, params[key]);
       row.append(label, value);
+      parameterRows.set(key, value);
       return row;
-    }));
+    });
+    elements.parameterList.replaceChildren(...rows);
+    parameterLayoutKey = layoutKey;
+  }
+
+  visibleKeys.forEach((key) => {
+    const value = parameterRows.get(key);
+    if (value) value.textContent = formatValue(key, params[key]);
+  });
 }
 
 function itemResultText(value) {
@@ -341,36 +380,37 @@ function drawDetection() {
 }
 
 function pushTrend(receivedAt, params) {
-  if (state.mode !== 'live') return;
   const number = (key) => Number(params[key] || 0);
-  state.trend.push({
+  state.liveTrend.push({
     t: receivedAt,
     actual: (number('encoder1_speed_avg') + number('encoder2_speed_avg')) / 2,
     target: (number('ex_rps1') + number('ex_rps2')) / 2,
     error: number('latest_error'),
   });
   const cutoff = receivedAt - 10000;
-  while (state.trend.length && state.trend[0].t < cutoff) state.trend.shift();
+  while (state.liveTrend.length && state.liveTrend[0].t < cutoff) state.liveTrend.shift();
+  if (state.mode === 'live') state.trend = state.liveTrend;
 }
 
 function buildReplayTrend(currentTime) {
-  const events = state.replay.events;
+  const events = state.replay.paramEvents;
   state.trend = [];
   if (!events.length) return;
   const cutoff = currentTime - 10000;
-  for (const event of events) {
-    if (event.type !== 'params') continue;
-    if (event.t > currentTime) break;
-    if (event.t < cutoff) continue;
+  const points = [];
+  for (let index = eventIndexAtTime(currentTime, events); index >= 0; index -= 1) {
+    const event = events[index];
+    if (event.t < cutoff) break;
     const p = event.data;
     const number = (key) => Number(p[key] || 0);
-    state.trend.push({
+    points.push({
       t: event.t,
       actual: (number('encoder1_speed_avg') + number('encoder2_speed_avg')) / 2,
       target: (number('ex_rps1') + number('ex_rps2')) / 2,
       error: number('latest_error'),
     });
   }
+  state.trend = points.reverse();
 }
 
 function drawTrend() {
@@ -424,43 +464,53 @@ function updateSummary() {
   elements.frameSequence.textContent = road ? `帧 ${road.sequence}` : '帧 --';
 }
 
-function applyParams(receivedAt, params, fromReplay = false) {
+function updateScopeModeText() {
+  elements.scopeModeText.textContent = state.mode === 'live'
+    ? '实时滚动 10 秒'
+    : `回放 ${formatTime(state.replay.currentTime)} / ${formatTime(state.replay.duration)}`;
+}
+
+function renderDisplaySnapshot() {
+  renderParameters(state.displayParams || {});
+  elements.parameterTimestamp.textContent = state.mode === 'live'
+    ? '实时'
+    : (state.displayParamTime === null ? '参数 --' : `参数 ${formatTime(state.displayParamTime)}`);
+  updateScopeModeText();
+  updateSummary();
+  drawRoad();
+  drawDetection();
+}
+
+function applyParams(receivedAt, params) {
   const roadDisabled = 'udp_mode' in params && Number(params.udp_mode) < 2;
-  if (!fromReplay) {
-    state.liveParams = params;
-    state.lastPacketAt = receivedAt;
-    pushTrend(receivedAt, params);
-    if (roadDisabled) {
-      state.liveRoad = null;
-      state.previousRoadSequence = null;
-    }
+  state.liveParams = params;
+  state.lastPacketAt = receivedAt;
+  pushTrend(receivedAt, params);
+  if (roadDisabled) {
+    state.liveRoad = null;
+    state.previousRoadSequence = null;
   }
-  if (state.mode === 'live' || fromReplay) {
+  if (state.mode === 'live') {
     state.displayParams = params;
+    state.displayParamTime = receivedAt;
     if (roadDisabled) state.displayRoad = null;
-    renderParameters(params);
-    updateSummary();
-    drawRoad();
-    drawDetection();
+    renderDisplaySnapshot();
   }
 }
 
-function applyRoad(receivedAt, road, fromReplay = false) {
-  if (!fromReplay) {
-    if (state.previousRoadSequence !== null && road.sequence > state.previousRoadSequence + 1) {
-      state.droppedRoadFrames += road.sequence - state.previousRoadSequence - 1;
-    }
-    state.previousRoadSequence = road.sequence;
-    if (state.lastRoadAt) elements.frameInterval.textContent = `间隔 ${receivedAt - state.lastRoadAt} ms`;
-    state.lastRoadAt = receivedAt;
-    state.lastPacketAt = receivedAt;
-    state.liveRoad = road;
+function applyRoad(receivedAt, road) {
+  if (state.previousRoadSequence !== null && road.sequence > state.previousRoadSequence + 1) {
+    state.droppedRoadFrames += road.sequence - state.previousRoadSequence - 1;
   }
-  if (state.mode === 'live' || fromReplay) {
+  state.previousRoadSequence = road.sequence;
+  if (state.lastRoadAt) elements.frameInterval.textContent = `间隔 ${receivedAt - state.lastRoadAt} ms`;
+  state.lastRoadAt = receivedAt;
+  state.lastPacketAt = receivedAt;
+  state.liveRoad = road;
+  if (state.mode === 'live') {
     state.displayRoad = road;
-    updateSummary();
-    drawRoad();
-    drawDetection();
+    state.displayRoadTime = receivedAt;
+    renderDisplaySnapshot();
   }
 }
 
@@ -492,19 +542,19 @@ function setMode(mode) {
   elements.modeBadge.classList.toggle('badge-alert', mode === 'replay');
   if (mode === 'live') {
     pauseReplay();
-    state.trend = [];
+    state.trend = state.liveTrend;
     state.displayParams = state.liveParams;
     state.displayRoad = state.liveRoad;
-    renderParameters(state.displayParams || {});
-    updateSummary();
-    drawRoad();
-    drawDetection();
+    state.displayParamTime = state.lastPacketAt || null;
+    state.displayRoadTime = state.lastRoadAt || null;
+    renderDisplaySnapshot();
     drawTrend();
+  } else {
+    updateScopeModeText();
   }
 }
 
-function eventIndexAtTime(time) {
-  const events = state.replay.events;
+function eventIndexAtTime(time, events = state.replay.events) {
   let low = 0;
   let high = events.length;
   while (low < high) {
@@ -519,18 +569,23 @@ function applyReplayTime(time) {
   const events = state.replay.events;
   if (!events.length) return;
   const clamped = Math.max(0, Math.min(state.replay.duration, time));
-  const index = Math.max(0, eventIndexAtTime(clamped));
-  let params = null;
-  let road = null;
-  for (let cursor = index; cursor >= 0 && (!params || !road); cursor -= 1) {
-    if (!params && events[cursor].type === 'params') params = events[cursor].data;
-    if (!road && events[cursor].type === 'road') road = events[cursor].data;
-  }
+  const paramIndex = eventIndexAtTime(clamped, state.replay.paramEvents);
+  const roadIndex = eventIndexAtTime(clamped, state.replay.roadEvents);
+  const paramEvent = paramIndex >= 0 ? state.replay.paramEvents[paramIndex] : null;
+  const roadEvent = roadIndex >= 0 ? state.replay.roadEvents[roadIndex] : null;
+  const roadDisabled = paramEvent && 'udp_mode' in paramEvent.data && Number(paramEvent.data.udp_mode) < 2;
+
   state.replay.currentTime = clamped;
+  state.displayParams = paramEvent?.data || null;
+  state.displayRoad = roadDisabled ? null : (roadEvent?.data || null);
+  state.displayParamTime = paramEvent?.t ?? null;
+  state.displayRoadTime = roadEvent?.t ?? null;
   elements.timeline.value = String(Math.round(clamped));
   elements.playbackTime.textContent = formatTime(clamped);
-  if (params) applyParams(events[index]?.receivedAt || 0, params, true);
-  if (road) applyRoad(events[index]?.receivedAt || 0, road, true);
+  elements.frameInterval.textContent = roadEvent
+    ? `录像间隔 ${roadIndex > 0 ? roadEvent.t - state.replay.roadEvents[roadIndex - 1].t : '--'} ms`
+    : '间隔 -- ms';
+  renderDisplaySnapshot();
   buildReplayTrend(clamped);
   drawTrend();
 }
@@ -601,6 +656,8 @@ async function loadSelectedRecording() {
     .sort((left, right) => left.t - right.t);
   if (!events.length) throw new Error('录像中没有有效遥测事件');
   state.replay.events = events;
+  state.replay.paramEvents = events.filter((event) => event.type === 'params');
+  state.replay.roadEvents = events.filter((event) => event.type === 'road');
   state.replay.duration = events[events.length - 1].t;
   state.replay.currentTime = 0;
   elements.timeline.max = String(Math.max(1, Math.ceil(state.replay.duration)));
