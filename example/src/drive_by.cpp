@@ -17,17 +17,17 @@ using DriveByClock = std::chrono::steady_clock;
 
 // ===================== 高速识别和 S 形绕行调参区 =====================
 // K0 开启但没有目标时按 35RPS 正常巡线；红色触发后只把“基准速度”降到
-// 20RPS，普通方向环仍会在该基准上叠加左右差速。
+// 10RPS，普通方向环仍会在该基准上叠加左右差速。
 volatile float drive_by_normal_speed_rps = 35.0f;
-volatile float drive_by_recognition_speed_rps = 20.0f;
+volatile float drive_by_recognition_speed_rps = 10.0f;
 volatile float drive_by_rps_to_mps = 0.047f;
 
 // 这些整数变量保留原名称，避免之前的调参经验失效。闭环版本中
 // drive_by_turn_speed_rps 表示转向阶段的前进基准速度，不再表示外侧轮速度。
-int drive_by_turn_speed_rps = 3;
+int drive_by_turn_speed_rps = 10;
 int drive_by_turn_inner_speed_rps = 0; // 兼容旧脚本，新的角度闭环不直接使用。
-int drive_by_forward_speed_rps = 6;
-int drive_by_exit_speed_rps = 6;
+int drive_by_forward_speed_rps = 10;
+int drive_by_exit_speed_rps = 10;
 int drive_by_turn_out_ms = 600;        // 兼容旧参数，新的状态切换主要看角度。
 int drive_by_forward_ms = 400;         // 兼容旧参数，新的状态切换主要看距离。
 int drive_by_turn_back_ms = 800;       // 兼容旧参数，新的状态切换主要看角度。
@@ -42,9 +42,12 @@ volatile float drive_by_exit_distance_m = 0.15f;
 volatile float drive_by_target_after_margin_m = 0.30f;
 volatile float drive_by_view_angle_max_deg = 45.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
-volatile float drive_by_heading_kp = 3.0f;
-volatile float drive_by_heading_kd = 0.8f;
-volatile float drive_by_heading_max_dps = 120.0f;
+// 25度标准绕行转角下，KP=8可在起步时直接请求约200dps。
+// KD只保留少量角速度阻尼，避免原来的0.8在刚起转后过早压低目标角速度。
+volatile float drive_by_heading_kp = 8.0f;
+volatile float drive_by_heading_kd = 0.2f;
+// 这是航向外环允许给出的目标角速度上限；接近目标角度时，KP/KD仍会主动降速。
+volatile float drive_by_heading_max_dps = 200.0f;
 volatile float drive_by_heading_tolerance_deg = 2.0f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
@@ -57,7 +60,7 @@ constexpr int kInferFrames = 3;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
 constexpr int kHeadingSettleCycles = 3;
-// 默认通过速度只有6RPS（约0.282m/s），走完约1.1m可能需要接近4秒。
+// 默认绕行速度为10RPS（约0.47m/s），走完约1.1m通常需要2秒以上。
 // 8秒只是防止状态机永久卡住，不参与正常阶段切换。
 constexpr int kMotionPhaseTimeoutMs = 8000;
 constexpr float kTrackTangentWindowM = 0.10f;
