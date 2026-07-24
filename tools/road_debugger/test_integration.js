@@ -114,6 +114,8 @@ async function main() {
     const pageResponse = await request('GET', '/');
     assert.strictEqual(pageResponse.status, 200);
     assert(pageResponse.text.includes('roadCanvas'));
+    assert(pageResponse.text.includes('scopeChannelSelect'));
+    assert(pageResponse.text.includes('roadColumnReset'));
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
     assert.strictEqual(stopResponse.status, 200);

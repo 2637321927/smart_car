@@ -21,6 +21,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  padding-bottom: 78px;
   color: var(--text);
   font-family: Bahnschrift, "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
   background:
@@ -105,19 +106,31 @@ h2 { font-size: 1.05rem; }
 
 .dashboard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 390px;
+  grid-template-columns:
+    minmax(260px, var(--road-column-size, 50fr))
+    minmax(320px, var(--scope-column-size, 50fr))
+    minmax(320px, 390px);
+  grid-template-areas:
+    "road scope command"
+    "status detection params";
   gap: 18px;
   align-items: start;
 }
 
 .visual-column, .side-column {
-  display: grid;
-  gap: 18px;
-  min-width: 0;
+  display: contents;
 }
+
+.road-panel { grid-area: road; }
+.scope-panel { grid-area: scope; }
+.command-panel { grid-area: command; }
+.status-panel { grid-area: status; }
+.detection-panel { grid-area: detection; }
+.params-panel { grid-area: params; }
 
 .panel {
   position: relative;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -147,6 +160,19 @@ h2 { font-size: 1.05rem; }
 .line-stats, .trend-legend { color: var(--muted); font-size: 0.76rem; }
 .line-stats span, .trend-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .line-stats b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+.column-reset, .scope-channel-tag {
+  min-height: 28px;
+  border: 1px solid rgba(81, 216, 208, 0.28);
+  border-radius: 4px;
+  color: var(--text);
+  background: rgba(81, 216, 208, 0.08);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.column-reset { padding: 4px 8px; }
+.column-reset:hover, .scope-channel-tag:hover { filter: brightness(1.18); }
 
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .left-dot { background: var(--blue); box-shadow: 0 0 12px var(--blue); }
@@ -191,10 +217,26 @@ h2 { font-size: 1.05rem; }
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
 }
-.trend-legend span::before { content: ""; width: 15px; height: 2px; background: currentColor; }
-.speed-actual { color: var(--cyan); }
-.speed-target { color: var(--yellow); }
-.error-line { color: var(--red); }
+.scope-channel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  border-color: color-mix(in srgb, var(--channel-color) 45%, transparent);
+  color: var(--channel-color);
+  background: color-mix(in srgb, var(--channel-color) 9%, transparent);
+}
+
+.scope-channel-tag::before {
+  content: "";
+  width: 15px;
+  height: 2px;
+  background: var(--channel-color);
+  box-shadow: 0 0 7px var(--channel-color);
+}
+
+.scope-channel-tag::after { content: "×"; color: var(--muted); }
+.scope-empty-label { color: var(--muted); }
 
 .status-grid {
   display: grid;
@@ -291,15 +333,31 @@ h2 { font-size: 1.05rem; }
 .button.record.active { color: var(--red); background: rgba(255, 100, 95, 0.08); }
 .icon-button { width: 42px; padding: 0; }
 
-.command-address, .command-entry, .record-row, .replay-row, .timeline-row {
+.command-address, .command-entry, .record-row, .replay-row, .timeline-row, .scope-channel-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .command-address, .command-entry { padding: 12px 18px 0; }
-.quick-commands { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 12px 18px; }
-.quick-commands button { min-height: 30px; font-size: 0.72rem; }
+.quick-commands { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; padding: 12px 18px; }
+.quick-commands button { grid-column: span 2; min-height: 30px; font-size: 0.72rem; }
+.quick-commands .run-command {
+  grid-column: span 3;
+  min-height: 54px;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+.quick-commands .start-command {
+  color: #07150d;
+  border-color: rgba(114, 224, 152, 0.72);
+  background: var(--green);
+}
+.quick-commands .stop-command {
+  color: #1a0908;
+  border-color: rgba(255, 100, 95, 0.76);
+  background: var(--red);
+}
 .command-panel .muted { padding: 0 18px 16px; }
 
 .muted { margin: 0; color: var(--muted); font-size: 0.72rem; }
@@ -329,8 +387,25 @@ h2 { font-size: 1.05rem; }
   gap: 10px 18px;
   padding: 12px 18px;
 }
+.scope-channel-row { grid-column: 1 / -1; min-width: 0; flex-wrap: wrap; }
+.scope-channel-row .grow { min-width: 210px; }
 .record-row, .replay-row { min-width: 0; }
-.timeline-row { padding: 12px 18px 0; }
+.timeline-row {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 30;
+  width: min(1880px, calc(100vw - 24px));
+  min-height: 64px;
+  padding: 10px 18px;
+  border: 1px solid rgba(81, 216, 208, 0.3);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  transform: translateX(-50%);
+  background: rgba(7, 17, 19, 0.97);
+  box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(12px);
+}
 .timeline-row input[type="range"] { flex: 1; min-width: 90px; accent-color: var(--cyan); }
 .timecode { min-width: 72px; color: var(--cyan); font-family: Consolas, monospace; font-size: 0.78rem; }
 
@@ -355,9 +430,16 @@ h2 { font-size: 1.05rem; }
 .toast.visible { opacity: 1; transform: translateY(0); }
 
 @media (max-width: 1120px) {
-  .dashboard { grid-template-columns: 1fr; }
-  .side-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .params-panel, .command-panel { grid-column: span 2; }
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "road"
+      "scope"
+      "command"
+      "status"
+      "detection"
+      "params";
+  }
   .scope-toolbar { grid-template-columns: 1fr; }
 }
 
@@ -365,13 +447,13 @@ h2 { font-size: 1.05rem; }
   .shell { padding: 12px; }
   .topbar, .panel-heading { align-items: flex-start; flex-direction: column; }
   .scope-heading-actions { align-items: flex-start; justify-content: flex-start; }
-  .dashboard, .visual-column, .side-column { gap: 12px; }
-  .side-column { grid-template-columns: 1fr; }
-  .params-panel, .command-panel { grid-column: auto; }
+  .dashboard { gap: 12px; }
   .road-stage { min-height: 280px; }
   .timeline-row { flex-wrap: wrap; }
   .timeline-row input[type="range"] { order: 5; flex-basis: 100%; }
   .record-row, .replay-row { flex-wrap: wrap; }
   .record-row .grow, .replay-row .grow { flex-basis: 100%; }
   .quick-commands { grid-template-columns: repeat(2, 1fr); }
+  .quick-commands button, .quick-commands .run-command { grid-column: span 1; }
+  .timeline-row { width: calc(100vw - 12px); }
 }

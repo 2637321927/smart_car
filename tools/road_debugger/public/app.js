@@ -3,6 +3,7 @@
 const $ = (id) => document.getElementById(id);
 
 const elements = {
+  dashboard: $('dashboard'),
   connectionBadge: $('connectionBadge'),
   modeBadge: $('modeBadge'),
   packetAge: $('packetAge'),
@@ -12,7 +13,11 @@ const elements = {
   frameSequence: $('frameSequence'),
   frameInterval: $('frameInterval'),
   roadCanvas: $('roadCanvas'),
+  roadColumnReset: $('roadColumnReset'),
   trendCanvas: $('trendCanvas'),
+  scopeLegend: $('scopeLegend'),
+  scopeChannelSelect: $('scopeChannelSelect'),
+  addScopeChannel: $('addScopeChannel'),
   detectionCanvas: $('detectionCanvas'),
   udpPort: $('udpPort'),
   localAddress: $('localAddress'),
@@ -120,6 +125,32 @@ const PARAMETER_LABELS = {
 
 const PARAMETER_ORDER = Object.keys(PARAMETER_LABELS);
 const ITEM_NAMES = { 0: '左绕 / 武器', 1: '直行 / 车辆', 2: '右绕 / 物资' };
+const SCOPE_CHANNEL_LIMIT = 6;
+const SCOPE_COLORS = ['#51d8d0', '#f5df74', '#ff645f', '#5ba9ff', '#ff9c5a', '#b6ef8c'];
+const SCOPE_PRESETS = {
+  speed: ['encoder1_speed_avg', 'encoder2_speed_avg', 'ex_rps1', 'ex_rps2'],
+  gyro: ['gyro_target_dps', 'gyro_dps'],
+  drive: ['drive_target_yaw_deg', 'drive_yaw_deg', 'drive_heading_error_deg', 'drive_turn_rps'],
+};
+const SCOPE_CHANNELS_STORAGE_KEY = 'scopeChannels';
+const ROAD_COLUMN_STORAGE_KEY = 'roadColumnPercent';
+
+function loadStoredScopeChannels() {
+  try {
+    const stored = localStorage.getItem(SCOPE_CHANNELS_STORAGE_KEY);
+    if (stored === null) return [...SCOPE_PRESETS.speed];
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [...SCOPE_PRESETS.speed];
+    return [...new Set(parsed.filter((key) => typeof key === 'string'))].slice(0, SCOPE_CHANNEL_LIMIT);
+  } catch (_error) {
+    return [...SCOPE_PRESETS.speed];
+  }
+}
+
+function loadStoredRoadColumnPercent() {
+  const stored = Number(localStorage.getItem(ROAD_COLUMN_STORAGE_KEY));
+  return Number.isFinite(stored) && stored >= 30 && stored <= 70 ? stored : 50;
+}
 
 const state = {
   mode: 'live',
@@ -137,6 +168,8 @@ const state = {
   liveTrend: [],
   serverStatus: null,
   recording: { active: false },
+  scopeChannels: loadStoredScopeChannels(),
+  roadColumnPercent: loadStoredRoadColumnPercent(),
   replay: {
     events: [],
     paramEvents: [],
@@ -153,6 +186,7 @@ const state = {
 let toastTimer = 0;
 let parameterLayoutKey = '';
 let parameterRows = new Map();
+let scopeOptionsKey = '';
 
 function showToast(message) {
   elements.toast.textContent = message;
@@ -182,6 +216,101 @@ function formatValue(key, value) {
   if (key === 'uptime_ms') return formatTime(value);
   if (typeof value === 'number' && !Number.isInteger(value)) return value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
   return String(value);
+}
+
+function parameterDisplayName(key) {
+  return PARAMETER_LABELS[key] || key;
+}
+
+function numericParameterKeys(params) {
+  const keys = Object.keys(params || {}).filter((key) => Number.isFinite(Number(params[key])));
+  return [
+    ...PARAMETER_ORDER.filter((key) => keys.includes(key)),
+    ...keys.filter((key) => !PARAMETER_ORDER.includes(key)).sort(),
+  ];
+}
+
+function saveScopeChannels() {
+  localStorage.setItem(SCOPE_CHANNELS_STORAGE_KEY, JSON.stringify(state.scopeChannels));
+}
+
+function renderScopeLegend() {
+  if (!state.scopeChannels.length) {
+    const hint = document.createElement('span');
+    hint.className = 'scope-empty-label';
+    hint.textContent = '未选择曲线';
+    elements.scopeLegend.replaceChildren(hint);
+    return;
+  }
+
+  const tags = state.scopeChannels.map((key, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'scope-channel-tag';
+    button.style.setProperty('--channel-color', SCOPE_COLORS[index]);
+    button.textContent = parameterDisplayName(key);
+    button.title = `${key}；点击删除`;
+    button.addEventListener('click', () => {
+      setScopeChannels(state.scopeChannels.filter((channel) => channel !== key));
+    });
+    return button;
+  });
+  elements.scopeLegend.replaceChildren(...tags);
+}
+
+function updateScopeOptions(params) {
+  const keys = numericParameterKeys(params);
+  state.scopeChannels.forEach((key) => {
+    if (!keys.includes(key)) keys.push(key);
+  });
+  const nextKey = keys.join('\u0000');
+  if (nextKey === scopeOptionsKey) return;
+
+  const previousValue = elements.scopeChannelSelect.value;
+  const options = keys.map((key) => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = `${parameterDisplayName(key)} · ${key}`;
+    return option;
+  });
+  if (!options.length) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = '等待数值型UDP参数';
+    options.push(option);
+  }
+  elements.scopeChannelSelect.replaceChildren(...options);
+  if (keys.includes(previousValue)) elements.scopeChannelSelect.value = previousValue;
+  scopeOptionsKey = nextKey;
+}
+
+function setScopeChannels(channels) {
+  const normalized = [...new Set(channels.filter((key) => typeof key === 'string' && key))];
+  if (normalized.length > SCOPE_CHANNEL_LIMIT) {
+    showToast(`最多同时显示${SCOPE_CHANNEL_LIMIT}条曲线`);
+    return;
+  }
+  state.scopeChannels = normalized;
+  saveScopeChannels();
+  renderScopeLegend();
+  scopeOptionsKey = '';
+  updateScopeOptions(state.displayParams || state.liveParams || {});
+  drawTrend();
+}
+
+function addSelectedScopeChannel() {
+  const key = elements.scopeChannelSelect.value;
+  if (!key || state.scopeChannels.includes(key)) return;
+  setScopeChannels([...state.scopeChannels, key]);
+}
+
+function applyRoadColumnPercent(percent, persist = true) {
+  const normalized = Math.max(30, Math.min(70, Math.round(percent)));
+  state.roadColumnPercent = normalized;
+  elements.dashboard.style.setProperty('--road-column-size', `${normalized}fr`);
+  elements.dashboard.style.setProperty('--scope-column-size', `${100 - normalized}fr`);
+  elements.roadColumnReset.textContent = `图像 ${normalized}%`;
+  if (persist) localStorage.setItem(ROAD_COLUMN_STORAGE_KEY, String(normalized));
 }
 
 function renderParameters(params) {
@@ -380,13 +509,7 @@ function drawDetection() {
 }
 
 function pushTrend(receivedAt, params) {
-  const number = (key) => Number(params[key] || 0);
-  state.liveTrend.push({
-    t: receivedAt,
-    actual: (number('encoder1_speed_avg') + number('encoder2_speed_avg')) / 2,
-    target: (number('ex_rps1') + number('ex_rps2')) / 2,
-    error: number('latest_error'),
-  });
+  state.liveTrend.push({ t: receivedAt, params });
   const cutoff = receivedAt - 10000;
   while (state.liveTrend.length && state.liveTrend[0].t < cutoff) state.liveTrend.shift();
   if (state.mode === 'live') state.trend = state.liveTrend;
@@ -401,14 +524,7 @@ function buildReplayTrend(currentTime) {
   for (let index = eventIndexAtTime(currentTime, events); index >= 0; index -= 1) {
     const event = events[index];
     if (event.t < cutoff) break;
-    const p = event.data;
-    const number = (key) => Number(p[key] || 0);
-    points.push({
-      t: event.t,
-      actual: (number('encoder1_speed_avg') + number('encoder2_speed_avg')) / 2,
-      target: (number('ex_rps1') + number('ex_rps2')) / 2,
-      error: number('latest_error'),
-    });
+    points.push({ t: event.t, params: event.data });
   }
   state.trend = points.reverse();
 }
@@ -418,37 +534,93 @@ function drawTrend() {
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
+  const plotLeft = 58;
+  const plotRight = width - 12;
+  const plotTop = 12;
+  const plotBottom = height - 20;
   context.fillStyle = '#071113';
   context.fillRect(0, 0, width, height);
   context.strokeStyle = 'rgba(103, 170, 168, 0.12)';
   context.lineWidth = 1;
-  for (let index = 1; index < 5; index += 1) {
-    const y = index / 5 * height;
+  for (let index = 0; index <= 5; index += 1) {
+    const y = plotTop + index / 5 * (plotBottom - plotTop);
     context.beginPath();
-    context.moveTo(0, y);
-    context.lineTo(width, y);
+    context.moveTo(plotLeft, y);
+    context.lineTo(plotRight, y);
     context.stroke();
   }
 
+  if (!state.scopeChannels.length) {
+    context.fillStyle = '#83a09f';
+    context.font = '600 18px Bahnschrift, Microsoft YaHei';
+    context.textAlign = 'center';
+    context.fillText('请添加需要观察的UDP曲线', width / 2, height / 2);
+    return;
+  }
   if (state.trend.length < 2) return;
+
+  const values = [];
+  state.trend.forEach((point) => {
+    state.scopeChannels.forEach((key) => {
+      const value = Number(point.params?.[key]);
+      if (Number.isFinite(value)) values.push(value);
+    });
+  });
+  if (!values.length) return;
+
   const start = state.trend[0].t;
   const end = Math.max(start + 1, state.trend[state.trend.length - 1].t);
-  const speedMax = Math.max(40, ...state.trend.map((point) => Math.abs(point.actual)), ...state.trend.map((point) => Math.abs(point.target)));
-  const drawSeries = (getter, color, mapper) => {
+  let axisMin = Math.min(0, ...values);
+  let axisMax = Math.max(0, ...values);
+  if (axisMin === axisMax) {
+    axisMin -= 1;
+    axisMax += 1;
+  }
+  const padding = (axisMax - axisMin) * 0.08;
+  axisMin -= padding;
+  axisMax += padding;
+  const axisRange = axisMax - axisMin;
+  const mapY = (value) => plotBottom - (value - axisMin) / axisRange * (plotBottom - plotTop);
+
+  context.fillStyle = '#83a09f';
+  context.font = '16px Consolas, monospace';
+  context.textAlign = 'right';
+  context.textBaseline = 'middle';
+  for (let index = 0; index <= 5; index += 1) {
+    const y = plotTop + index / 5 * (plotBottom - plotTop);
+    const value = axisMax - index / 5 * axisRange;
+    context.fillText(value.toFixed(Math.abs(value) < 10 ? 2 : 1), plotLeft - 7, y);
+  }
+
+  const zeroY = mapY(0);
+  if (zeroY >= plotTop && zeroY <= plotBottom) {
+    context.strokeStyle = 'rgba(231, 241, 238, 0.32)';
+    context.beginPath();
+    context.moveTo(plotLeft, zeroY);
+    context.lineTo(plotRight, zeroY);
+    context.stroke();
+  }
+
+  const drawSeries = (key, color) => {
     context.strokeStyle = color;
     context.lineWidth = 2.5;
     context.beginPath();
-    state.trend.forEach((point, index) => {
-      const x = (point.t - start) / (end - start) * width;
-      const y = mapper(getter(point));
-      if (index === 0) context.moveTo(x, y);
+    let drawing = false;
+    state.trend.forEach((point) => {
+      const value = Number(point.params?.[key]);
+      if (!Number.isFinite(value)) {
+        drawing = false;
+        return;
+      }
+      const x = plotLeft + (point.t - start) / (end - start) * (plotRight - plotLeft);
+      const y = mapY(value);
+      if (!drawing) context.moveTo(x, y);
       else context.lineTo(x, y);
+      drawing = true;
     });
     context.stroke();
   };
-  drawSeries((point) => point.actual, '#51d8d0', (value) => height - (value / speedMax) * height * 0.86 - 12);
-  drawSeries((point) => point.target, '#f5df74', (value) => height - (value / speedMax) * height * 0.86 - 12);
-  drawSeries((point) => point.error, '#ff645f', (value) => height / 2 - (Math.max(-120, Math.min(120, value)) / 120) * height * 0.42);
+  state.scopeChannels.forEach((key, index) => drawSeries(key, SCOPE_COLORS[index]));
 }
 
 function updateSummary() {
@@ -471,6 +643,7 @@ function updateScopeModeText() {
 }
 
 function renderDisplaySnapshot() {
+  updateScopeOptions(state.displayParams || {});
   renderParameters(state.displayParams || {});
   elements.parameterTimestamp.textContent = state.mode === 'live'
     ? '实时'
@@ -700,6 +873,20 @@ async function sendCommand(command) {
 
 function bindEvents() {
   elements.parameterFilter.addEventListener('input', () => renderParameters(state.displayParams || {}));
+  elements.addScopeChannel.addEventListener('click', addSelectedScopeChannel);
+  elements.scopeChannelSelect.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') addSelectedScopeChannel();
+  });
+  document.querySelectorAll('[data-scope-preset]').forEach((button) => {
+    button.addEventListener('click', () => setScopeChannels(SCOPE_PRESETS[button.dataset.scopePreset] || []));
+  });
+  elements.roadColumnReset.addEventListener('click', () => applyRoadColumnPercent(50));
+  elements.roadCanvas.addEventListener('wheel', (event) => {
+    if (!event.ctrlKey) return;
+    event.preventDefault();
+    const step = event.deltaY < 0 ? 2 : -2;
+    applyRoadColumnPercent(state.roadColumnPercent + step);
+  }, { passive: false });
   elements.recordButton.addEventListener('click', () => toggleRecording().catch((error) => showToast(error.message)));
   elements.refreshRecordings.addEventListener('click', () => loadRecordings().catch((error) => showToast(error.message)));
   elements.loadRecording.addEventListener('click', () => loadSelectedRecording().catch((error) => showToast(error.message)));
@@ -768,6 +955,9 @@ function updateConnectionAge() {
 }
 
 async function initialize() {
+  applyRoadColumnPercent(state.roadColumnPercent, false);
+  renderScopeLegend();
+  updateScopeOptions({});
   bindEvents();
   drawRoad();
   drawDetection();

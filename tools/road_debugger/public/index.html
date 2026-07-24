@@ -20,7 +20,7 @@
       </div>
     </header>
 
-    <main class="dashboard">
+    <main id="dashboard" class="dashboard">
       <section class="visual-column">
         <article class="panel road-panel">
           <div class="panel-heading">
@@ -32,6 +32,7 @@
               <span><i class="dot left-dot"></i>左线 <b id="leftCount">0</b></span>
               <span><i class="dot center-dot"></i>中线 <b id="centerCount">0</b></span>
               <span><i class="dot right-dot"></i>右线 <b id="rightCount">0</b></span>
+              <button id="roadColumnReset" class="column-reset" type="button" title="点击恢复50%；按住Ctrl并在道路图上滚动可调整宽度">图像 50%</button>
             </div>
           </div>
           <div class="road-stage">
@@ -50,16 +51,20 @@
               <h2>控制示波器与录像</h2>
             </div>
             <div class="scope-heading-actions">
-              <div class="trend-legend">
-                <span class="speed-actual">实际轮速</span>
-                <span class="speed-target">目标轮速</span>
-                <span class="error-line">视觉误差</span>
-              </div>
+              <div id="scopeLegend" class="trend-legend" aria-label="当前示波器曲线"></div>
               <span id="scopeModeText" class="scope-mode">实时滚动 10 秒</span>
               <button id="returnLiveButton" class="button ghost" type="button">返回实时</button>
             </div>
           </div>
           <div class="scope-toolbar">
+            <div class="scope-channel-row">
+              <select id="scopeChannelSelect" class="input grow" aria-label="选择示波器曲线"></select>
+              <button id="addScopeChannel" class="button" type="button">添加曲线</button>
+              <button class="button ghost" type="button" data-scope-preset="speed">速度环</button>
+              <button class="button ghost" type="button" data-scope-preset="gyro">角速度环</button>
+              <button class="button ghost" type="button" data-scope-preset="drive">绕行</button>
+              <span class="muted">最多6条，点击上方彩色标签删除</span>
+            </div>
             <div class="record-row">
               <input id="recordingName" class="input grow" value="tuning" aria-label="录像名称">
               <button id="recordButton" class="button record" type="button">开始录制</button>
@@ -144,8 +149,8 @@
             <button id="sendCommand" class="button" type="button">发送</button>
           </div>
           <div class="quick-commands">
-            <button type="button" data-command="#run=1;">发车</button>
-            <button type="button" data-command="#run=0;">停车</button>
+            <button class="run-command start-command" type="button" data-command="#run=1;">发车</button>
+            <button class="run-command stop-command" type="button" data-command="#run=0;">停车</button>
             <button type="button" data-command="#spd=20;">20RPS</button>
             <button type="button" data-command="#spd=35;">35RPS</button>
             <button type="button" data-command="#gyro=1;">陀螺仪开</button>
