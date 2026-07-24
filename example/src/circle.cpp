@@ -23,7 +23,7 @@ enum circle_type_e circle_type = CIRCLE_NONE;
 int64_t circle_encoder;
 
 // 环岛出环距离阈值（米），可在 VOFA 中通过 #circle_exit=... 在线调参
-volatile float circle_exit_distance_m = 0.50f;
+volatile float circle_exit_distance_m = 1.20f;
 
 int none_left_line = 0, none_right_line = 0;
 int have_left_line = 0, have_right_line = 0;
