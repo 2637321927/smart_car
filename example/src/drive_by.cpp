@@ -273,6 +273,7 @@ void restore_control()
     if (!g_saved.valid) {
         return;
     }
+    
 
     set_speed_of_motor1_rps = g_saved.set_speed1;
     set_speed_of_motor2_rps = g_saved.set_speed2;
