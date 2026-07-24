@@ -26,6 +26,9 @@ void check_circle();
 
 void run_circle();
 
+// 目标板脚本或停车接管时清除未完成的十字/环岛阶段，避免下次继续旧状态。
+void reset_special_track_state();
+
 void draw_circle();
 extern enum circle_type_e circle_type;
 extern enum cross_type_e cross_type;

@@ -101,6 +101,7 @@ const int AVOID_FRAME_MAX = 160;    // 绕行总帧数(根据实际车速调)
  cv::Rect red_block_rect;   // 红色标记块外接矩形
  cv::Rect plate_rect;       // 目标板区域矩形
  bool have_target = false;
+ int red_contour_area = 0;  // 当前严格红块检测得到的最大轮廓面积
  image_t img_raw;
  image_t img0;
  image_t img_thres;
@@ -890,6 +891,10 @@ void udp_send(void){
              "\"drive_geometry_valid\":%d,"
              "\"drive_view_ready\":%d,"
              "\"drive_infer_valid_count\":%d,"
+             "\"red_candidate\":%d,"
+             "\"red_candidate_count\":%d,"
+             "\"red_contour_area\":%d,"
+             "\"drive_detection_stage\":%d,"
              "\"have_target\":%d,"
              "\"item_flag\":%d,"
              "\"red_x\":%d,\"red_y\":%d,\"red_w\":%d,\"red_h\":%d,"
@@ -945,6 +950,10 @@ void udp_send(void){
              drive_debug.target_geometry_valid,
              drive_debug.view_ready,
              drive_debug.infer_valid_count,
+             drive_debug.red_candidate,
+             drive_debug.red_candidate_count,
+             drive_debug.red_contour_area,
+             drive_debug.detection_stage,
              have_target ? 1 : 0,
              item_flag,
              red_rect.x, red_rect.y, red_rect.width, red_rect.height,
@@ -987,6 +996,7 @@ void detectRedPlate(cv::Mat& frame)
 {
     // 初始化标志位：默认无目标
     have_target = false;
+    red_contour_area = 0;
     // 初始化红色色块矩形区域
     red_block_rect = cv::Rect(0, 0, 0, 0);
     // 初始化车牌矩形区域
@@ -1043,6 +1053,7 @@ void detectRedPlate(cv::Mat& frame)
 
     // 未找到有效红色色块，直接返回
     if (maxArea <= 0) return;
+    red_contour_area = maxArea;
 
     // ===================== 5. 坐标还原到原图坐标系 =====================
     // bestRect 的坐标是相对于 roi 的，加回 recog_rect 左上角偏移
@@ -1154,7 +1165,7 @@ gyro_yaw_rate_control_init();
 
     dir_timer.set_seconds_ms(8, []() {
       // K0 只是目标板功能开关，不应该在没有目标时关闭正常方向环。
-      // 红色触发后的观察/推理阶段也继续巡线，只把基准速度降为20RPS。
+      // 远距离红块候选后的接近/推理阶段也继续巡线，只把基准速度降为10RPS。
       if (front_ui_is_running() &&
           (!drive_by_is_busy() || drive_by_is_recognizing())) {
         PID_control_test(latest_error);
@@ -1236,44 +1247,66 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
         // 预瞄距离,动态效果更佳
         aim_distance = AIM;
 
-        // 单侧线少，切换巡线方向  切外向圆
- if(g_avoid_state==AV_NORMAL&&cross_type!=CROSS_IN){
-        if (rpts0s_num < rpts1s_num / 2 && rpts0s_num < 60) {
-            track_type = TRACK_RIGHT;
-        } else if (rpts1s_num < rpts0s_num / 2 && rpts1s_num < 60) {
-            track_type = TRACK_LEFT;
-        } else if (rpts0s_num < 20 && rpts1s_num > rpts0s_num) {
-            track_type = TRACK_RIGHT;
-        } else if (rpts1s_num < 20 && rpts0s_num > rpts1s_num) {
-            track_type = TRACK_LEFT;
+        // 目标板候选成立后暂停十字和环岛。脚本结束后再留300ms普通中线窗口，
+        // 防止刚完成横移时立刻把残缺边线误判成新的赛道元素。
+        static bool drive_by_track_features_were_suspended = false;
+        static steady_clock::time_point drive_by_track_features_resume_at =
+            steady_clock::now();
+        const bool drive_by_suspends_track_features =
+            drive_by_should_suspend_track_features();
+        if (drive_by_suspends_track_features) {
+            reset_special_track_state();
+            drive_by_track_features_were_suspended = true;
+        } else if (drive_by_track_features_were_suspended) {
+            reset_special_track_state();
+            drive_by_track_features_resume_at = steady_clock::now() + milliseconds(300);
+            drive_by_track_features_were_suspended = false;
         }
-        else{
-            track_type=midd;
-        }
-    }
+        const bool track_features_blocked = drive_by_suspends_track_features ||
+            steady_clock::now() < drive_by_track_features_resume_at;
+
+        if (!track_features_blocked) {
+            // 单侧线少，切换巡线方向，或为环岛选择外侧线。
+            if(g_avoid_state==AV_NORMAL&&cross_type!=CROSS_IN){
+                if (rpts0s_num < rpts1s_num / 2 && rpts0s_num < 60) {
+                    track_type = TRACK_RIGHT;
+                } else if (rpts1s_num < rpts0s_num / 2 && rpts1s_num < 60) {
+                    track_type = TRACK_LEFT;
+                } else if (rpts0s_num < 20 && rpts1s_num > rpts0s_num) {
+                    track_type = TRACK_RIGHT;
+                } else if (rpts1s_num < 20 && rpts0s_num > rpts1s_num) {
+                    track_type = TRACK_LEFT;
+                }
+                else{
+                    track_type=midd;
+                }
+            }
         // 分别检查十字 三叉 和圆环, 十字优先级最高
             check_cross();
-        if (cross_type == CROSS_NONE){
-            check_circle();
-        }
-        if (cross_type != CROSS_NONE) {
-            circle_type = CIRCLE_NONE;
-        }
-        if(g_avoid_state!=AV_NORMAL){
-            cross_type=CROSS_NONE;
-            circle_type = CIRCLE_NONE;
-        }
+            if (cross_type == CROSS_NONE){
+                check_circle();
+            }
+            if (cross_type != CROSS_NONE) {
+                circle_type = CIRCLE_NONE;
+            }
+            if(g_avoid_state!=AV_NORMAL){
+                cross_type=CROSS_NONE;
+                circle_type = CIRCLE_NONE;
+            }
         //车库 ,十字清Aprltag标志
         //if (garage_type != GARAGE_NONE || cross_type != CROSS_NONE) apriltag_type = APRILTAG_NONE;
 
         //根据检查结果执行模式
         //if (yroad_type != YROAD_NONE) run_yroad();
-        if (cross_type != CROSS_NONE) run_cross();
-      if (circle_type != CIRCLE_NONE) run_circle();
-      if(cross_type != CROSS_BEGIN){
-        L_count=0;
-        R_count=0;
-      }
+            if (cross_type != CROSS_NONE) run_cross();
+            if (circle_type != CIRCLE_NONE) run_circle();
+        } else {
+            reset_special_track_state();
+        }
+        if(cross_type != CROSS_BEGIN){
+            L_count=0;
+            R_count=0;
+        }
 
        // if (garage_type != GARAGE_NONE) run_garage();
 

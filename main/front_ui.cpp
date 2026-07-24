@@ -1,4 +1,5 @@
 #include "front_ui.hpp"
+#include "circle.hpp"
 #include "drive_by.hpp"
 #include "lq_all_demo.hpp"
 #include "gyro_yaw_rate_control.hpp"
@@ -109,6 +110,7 @@ void stop_car()
 {
     // K2 停车是最高优先级：如果目标板脚本正在接管，先取消脚本，再清零电机。
     const bool recognition_test_aborted = drive_by_cancel();
+    reset_special_track_state();
     // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
     car_running = false;
     gyro_yaw_rate_control_reset();

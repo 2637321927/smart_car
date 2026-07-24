@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include <opencv2/imgproc.hpp>
 
@@ -52,7 +53,6 @@ volatile float drive_by_heading_tolerance_deg = 2.0f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
 volatile float drive_by_yaw_sign = -1.0f;
-volatile float drive_by_track_heading_alpha = 0.80f;
 
 namespace {
 
@@ -60,9 +60,19 @@ constexpr int kInferFrames = 3;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
 constexpr int kHeadingSettleCycles = 3;
-// 默认绕行速度为10RPS（约0.47m/s），走完约1.1m通常需要2秒以上。
-// 8秒只是防止状态机永久卡住，不参与正常阶段切换。
-constexpr int kMotionPhaseTimeoutMs = 8000;
+constexpr int kFarDetectTop = 60;
+constexpr int kFarDetectBottom = 40;
+constexpr int kFarDetectLeft = 60;
+constexpr int kFarDetectRight = 60;
+constexpr int kFarDetectMinArea = 40;
+constexpr int kFarDetectMinWidth = 8;
+constexpr int kFarDetectConfirmCount = 2;
+constexpr int kApproachTimeoutMs = 300;
+constexpr int kCandidateRetryCooldownMs = 300;
+constexpr int kTurnPhaseTimeoutMs = 1500;
+constexpr int kPassPhaseTimeoutMs = 2500;
+constexpr float kTurnPhaseMaxDistanceM = 0.80f;
+constexpr float kPassPhaseMaxDistanceM = 1.50f;
 constexpr float kTrackTangentWindowM = 0.10f;
 constexpr float kMaxIntegrationDtS = 0.10f;
 constexpr float kMinWheelTargetRps = -10.0f;
@@ -70,6 +80,7 @@ constexpr float kMaxWheelTargetRps = 200.0f;
 
 enum DriveByState {
     DB_IDLE,
+    DB_APPROACH,
     DB_WAIT_VIEW,
     DB_INFER,
     DB_SHIFT_OUT_A,
@@ -136,9 +147,16 @@ struct RecognitionReport {
     float finish_right_rps = 0.0f;
 };
 
+struct FarRedCandidate {
+    bool found = false;
+    int max_contour_area = 0;
+    cv::Rect rect;
+};
+
 volatile bool g_drive_by_enable = false;
 volatile bool g_drive_by_busy = false;
 bool g_seen_lock = false;
+bool g_recognition_triggered = false;
 bool g_target_geometry_captured = false;
 bool g_track_reference_valid = false;
 bool g_current_track_heading_valid = false;
@@ -146,9 +164,12 @@ DriveByState g_state = DB_IDLE;
 DriveByAbortReason g_abort_reason = DB_ABORT_NONE;
 DriveByClock::time_point g_state_start = DriveByClock::now();
 DriveByClock::time_point g_session_start = DriveByClock::now();
+DriveByClock::time_point g_recognition_start = DriveByClock::now();
 DriveByClock::time_point g_last_integration_time = DriveByClock::now();
 DriveByClock::time_point g_cooldown_start = DriveByClock::now();
+DriveByClock::time_point g_candidate_retry_after = DriveByClock::now();
 int g_detect_frame_counter = 0;
+int g_far_candidate_count = 0;
 int g_heading_settle_count = 0;
 int g_turn_side = 0;
 float g_yaw_deg = 0.0f;
@@ -176,12 +197,6 @@ float normalize_angle_deg(float angle_deg)
     return angle_deg;
 }
 
-float blend_angle_deg(float old_angle, float new_angle, float old_weight)
-{
-    const float delta = normalize_angle_deg(new_angle - old_angle);
-    return normalize_angle_deg(old_angle + (1.0f - old_weight) * delta);
-}
-
 long long elapsed_ms(DriveByClock::time_point start)
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -198,6 +213,7 @@ const char *state_name(DriveByState state)
 {
     switch (state) {
     case DB_IDLE: return "IDLE";
+    case DB_APPROACH: return "APPROACH";
     case DB_WAIT_VIEW: return "WAIT_VIEW";
     case DB_INFER: return "INFER";
     case DB_SHIFT_OUT_A: return "SHIFT_OUT_A";
@@ -206,6 +222,23 @@ const char *state_name(DriveByState state)
     case DB_SHIFT_IN_A: return "SHIFT_IN_A";
     case DB_SHIFT_IN_B: return "SHIFT_IN_B";
     default: return "UNKNOWN";
+    }
+}
+
+int detection_stage(DriveByState state)
+{
+    switch (state) {
+    case DB_APPROACH: return 1;
+    case DB_WAIT_VIEW: return 2;
+    case DB_INFER: return 3;
+    case DB_SHIFT_OUT_A:
+    case DB_SHIFT_OUT_B:
+    case DB_PASS_TARGET:
+    case DB_SHIFT_IN_A:
+    case DB_SHIFT_IN_B:
+        return 4;
+    default:
+        return 0;
     }
 }
 
@@ -336,6 +369,62 @@ bool should_detect_this_frame()
     return true;
 }
 
+FarRedCandidate detect_far_red_candidate(const cv::Mat& frame)
+{
+    FarRedCandidate result;
+    if (frame.empty()) {
+        return result;
+    }
+
+    const int width = frame.cols - kFarDetectLeft - kFarDetectRight;
+    const int height = frame.rows - kFarDetectTop - kFarDetectBottom;
+    if (width <= 0 || height <= 0) {
+        return result;
+    }
+
+    // 远距离阶段只做颜色与轮廓筛选，不运行NCNN。扩大到图像第60行后，
+    // 远处小红块能更早进入ROI，同时仍比整帧检测节省计算量。
+    const cv::Rect search_rect(kFarDetectLeft, kFarDetectTop, width, height);
+    cv::Mat hsv;
+    cv::Mat mask_low;
+    cv::Mat mask_high;
+    cv::Mat mask;
+    cv::cvtColor(frame(search_rect), hsv, cv::COLOR_BGR2HSV);
+    cv::inRange(hsv, cv::Scalar(0, 120, 100), cv::Scalar(10, 255, 255), mask_low);
+    cv::inRange(hsv, cv::Scalar(160, 120, 100), cv::Scalar(179, 255, 255), mask_high);
+    mask = mask_low | mask_high;
+
+    const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+    cv::morphologyEx(mask, mask, cv::MORPH_OPEN, kernel);
+
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    int best_candidate_area = 0;
+    for (const auto& contour : contours) {
+        const int area = (int)cv::contourArea(contour);
+        result.max_contour_area = std::max(result.max_contour_area, area);
+        if (area < kFarDetectMinArea) {
+            continue;
+        }
+
+        cv::Rect rect = cv::boundingRect(contour);
+        if (rect.width < kFarDetectMinWidth || rect.height <= 0) {
+            continue;
+        }
+        const float aspect_ratio = (float)rect.width / (float)rect.height;
+        if (aspect_ratio < 1.3f || aspect_ratio > 5.0f || area <= best_candidate_area) {
+            continue;
+        }
+
+        best_candidate_area = area;
+        rect.x += search_rect.x;
+        rect.y += search_rect.y;
+        result.rect = rect;
+        result.found = true;
+    }
+    return result;
+}
+
 bool make_plate_roi(cv::Mat& frame, cv::Mat& roi)
 {
     if (frame.empty() || plate_rect.width <= 0 || plate_rect.height <= 0) {
@@ -393,7 +482,7 @@ void finish_frame_record(RecognitionFrameRecord& record,
 {
     const DriveByClock::time_point frame_end = DriveByClock::now();
     record.frame_ms = duration_ms(frame_start, frame_end);
-    record.since_trigger_ms = duration_ms(g_session_start, frame_end);
+    record.since_trigger_ms = duration_ms(g_recognition_start, frame_end);
 }
 
 void process_inference_frame(cv::Mat& frame,
@@ -415,6 +504,7 @@ void process_inference_frame(cv::Mat& frame,
         detectRedPlate(frame);
         record.detect_ms = duration_ms(detect_start, DriveByClock::now());
     }
+    g_debug.red_contour_area = red_contour_area;
 
     if (!have_target) {
         record.status = RECOG_FRAME_NO_RED;
@@ -615,6 +705,7 @@ void enter_state(DriveByState next)
     g_phase_distance_m = 0.0f;
     g_heading_settle_count = 0;
     g_debug.phase_distance_m = 0.0f;
+    g_debug.detection_stage = detection_stage(next);
 }
 
 void reset_runtime(bool restore_outputs)
@@ -625,12 +716,15 @@ void reset_runtime(bool restore_outputs)
     gyro_yaw_rate_control_reset_controller();
     g_drive_by_busy = false;
     g_seen_lock = false;
+    g_recognition_triggered = false;
     g_target_geometry_captured = false;
     g_track_reference_valid = false;
     g_current_track_heading_valid = false;
     g_state = DB_IDLE;
     g_abort_reason = DB_ABORT_NONE;
+    g_candidate_retry_after = DriveByClock::now();
     g_detect_frame_counter = 0;
+    g_far_candidate_count = 0;
     g_heading_settle_count = 0;
     g_turn_side = 0;
     g_yaw_deg = 0.0f;
@@ -639,6 +733,9 @@ void reset_runtime(bool restore_outputs)
     g_report = RecognitionReport{};
     g_debug = DriveByDebug{};
     have_target = false;
+    red_block_rect = cv::Rect();
+    plate_rect = cv::Rect();
+    red_contour_area = 0;
 }
 
 void finish_session(DriveByAbortReason reason)
@@ -658,32 +755,80 @@ void finish_session(DriveByAbortReason reason)
     gyro_yaw_rate_control_reset_controller();
     g_drive_by_busy = false;
     g_state = DB_IDLE;
+    g_far_candidate_count = 0;
+    g_debug.red_candidate = 0;
+    g_debug.red_candidate_count = 0;
+    g_debug.detection_stage = 0;
     g_cooldown_start = DriveByClock::now();
     print_recognition_report(item_flag);
 }
 
-void start_target_session(double trigger_detect_ms)
+void start_approach_session(const FarRedCandidate& candidate)
 {
     save_control_once();
     g_drive_by_busy = true;
     g_seen_lock = true;
+    g_recognition_triggered = false;
     g_target_geometry_captured = false;
     g_track_reference_valid = false;
     g_current_track_heading_valid = false;
     g_abort_reason = DB_ABORT_NONE;
     item_flag = 1;
     g_session_start = DriveByClock::now();
+    g_recognition_start = g_session_start;
     g_last_integration_time = g_session_start;
     g_yaw_deg = 0.0f;
     g_distance_since_trigger_m = 0.0f;
     g_phase_distance_m = 0.0f;
     g_report = RecognitionReport{};
-    g_report.trigger_detect_ms = trigger_detect_ms;
     g_report.trigger_left_rps = encoder1_speed_avg;
     g_report.trigger_right_rps = encoder2_speed_avg;
     g_debug = DriveByDebug{};
+    g_debug.red_candidate = 1;
+    g_debug.red_candidate_count = g_far_candidate_count;
+    g_debug.red_contour_area = candidate.max_contour_area;
+    have_target = false;
+    red_block_rect = cv::Rect();
+    plate_rect = cv::Rect();
+    red_contour_area = 0;
     command_recognition_base_speed();
-    enter_state(DB_WAIT_VIEW);
+    enter_state(DB_APPROACH);
+}
+
+void mark_recognition_trigger(double trigger_detect_ms)
+{
+    if (g_recognition_triggered) {
+        return;
+    }
+    g_recognition_triggered = true;
+    g_recognition_start = DriveByClock::now();
+    g_report.trigger_detect_ms = trigger_detect_ms;
+    g_report.trigger_left_rps = encoder1_speed_avg;
+    g_report.trigger_right_rps = encoder2_speed_avg;
+}
+
+void cancel_false_candidate()
+{
+    // 远距离检测只负责提前减速。300ms内始终达不到严格红块条件时，
+    // 恢复原巡线输出，短暂冷却后允许同一目标在变大时再次触发。
+    restore_control();
+    gyro_yaw_rate_control_reset_controller();
+    g_drive_by_busy = false;
+    g_state = DB_IDLE;
+    g_cooldown_start = DriveByClock::now();
+    g_candidate_retry_after = g_cooldown_start +
+        std::chrono::milliseconds(kCandidateRetryCooldownMs);
+    g_seen_lock = false;
+    g_far_candidate_count = 0;
+    g_target_geometry_captured = false;
+    g_track_reference_valid = false;
+    g_debug.red_candidate = 0;
+    g_debug.red_candidate_count = 0;
+    g_debug.detection_stage = 0;
+    have_target = false;
+    red_block_rect = cv::Rect();
+    plate_rect = cv::Rect();
+    red_contour_area = 0;
 }
 
 void begin_motion_script(int result)
@@ -742,21 +887,43 @@ float phase_base_speed_rps()
     }
 }
 
+bool motion_phase_guard_exceeded()
+{
+    if (g_state == DB_PASS_TARGET) {
+        return elapsed_ms(g_state_start) > kPassPhaseTimeoutMs ||
+            g_phase_distance_m > kPassPhaseMaxDistanceM;
+    }
+    return elapsed_ms(g_state_start) > kTurnPhaseTimeoutMs ||
+        g_phase_distance_m > kTurnPhaseMaxDistanceM;
+}
+
+void abort_motion_and_stop(DriveByAbortReason reason)
+{
+    // 绕行已经接近目标板，异常时恢复35RPS巡线可能直接撞板，因此阶段保护、
+    // 陀螺仪失效都采用安全停车。停车完成后重新写回退出原因，供UDP事后查看。
+    g_abort_reason = reason;
+    g_debug.abort_reason = (int)reason;
+    print_recognition_report(item_flag);
+    front_ui_stop();
+    g_abort_reason = reason;
+    g_debug.abort_reason = (int)reason;
+}
+
 void update_motion_state()
 {
     if (!gyro_yaw_rate_control_is_ready()) {
         item_flag = 1;
-        finish_session(DB_ABORT_GYRO_NOT_READY);
+        abort_motion_and_stop(DB_ABORT_GYRO_NOT_READY);
         return;
     }
     if (gyro_yaw_rate_control_gyro_age_ms() > drive_by_gyro_stale_ms) {
         item_flag = 1;
-        finish_session(DB_ABORT_GYRO_STALE);
+        abort_motion_and_stop(DB_ABORT_GYRO_STALE);
         return;
     }
-    if (elapsed_ms(g_state_start) > kMotionPhaseTimeoutMs) {
+    if (motion_phase_guard_exceeded()) {
         item_flag = 1;
-        finish_session(DB_ABORT_PHASE_TIMEOUT);
+        abort_motion_and_stop(DB_ABORT_PHASE_TIMEOUT);
         return;
     }
 
@@ -821,7 +988,7 @@ void update_motion_state()
 
 void complete_inference()
 {
-    g_report.total_ms = duration_ms(g_session_start, DriveByClock::now());
+    g_report.total_ms = duration_ms(g_recognition_start, DriveByClock::now());
     g_report.finish_left_rps = encoder1_speed_avg;
     g_report.finish_right_rps = encoder2_speed_avg;
     item_flag = choose_vote_result();
@@ -838,24 +1005,43 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
     integrate_session_motion();
 
     switch (g_state) {
+    case DB_APPROACH: {
+        command_recognition_base_speed();
+        const DriveByClock::time_point detect_start = DriveByClock::now();
+        detectRedPlate(frame);
+        const double detect_ms = duration_ms(detect_start, DriveByClock::now());
+        g_debug.red_contour_area = red_contour_area;
+        if (have_target) {
+            mark_recognition_trigger(detect_ms);
+            // APPROACH成立后主循环已经暂停十字/环岛，因此这里使用的是上一帧
+            // 重新生成的普通中线，不会继承旧环岛的单侧贴线状态。
+            drive_by_update_track_geometry();
+            if (g_debug.view_ready != 0) {
+                enter_state(DB_INFER);
+                process_inference_frame(frame, ncnn, true, detect_ms);
+                if (g_report.frame_count >= kInferFrames) {
+                    complete_inference();
+                }
+            } else {
+                enter_state(DB_WAIT_VIEW);
+            }
+        } else if (elapsed_ms(g_state_start) >= kApproachTimeoutMs) {
+            cancel_false_candidate();
+        }
+        break;
+    }
+
     case DB_WAIT_VIEW:
         command_recognition_base_speed();
         {
-            bool detected_this_frame = false;
-            double detect_ms = 0.0;
-            if (should_detect_this_frame()) {
-                const DriveByClock::time_point detect_start = DriveByClock::now();
-                detectRedPlate(frame);
-                detect_ms = duration_ms(detect_start, DriveByClock::now());
-                detected_this_frame = true;
-
-                // 主循环的道路结果来自上一张相机帧，时间上只差一个帧周期。
-                // 这里立即更新观察夹角，使合格的当前帧可以直接成为第1帧推理。
-                drive_by_update_track_geometry();
-            }
+            const DriveByClock::time_point detect_start = DriveByClock::now();
+            detectRedPlate(frame);
+            const double detect_ms = duration_ms(detect_start, DriveByClock::now());
+            g_debug.red_contour_area = red_contour_area;
+            drive_by_update_track_geometry();
             if (g_debug.view_ready != 0 && have_target) {
                 enter_state(DB_INFER);
-                process_inference_frame(frame, ncnn, detected_this_frame, detect_ms);
+                process_inference_frame(frame, ncnn, true, detect_ms);
                 if (g_report.frame_count >= kInferFrames) {
                     complete_inference();
                 }
@@ -893,31 +1079,41 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
 
 void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
 {
+    (void)ncnn;
     if (!should_detect_this_frame()) {
         return;
     }
 
-    const DriveByClock::time_point detect_start = DriveByClock::now();
-    detectRedPlate(frame);
-    const double detect_ms = duration_ms(detect_start, DriveByClock::now());
+    const FarRedCandidate candidate = detect_far_red_candidate(frame);
+    g_debug.red_candidate = candidate.found ? 1 : 0;
+    g_debug.red_contour_area = candidate.max_contour_area;
+    g_debug.detection_stage = 0;
+    have_target = false;
+    red_block_rect = cv::Rect();
+    plate_rect = cv::Rect();
+    red_contour_area = 0;
+
+    if (DriveByClock::now() < g_candidate_retry_after) {
+        g_far_candidate_count = 0;
+        g_debug.red_candidate_count = 0;
+        return;
+    }
 
     if (g_seen_lock) {
-        if (!have_target && elapsed_ms(g_cooldown_start) >= drive_by_cooldown_ms) {
+        g_far_candidate_count = 0;
+        g_debug.red_candidate_count = 0;
+        if (!candidate.found && elapsed_ms(g_cooldown_start) >= drive_by_cooldown_ms) {
             g_seen_lock = false;
         }
         return;
     }
 
-    if (have_target) {
-        start_target_session(detect_ms);
-
-        // 复用上一帧已经提取好的道路中线，立即计算本触发帧的目标几何。
-        // 若观察角已经合格，本帧直接作为第1帧，不再额外等待一个相机周期。
-        drive_by_update_track_geometry();
-        if (g_debug.view_ready != 0) {
-            enter_state(DB_INFER);
-            process_inference_frame(frame, ncnn, true, detect_ms);
-        }
+    g_far_candidate_count = candidate.found
+        ? std::min(g_far_candidate_count + 1, kFarDetectConfirmCount)
+        : 0;
+    g_debug.red_candidate_count = g_far_candidate_count;
+    if (g_far_candidate_count >= kFarDetectConfirmCount) {
+        start_approach_session(candidate);
     }
 }
 
@@ -960,24 +1156,10 @@ void drive_by_update_track_geometry()
         compute_current_track_heading(&current_heading_relative_deg);
     if (g_current_track_heading_valid) {
         g_current_track_heading_relative_deg = current_heading_relative_deg;
-        const float measured_global_heading = normalize_angle_deg(
-            g_yaw_deg + current_heading_relative_deg);
-        if (drive_by_is_motion_phase()) {
-            if (!g_track_reference_valid) {
-                g_track_heading_reference_deg = measured_global_heading;
-                g_track_reference_valid = true;
-            } else {
-                const float alpha = clampf(drive_by_track_heading_alpha, 0.0f, 1.0f);
-                g_track_heading_reference_deg = blend_angle_deg(
-                    g_track_heading_reference_deg,
-                    measured_global_heading,
-                    alpha);
-            }
-        }
     }
 
-    // 目标位置和观察夹角只在识别阶段需要。进入S形后目标几何已经锁定，
-    // 每帧只更新当前赛道切线，避免重复遍历整条中线。
+    // 目标位置和观察夹角只在识别阶段需要。进入S形后锁定目标位置处切线，
+    // 不再用横移时的视觉中线更新目标，否则目标航向会跟着车身一起漂移。
     float target_track_heading_relative_deg = 0.0f;
     float view_angle_deg = g_debug.view_angle_deg;
     float target_distance_now_m = 0.0f;
@@ -1020,7 +1202,8 @@ bool drive_by_is_busy()
 
 bool drive_by_is_recognizing()
 {
-    return g_drive_by_busy && (g_state == DB_WAIT_VIEW || g_state == DB_INFER);
+    return g_drive_by_busy &&
+        (g_state == DB_APPROACH || g_state == DB_WAIT_VIEW || g_state == DB_INFER);
 }
 
 bool drive_by_is_motion_phase()
@@ -1031,6 +1214,13 @@ bool drive_by_is_motion_phase()
          g_state == DB_PASS_TARGET ||
          g_state == DB_SHIFT_IN_A ||
          g_state == DB_SHIFT_IN_B);
+}
+
+bool drive_by_should_suspend_track_features()
+{
+    // 从远距离候选成立开始就暂停十字/环岛。这样严格识别使用的上一帧中线
+    // 已经回到普通中线，不会被旧的环岛阶段或单侧贴线继续污染。
+    return g_drive_by_busy;
 }
 
 bool drive_by_is_enabled()

@@ -423,6 +423,21 @@ int far_rpts0an_num, far_rpts1an_num;
 
 int not_have_line = 0;
 
+void reset_special_track_state()
+{
+    circle_type = CIRCLE_NONE;
+    cross_type = CROSS_NONE;
+    track_type = midd;
+    L_count = 0;
+    R_count = 0;
+    circle_encoder = 0;
+    none_left_line = 0;
+    none_right_line = 0;
+    have_left_line = 0;
+    have_right_line = 0;
+    not_have_line = 0;
+}
+
 int far_x1 = 86, far_x2 = 280, far_y1, far_y2;
 void find_corners() {
     // 识别L拐点

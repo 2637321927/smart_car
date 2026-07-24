@@ -104,6 +104,10 @@ const PARAMETER_LABELS = {
   drive_geometry_valid: '目标几何有效',
   drive_view_ready: '观察角度合格',
   drive_infer_valid_count: '有效识别帧数',
+  red_candidate: '远距离红块候选',
+  red_candidate_count: '候选连续次数',
+  red_contour_area: '红色轮廓面积',
+  drive_detection_stage: '目标板检测阶段',
   have_target: '检测到目标',
   item_flag: '识别结果',
   red_x: '红块X',
@@ -208,8 +212,12 @@ function formatValue(key, value) {
   if (typeof value === 'boolean') return value ? '是' : '否';
   if (key === 'run' || key === 'drive_enabled' || key === 'drive_busy' || key === 'have_target' ||
       key === 'drive_recognizing' || key === 'drive_motion' || key === 'drive_geometry_valid' ||
-      key === 'drive_view_ready') {
+      key === 'drive_view_ready' || key === 'red_candidate') {
     return Number(value) ? '是' : '否';
+  }
+  if (key === 'drive_detection_stage') {
+    return ({ 0: '0 / 正常巡线', 1: '1 / 远距接近', 2: '2 / 等待角度',
+      3: '3 / 三帧推理', 4: '4 / 绕行运动' })[Number(value)] || String(value);
   }
   if (key === 'item_flag') return `${value} / ${ITEM_NAMES[value] || '未知'}`;
   if (key === 'udp_mode') return ({ 0: '0 / 关闭', 1: '1 / 仅波形', 2: '2 / 波形和道路' })[Number(value)] || String(value);

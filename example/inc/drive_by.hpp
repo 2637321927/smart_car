@@ -37,7 +37,6 @@ extern volatile float drive_by_heading_tolerance_deg;
 extern volatile float drive_by_rate_tolerance_dps;
 extern volatile int drive_by_gyro_stale_ms;
 extern volatile float drive_by_yaw_sign;
-extern volatile float drive_by_track_heading_alpha;
 
 typedef struct
 {
@@ -56,6 +55,10 @@ typedef struct
     int view_ready;
     int infer_valid_count;
     int abort_reason;
+    int red_candidate;
+    int red_candidate_count;
+    int red_contour_area;
+    int detection_stage;
 } DriveByDebug;
 
 void drive_by_init();
@@ -63,6 +66,8 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn);
 bool drive_by_is_busy();
 bool drive_by_is_recognizing();
 bool drive_by_is_motion_phase();
+// 远距离候选出现后，目标板脚本需要暂时独占道路类型，避免环岛/十字改写中线。
+bool drive_by_should_suspend_track_features();
 bool drive_by_is_enabled();
 void drive_by_set_enable(bool enable);
 void drive_by_toggle_enable();
