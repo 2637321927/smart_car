@@ -63,13 +63,10 @@ static int __init dev_init(void)
         i++;
     }
     i2c_put_adapter(adapter);
-    if (client_count > 0)
-        return 0;
-    else
-    {
-        printk("LQ_I2C_ALL_DEV: no i2c device found on bus %d\n", bus_num);
-        return -ENODEV;
-    }
+
+    // ========== 修改点：无论探测到几个设备，模块都正常加载 ==========
+    printk("LQ_I2C_ALL_DEV: scan finish, detected %d valid i2c devices on bus %d\n", client_count, bus_num);
+    return 0;
 }
 
 static void __exit dev_exit(void)

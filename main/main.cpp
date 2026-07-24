@@ -1385,18 +1385,18 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
         } 
         else if (check_line_lost() && cross_type != CROSS_IN) {
             if (g_avoid_state == AV_GO_RIGHT) {
-                latest_error = filter_error(-100.0f); // 避障丢线，平滑过渡到最大打角
+                //latest_error = filter_error(-100.0f); // 避障丢线，平滑过渡到最大打角
                 diu++;
             } 
             else if (g_avoid_state == AV_GO_LEFT) {
-                latest_error = filter_error(100.0f);
+                //latest_error = filter_error(100.0f);
                 diu++;
             } 
             else if (cross_type == CROSS_NONE && circle_type == CIRCLE_NONE) {
                 if (lost == RIGHT) {
-                    latest_error = filter_error(100.0f);  
+                   // latest_error = filter_error(100.0f);  
                 } else {   
-                    latest_error = filter_error(-100.0f);
+                   // latest_error = filter_error(-100.0f);
                 }
             } 
             else {

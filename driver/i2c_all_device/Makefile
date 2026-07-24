@@ -1,4 +1,4 @@
-KDIR?=/home/linux/Desktop/linux-4.19-loongson-embeded
+KDIR?=/home/suncongsun/Desktop/linux-4.19
 ARCH:=loongarch
 CROSS_COMPILE:=loongarch64-linux-gnu-
 PWD?=$(shell pwd)
