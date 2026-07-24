@@ -79,22 +79,23 @@
           <div class="scope-chart">
             <canvas id="trendCanvas" width="1200" height="260"></canvas>
           </div>
-          <div class="timeline-row">
-            <button id="playPauseButton" class="icon-button" type="button" aria-label="播放或暂停">▶</button>
-            <button id="stepBackButton" class="icon-button" type="button" aria-label="上一事件">−1</button>
-            <button id="stepForwardButton" class="icon-button" type="button" aria-label="下一事件">+1</button>
-            <input id="timeline" type="range" min="0" max="0" value="0" step="1">
-            <span id="playbackTime" class="timecode">00:00.000</span>
-            <select id="playbackSpeed" class="input speed-select" aria-label="回放速度">
-              <option value="0.25">0.25×</option>
-              <option value="0.5">0.5×</option>
-              <option value="1" selected>1×</option>
-              <option value="2">2×</option>
-              <option value="4">4×</option>
-            </select>
-          </div>
         </article>
       </section>
+
+      <div class="panel timeline-row" aria-label="录像回放时间轴">
+        <button id="playPauseButton" class="icon-button" type="button" aria-label="播放或暂停">▶</button>
+        <button id="stepBackButton" class="icon-button" type="button" aria-label="上一事件">−1</button>
+        <button id="stepForwardButton" class="icon-button" type="button" aria-label="下一事件">+1</button>
+        <input id="timeline" type="range" min="0" max="0" value="0" step="1">
+        <span id="playbackTime" class="timecode">00:00.000</span>
+        <select id="playbackSpeed" class="input speed-select" aria-label="回放速度">
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+        </select>
+      </div>
 
       <aside class="side-column">
         <article class="panel status-panel">
