@@ -58,7 +58,7 @@ uint8_t Last_Left_Down_Point_finish_flag  = 0;  // 本次与上次是同一个�
 // 每列白色像素统计
 // ====================
 sint16 White_Column[LCDW]; 
-const std::string TARGET_IP    = "192.168.43.213";
+const std::string TARGET_IP    = "192.168.43.146";
 //192.168.43.146 huawei
 //192.168.43.213 lianxiang
 // UDP目标端口
@@ -1120,7 +1120,7 @@ void start_camera(void)
 
     // 初始化UDP客户端S
     udp_client.udp_client_init(TARGET_IP, TARGET_PORT);
-    udp_client_img.udp_client_init("192.168.43.213" , 8081);
+    udp_client_img.udp_client_init("192.168.43.146" , 8081);
     printf("UDP client initialized\r\n");
 
     // 初始化摄像头

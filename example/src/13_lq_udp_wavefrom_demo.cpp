@@ -4,7 +4,7 @@
 // 配置参数 - 根据需要修改
 // =====================================================
 // 目标IP地址（UDP接收端，也就是PC端IP）
-const std::string TARGET_IP    = "192.168.43.98";
+const std::string TARGET_IP    = "192.168.43.146";
 // UDP目标端口
 const uint16_t    TARGET_PORT  = 8080;
 
