@@ -9,7 +9,7 @@ const { URL } = require('url');
 
 const UDP_PORT = Number(process.env.ROAD_DEBUG_UDP_PORT || 8080);
 const HTTP_PORT = Number(process.env.ROAD_DEBUG_HTTP_PORT || 8765);
-const CAR_IP = process.env.ROAD_DEBUG_CAR_IP || '192.168.43.6';
+const CAR_IP = process.env.ROAD_DEBUG_CAR_IP || '192.168.43.93';
 const CAR_COMMAND_PORT = Number(process.env.ROAD_DEBUG_CAR_PORT || 8082);
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const RECORDINGS_DIR = process.env.ROAD_DEBUG_RECORDINGS_DIR
@@ -440,7 +440,7 @@ function start() {
     console.log(`[WEB] http://127.0.0.1:${HTTP_PORT}`);
     const addresses = localIPv4Addresses();
     if (addresses.length) {
-      console.log('[提示] 小车TARGET_IP应设置为以下地址之一：');
+      console.log('[提示] 小车DEBUGGER_TARGET_IP应设置为以下地址之一：');
       addresses.forEach((entry) => console.log(`  ${entry.name}: ${entry.address}`));
     }
   });

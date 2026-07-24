@@ -58,11 +58,12 @@ uint8_t Last_Left_Down_Point_finish_flag  = 0;  // 本次与上次是同一个�
 // 每列白色像素统计
 // ====================
 sint16 White_Column[LCDW]; 
-const std::string TARGET_IP    = "192.168.43.146";
-//192.168.43.146 huawei
-//192.168.43.213 lianxiang
-// UDP目标端口
-const uint16_t    TARGET_PORT  = 8080;
+// VOFA和道路调试器位于不同电脑，必须分别初始化，不能共用目标IP。
+const std::string VOFA_TARGET_IP       = "192.168.43.146";
+const std::string DEBUGGER_TARGET_IP   = "192.168.43.155";
+const uint16_t    VOFA_TARGET_PORT     = 8080;
+const uint16_t    DEBUGGER_TARGET_PORT = 8080;
+const uint16_t    DEBUGGER_IMAGE_PORT  = 8081;
 // 摄像头参数
 const uint16_t    CAM_WIDTH    = 320;     // 宽
 const uint16_t    CAM_HEIGHT   = 240;     // 高
@@ -1111,16 +1112,17 @@ void start_camera(void)
         printf("=========================================\r\n");
     printf("  UDP Camera + Encoder Stream\r\n");
     printf("=========================================\r\n");
-    printf("Target IP:   %s\r\n", TARGET_IP.c_str());
-    printf("Target Port: %d\r\n", TARGET_PORT);
-    printf("Target_img Port: %d\r\n", 8081);
+    printf("VOFA target:     %s:%d\r\n", VOFA_TARGET_IP.c_str(), VOFA_TARGET_PORT);
+    printf("Debugger target: %s:%d\r\n", DEBUGGER_TARGET_IP.c_str(), DEBUGGER_TARGET_PORT);
+    printf("Debugger image:  %s:%d\r\n", DEBUGGER_TARGET_IP.c_str(), DEBUGGER_IMAGE_PORT);
     printf("Resolution:  %dx%d\r\n", CAM_WIDTH, CAM_HEIGHT);
     printf("FPS:         %d\r\n", CAM_FPS);
     printf("=========================================\r\n");
 
-    // 初始化UDP客户端S
-    udp_client.udp_client_init(TARGET_IP, TARGET_PORT);
-    udp_client_img.udp_client_init("192.168.43.146" , 8081);
+    // 波形发往VOFA；参数副本、道路三线和调试图像发往道路调试器。
+    udp_client.udp_client_init(VOFA_TARGET_IP, VOFA_TARGET_PORT);
+    udp_client_debugger.udp_client_init(DEBUGGER_TARGET_IP, DEBUGGER_TARGET_PORT);
+    udp_client_img.udp_client_init(DEBUGGER_TARGET_IP, DEBUGGER_IMAGE_PORT);
     printf("UDP client initialized\r\n");
 
     // 初始化摄像头

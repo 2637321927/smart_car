@@ -81,9 +81,11 @@ ls_encoder_pwm enc1(ENC_PWM1_PIN65, PIN_73);
  volatile float set_speed_of_motor1_rps=0.0f;
  volatile float set_speed_of_motor2_rps=0.0f;
 lq_udp_client udp_client;
+lq_udp_client udp_client_debugger;
 lq_udp_client udp_client_img;
-// UDP调试模式：0关闭，1仅参数波形，2参数波形+道路三线。默认保持原有波形输出。
-volatile int udp_debug_mode = 1;
+// Debugger默认发送参数波形和道路三线；传统VOFA波形回传默认关闭，避免重复占用带宽。
+volatile int udp_debug_mode = 2;
+volatile int vofa_telemetry_enabled = 0;
 cv::Mat bgr_bird;
 volatile int test_count = 0;
 enum AvoidState
@@ -414,6 +416,13 @@ if (sscanf(buf, "#udp=%d;", &itmp) == 1)
         ? "关闭"
         : (udp_debug_mode == 1 ? "仅波形" : "波形和道路三线");
     printf("[VOFA] UDP调试模式=%d（%s）\n", udp_debug_mode, mode_name);
+}
+
+if (sscanf(buf, "#vofa=%d;", &itmp) == 1)
+{
+    vofa_telemetry_enabled = itmp != 0 ? 1 : 0;
+    printf("[VOFA] 波形回传=%s（192.168.43.146:8080）\n",
+           vofa_telemetry_enabled ? "开启" : "关闭");
 }
 
 // ==================== 目标板高速绕行在线调参 ====================
@@ -815,7 +824,7 @@ void road_telemetry_send()
     telemetry_write_line(cursor, rptsn, rptsn_num, center_count);
     telemetry_write_line(cursor, rpts1s, rpts1s_num, right_count);
 
-    udp_client.udp_send(packet, static_cast<size_t>(cursor - packet));
+    udp_client_debugger.udp_send(packet, static_cast<size_t>(cursor - packet));
 }
 
 } // namespace
@@ -950,7 +959,13 @@ void udp_send(void){
 
 // 截断的JSON没有调试价值，直接丢弃，避免PC端把它统计为协议错误。
 if (json_length > 0 && json_length < static_cast<int>(sizeof(encoder_str))) {
-    udp_client.udp_send(encoder_str, static_cast<size_t>(json_length));
+    // Debugger和VOFA发送开关相互独立；关闭VOFA回传不会影响8082端口接收调参指令。
+    if (vofa_telemetry_enabled) {
+        udp_client.udp_send(encoder_str, static_cast<size_t>(json_length));
+    }
+    if (udp_debug_mode >= 1) {
+        udp_client_debugger.udp_send(encoder_str, static_cast<size_t>(json_length));
+    }
 }
 /*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
@@ -1131,7 +1146,7 @@ gyro_yaw_rate_control_init();
     });
 
      udp_timer.set_seconds_ms(12, []() {
-    if (udp_debug_mode >= 1) {
+    if (udp_debug_mode >= 1 || vofa_telemetry_enabled) {
       udp_send();
     }
 
