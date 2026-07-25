@@ -412,7 +412,8 @@ heading_error = desired_vehicle_yaw - vehicle_yaw</code></pre>
           <tr><td><code>TURN_OUT</code></td><td>绕行侧25°</td><td>15RPS</td><td>向目标板侧方移出</td></tr>
           <tr><td><code>PASS_SHORT</code></td><td>继续保持绕行侧25°</td><td>20RPS</td><td>沿斜向轨迹越过目标板</td></tr>
           <tr><td><code>TURN_TO_TRACK</code></td><td>赛道内侧5°</td><td>15RPS</td><td>反向多转一点，让车头指向赛道</td></tr>
-          <tr><td>完成</td><td>普通视觉方向环接管</td><td>35RPS</td><td>不再执行固定回正或退出直行</td></tr>
+          <tr><td><code>RECOVER_CENTER_LINE</code></td><td>左绕向右、右绕向左给满100</td><td>15RPS</td><td>仅在第二转结束仍找不到中线时启用</td></tr>
+          <tr><td>完成</td><td>普通视觉方向环接管</td><td>35RPS</td><td>中线可靠后立即恢复普通巡线</td></tr>
         </tbody>
       </table>
       <p>左右绕行完全镜像。以左绕为例，第一次目标为左偏25°，第二次目标为右偏5°，因此第二次实际反转约30°。</p>
@@ -430,7 +431,7 @@ abs(gyro_dps) &lt;= 20dps
 PASS_SHORT必须同时满足：
 phase_distance &gt;= dbPassDist
 distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
-      <p><code>dbPassDist</code>默认0.35m，<code>dbSafeDist</code>默认0.30m。第二转稳定后，8ms方向定时器直接释放脚本并在同周期恢复普通方向环，不恢复识别前保存的旧差速。</p>
+      <p><code>dbPassDist</code>默认0.35m，<code>dbSafeDist</code>默认0.30m。第二转稳定后先检查中线：可靠时直接恢复普通方向环；仍丢线时左绕向右给+100、右绕向左给-100，并保持dbExitRps直到中线恢复。交还时不恢复识别前保存的旧差速。</p>
       <h4>三阶段调参接口</h4>
       <table>
         <thead><tr><th>VOFA参数</th><th>作用</th><th>默认值</th></tr></thead>
@@ -447,7 +448,9 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         </tbody>
       </table>
       <p>旧命令<code>#dbExitDist=...;</code>仍会被接收，但只打印“已废弃并忽略”，不参与三阶段状态切换。</p>
-      <h3>6.2 边线瞄准实验方案（dbMode=1）</h3>
+      <h3>6.2 两套方案共用的回程丢线保护</h3>
+      <p>无论选择哪套方案，回到赛道时都必须先确认中线剩余有效点不少于15点。左绕后找不到中线就向右给+100，右绕后找不到中线就向左给-100，直到中线恢复。dbMode=0找线时保持dbExitRps，dbMode=1保持dbForwardRps。</p>
+      <h3>6.3 边线瞄准实验方案（dbMode=1）</h3>
       <p>该方案保留相同的红块检测、主动制动和识别投票，只替换识别完成后的运动控制。</p>
       <div class="table-wrap"><table>
         <thead><tr><th>状态</th><th>左绕</th><th>右绕</th><th>结束条件</th></tr></thead>

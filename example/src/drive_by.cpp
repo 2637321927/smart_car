@@ -1138,6 +1138,9 @@ void update_motion_state()
             g_target_distance_at_trigger_m + drive_by_target_after_margin_m;
         if (g_phase_distance_m >= drive_by_pass_distance_m &&
             g_distance_since_trigger_m >= pass_end_distance) {
+            // 第二次转向期间开始观察中线。角度达到后只有中线可靠才直接交还，
+            // 否则进入反方向满误差找线，避免车头朝向正确但车辆仍在赛道外侧。
+            g_visual_aim_line_valid = false;
             enter_state(DB_TURN_TO_TRACK);
         }
         break;
@@ -1145,7 +1148,14 @@ void update_motion_state()
 
     case DB_TURN_TO_TRACK:
         if (heading_is_settled(heading_error_deg, gyro_dps)) {
-            complete_motion_handoff();
+            if (g_visual_aim_line_valid) {
+                complete_motion_handoff();
+            } else {
+                // 左绕回程找不到中线时向右打满，右绕则向左打满。
+                // 后续由相机线程持续检查中线，不能只依赖一次检测结果。
+                enter_state(DB_RECOVER_CENTER_LINE);
+                latest_error = visual_forced_error(true);
+            }
         }
         break;
 
@@ -1162,10 +1172,13 @@ void update_visual_motion_state()
         return;
     }
 
-    // 新方案全程使用dbForwardRps作为基准速度，差速仍由随后执行的
-    // PID_control_test(latest_error)计算。这里只设基准，不在两个线程间抢PWM。
-    set_speed_of_motor1_rps = (float)drive_by_forward_speed_rps;
-    set_speed_of_motor2_rps = (float)drive_by_forward_speed_rps;
+    // 新方案使用dbForwardRps；旧三阶段在额外找线时保持第二转的dbExitRps，
+    // 避免刚结束角度闭环就突然提速。差速仍由随后执行的普通方向环计算。
+    const float visual_base_rps = g_active_mode == 1
+        ? (float)drive_by_forward_speed_rps
+        : (float)drive_by_exit_speed_rps;
+    set_speed_of_motor1_rps = visual_base_rps;
+    set_speed_of_motor2_rps = visual_base_rps;
 
     if (g_state == DB_FOLLOW_SIDE_LINE &&
         elapsed_ms(g_state_start) >= kVisualSideFollowMs) {
@@ -1382,7 +1395,10 @@ void drive_by_control_update()
         begin_motion_script(g_pending_result);
     }
     if (drive_by_is_motion_phase() && !g_stop_requested) {
-        if (g_active_mode == 1) {
+        // RECOVER_CENTER_LINE是两套方案共用的视觉找线状态，不能继续执行
+        // 旧方案的航向闭环，否则两个控制器会同时改写左右轮目标。
+        if (g_state == DB_FOLLOW_SIDE_LINE ||
+            g_state == DB_RECOVER_CENTER_LINE) {
             update_visual_motion_state();
         } else {
             update_motion_state();
@@ -1621,6 +1637,13 @@ float drive_by_adjust_visual_error(float computed_error,
         const bool valid = selected_aim_line == expected_line && aim_line_valid;
         g_visual_aim_line_valid = valid;
         return valid ? computed_error : visual_forced_error(false);
+    }
+
+    if (g_state == DB_TURN_TO_TRACK) {
+        // 旧三阶段的第二转仍由角度闭环控制，这里只旁路记录中线是否可靠，
+        // 不覆盖computed_error，也不让普通方向环提前参与。
+        g_visual_aim_line_valid = selected_aim_line == 0 && aim_line_valid;
+        return computed_error;
     }
 
     if (g_state == DB_RECOVER_CENTER_LINE) {

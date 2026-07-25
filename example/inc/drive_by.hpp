@@ -87,7 +87,8 @@ bool drive_by_start_test(int simulated_item_flag,
 bool drive_by_is_busy();
 bool drive_by_is_recognizing();
 bool drive_by_is_motion_phase();
-// 新边线方案运动阶段仍由普通方向环执行，旧角度方案则由drive_by独占方向控制。
+// 边线方案和两套方案共用的中线找回阶段由普通方向环执行；
+// 旧角度方案的三个航向阶段仍由drive_by独占方向控制。
 bool drive_by_uses_visual_direction_control();
 // 返回当前相机帧应使用的瞄准线：-1左线、0正常中线、1右线。
 int drive_by_visual_aim_line();
