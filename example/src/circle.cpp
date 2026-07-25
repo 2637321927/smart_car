@@ -32,7 +32,7 @@ namespace {
 
 // 识别到一次环岛后，20 秒内不允许再次从 CIRCLE_NONE 进入环岛。
 constexpr auto kCircleEnterCooldown = std::chrono::seconds(3);
-constexpr auto kCircleOUTCooldown = std::chrono::seconds(0);
+constexpr auto kCrossEnterCooldown = std::chrono::seconds(1);
 bool circle_enter_cooldown = false;
 std::chrono::steady_clock::time_point last_circle_enter_time;
 std::chrono::steady_clock::time_point last_cross_time;
@@ -51,7 +51,9 @@ bool circle_entry_is_blocked()
         return false;
     }
 
-    if (std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown&&std::chrono::steady_clock::now() - last_cross_time >= kCircleOUTCooldown) {
+    if (std::chrono::steady_clock::now() - last_circle_enter_time >= kCircleEnterCooldown)
+    //&&std::chrono::steady_clock::now() - last_cross_time >= kCircleOUTCooldown)
+     {
         circle_enter_cooldown = false;
         //std::cout<<"not circle"<<std::endl;
         return false;
@@ -515,6 +517,7 @@ void check_cross() {
     bool Xfound = Lpt0_found && Lpt1_found;
     if (cross_type == CROSS_NONE && Xfound) {cross_type = CROSS_BEGIN;
         std::cout<<"cross"<<std::endl;
+        start_cross_cooldown();
     }
 }
 
@@ -544,6 +547,9 @@ void run_cross() {
     }
         //远线控制进十字,begin_y渐变靠近防丢线
     else if (cross_type == CROSS_IN) {
+        if(std::chrono::steady_clock::now() - last_cross_time >= kCrossEnterCooldown){
+            cross_type = CROSS_NONE;
+        }
         //寻远线,算法与近线相同
         cross_farline();
 

@@ -461,7 +461,7 @@ if (sscanf(buf, "#dbTurnAngle=%f;", &ftmp) == 1)
 if (sscanf(buf, "#dbReturnBias=%f;", &ftmp) == 1)
 {
     if (ftmp < 0.0f) ftmp = -ftmp;
-    drive_by_return_bias_deg = ftmp > 45.0f ? 45.0f : ftmp;
+    drive_by_return_bias_deg = ftmp > 91.0f ? 91.0f : ftmp;
     printf("[VOFA] dbReturnBias = %.2f deg\n", drive_by_return_bias_deg);
 }
 
