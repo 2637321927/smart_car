@@ -9,7 +9,7 @@
 extern volatile float drive_by_normal_speed_rps;
 extern volatile float drive_by_recognition_speed_rps;
 extern volatile float drive_by_rps_to_mps;
-// 0：现有三阶段角度闭环；1：实验性的边线瞄准绕行。
+// 0：三阶段角度闭环；1：边线瞄准；2：六次手推示教得到的距离索引轨迹。
 extern volatile int drive_by_mode;
 
 // 目标板脚本的速度参数。整数参数保留，方便兼容之前的 VOFA/源码调参习惯。
@@ -17,6 +17,9 @@ extern int drive_by_turn_speed_rps;
 extern int drive_by_turn_inner_speed_rps;
 extern int drive_by_forward_speed_rps;
 extern int drive_by_exit_speed_rps;
+extern volatile float drive_by_learned_speed_rps;
+extern volatile float drive_by_learned_distance_m;
+extern volatile float drive_by_learned_yaw_scale;
 extern int drive_by_turn_out_ms;
 extern int drive_by_forward_ms;
 extern int drive_by_turn_back_ms;

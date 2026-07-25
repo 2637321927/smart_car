@@ -438,10 +438,14 @@ if (sscanf(buf, "#drive=%d;", &itmp) == 1)
 // 识别阶段的 dbRecSpd 只改变基准速度，普通方向环仍会继续产生左右差速。
 if (sscanf(buf, "#dbMode=%d;", &itmp) == 1)
 {
-    drive_by_mode = itmp == 1 ? 1 : 0;
+    if (itmp < 0) itmp = 0;
+    if (itmp > 2) itmp = 2;
+    drive_by_mode = itmp;
+    const char *mode_name = drive_by_mode == 0
+        ? "三阶段角度闭环"
+        : (drive_by_mode == 1 ? "边线瞄准500ms" : "六次示教轨迹");
     printf("[VOFA] dbMode = %d（%s）\n",
-           drive_by_mode,
-           drive_by_mode == 1 ? "边线瞄准500ms" : "三阶段角度闭环");
+           drive_by_mode, mode_name);
 }
 
 if (sscanf(buf, "#dbNormalSpd=%f;", &ftmp) == 1)
@@ -525,6 +529,30 @@ if (sscanf(buf, "#dbHMax=%f;", &ftmp) == 1)
     if (ftmp < 0.0f) ftmp = -ftmp;
     drive_by_heading_max_dps = ftmp > 720.0f ? 720.0f : ftmp;
     printf("[VOFA] dbHMax = %.2f dps\n", drive_by_heading_max_dps);
+}
+
+if (sscanf(buf, "#dbLearnRps=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = 0.0f;
+    if (ftmp > 40.0f) ftmp = 40.0f;
+    drive_by_learned_speed_rps = ftmp;
+    printf("[VOFA] dbLearnRps = %.2f RPS\n", drive_by_learned_speed_rps);
+}
+
+if (sscanf(buf, "#dbLearnDist=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.10f) ftmp = 0.10f;
+    if (ftmp > 3.00f) ftmp = 3.00f;
+    drive_by_learned_distance_m = ftmp;
+    printf("[VOFA] dbLearnDist = %.3f m\n", drive_by_learned_distance_m);
+}
+
+if (sscanf(buf, "#dbLearnScale=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    if (ftmp > 3.0f) ftmp = 3.0f;
+    drive_by_learned_yaw_scale = ftmp;
+    printf("[VOFA] dbLearnScale = %.2f\n", drive_by_learned_yaw_scale);
 }
 
 if (sscanf(buf, "#dbRecoverDps=%f;", &ftmp) == 1)
@@ -945,6 +973,7 @@ void tuning_telemetry_send()
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
         "\"dbMode\":%d,\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
+        "\"dbLearnRps\":%.2f,\"dbLearnDist\":%.3f,\"dbLearnScale\":%.2f,"
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
@@ -969,6 +998,9 @@ void tuning_telemetry_send()
         drive_by_mode,
         safe_float(drive_by_normal_speed_rps),
         safe_float(drive_by_recognition_speed_rps),
+        safe_float(drive_by_learned_speed_rps),
+        safe_float(drive_by_learned_distance_m),
+        safe_float(drive_by_learned_yaw_scale),
         safe_float(drive_by_turn_angle_deg),
         safe_float(drive_by_return_bias_deg),
         safe_float(drive_by_pass_distance_m),
