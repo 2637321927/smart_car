@@ -147,6 +147,7 @@ struct RecognitionReport {
     int frame_count = 0;
     int valid_count = 0;
     int votes[3] = {0, 0, 0};
+    bool early_decision = false;
     double trigger_detect_ms = 0.0;
     double infer_sum_ms = 0.0;
     double total_ms = 0.0;
@@ -526,6 +527,19 @@ int choose_vote_result()
     return best;
 }
 
+bool recognition_should_finish()
+{
+    // 三票多数制中，任一结果拿到两票后，第三票已经不可能改变最终结果。
+    // 只有前两帧都是有效结果且一致时才会提前结束；失败帧和未知类别不算票。
+    for (int result = 0; result < 3; ++result) {
+        if (g_report.votes[result] >= 2) {
+            g_report.early_decision = g_report.frame_count < kInferFrames;
+            return true;
+        }
+    }
+    return g_report.frame_count >= kInferFrames;
+}
+
 void finish_frame_record(RecognitionFrameRecord& record,
                          DriveByClock::time_point frame_start)
 {
@@ -616,15 +630,19 @@ void print_recognition_report(int final_result)
                record.since_trigger_ms);
     }
 
-    printf("[识别测试] 最终结果=%d（%s），投票：左绕=%d，直行=%d，右绕=%d，有效帧=%d/%d\n",
+    const char *decision_mode = g_report.early_decision
+        ? "前两帧一致，提前结束"
+        : (g_report.frame_count >= kInferFrames ? "完成三帧投票" : "流程提前退出");
+    printf("[识别测试] 最终结果=%d（%s），投票：左绕=%d，直行=%d，右绕=%d，有效帧=%d/%d，判定=%s\n",
            final_result,
            result_action_name(final_result),
            g_report.votes[0],
            g_report.votes[1],
            g_report.votes[2],
            g_report.valid_count,
-           kInferFrames);
-    printf("[识别测试] 三帧总时间=%.2f毫秒，推理合计=%.2f毫秒，结束轮速=(%.2f, %.2f)RPS\n",
+           g_report.frame_count,
+           decision_mode);
+    printf("[识别测试] 识别总时间=%.2f毫秒，推理合计=%.2f毫秒，结束轮速=(%.2f, %.2f)RPS\n",
            g_report.total_ms,
            g_report.infer_sum_ms,
            g_report.finish_left_rps,
@@ -1107,7 +1125,7 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
             if (g_debug.view_ready != 0) {
                 enter_state(DB_INFER);
                 process_inference_frame(frame, ncnn, true, detect_ms);
-                if (g_report.frame_count >= kInferFrames) {
+                if (recognition_should_finish()) {
                     complete_inference();
                 }
             } else {
@@ -1130,7 +1148,7 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
             if (g_debug.view_ready != 0 && have_target) {
                 enter_state(DB_INFER);
                 process_inference_frame(frame, ncnn, true, detect_ms);
-                if (g_report.frame_count >= kInferFrames) {
+                if (recognition_should_finish()) {
                     complete_inference();
                 }
             } else if (elapsed_ms(g_state_start) >= drive_by_view_wait_timeout_ms) {
@@ -1143,7 +1161,7 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
     case DB_INFER:
         command_recognition_base_speed();
         process_inference_frame(frame, ncnn, false, 0.0);
-        if (g_report.frame_count >= kInferFrames) {
+        if (recognition_should_finish()) {
             complete_inference();
         } else if (elapsed_ms(g_state_start) >= drive_by_infer_timeout_ms) {
             item_flag = 1;

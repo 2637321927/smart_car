@@ -27,9 +27,11 @@ const MIME_TYPES = {
 const runtime = {
   startedAt: Date.now(),
   latestParams: null,
+  latestTuning: null,
   latestRoad: null,
   udpPackets: 0,
   jsonPackets: 0,
+  tuningPackets: 0,
   roadPackets: 0,
   invalidPackets: 0,
   lastRemote: null,
@@ -171,6 +173,10 @@ function startRecording(name) {
     udpPort: UDP_PORT,
     carIp: CAR_IP,
   })}\n`);
+  // 录像从第0毫秒就带上当前调参状态，回放开头不会退回前端默认值。
+  if (runtime.latestTuning) {
+    recordingEvent('tuning', startedAt, runtime.latestTuning);
+  }
   broadcast('recording', recordingState());
   return recordingState();
 }
@@ -228,6 +234,7 @@ function statusPayload() {
     localAddresses: localIPv4Addresses(),
     udpPackets: runtime.udpPackets,
     jsonPackets: runtime.jsonPackets,
+    tuningPackets: runtime.tuningPackets,
     roadPackets: runtime.roadPackets,
     invalidPackets: runtime.invalidPackets,
     lastPacketAt: runtime.lastPacketAt,
@@ -309,8 +316,19 @@ function start() {
     if (message[0] === 0x7b) {
       try {
         const params = JSON.parse(message.toString('utf8'));
-        runtime.latestParams = params;
         runtime.jsonPackets += 1;
+        if (params.packet_type === 'tuning') {
+          const tuning = { ...params };
+          delete tuning.packet_type;
+          runtime.latestTuning = tuning;
+          runtime.tuningPackets += 1;
+          const event = { receivedAt, tuning };
+          broadcast('tuning', event);
+          recordingEvent('tuning', receivedAt, tuning);
+          return;
+        }
+
+        runtime.latestParams = params;
         const event = { receivedAt, params };
         broadcast('params', event);
         recordingEvent('params', receivedAt, params);
@@ -358,6 +376,12 @@ function start() {
           response.write(`event: params\ndata: ${JSON.stringify({
             receivedAt: runtime.lastPacketAt,
             params: runtime.latestParams,
+          })}\n\n`);
+        }
+        if (runtime.latestTuning) {
+          response.write(`event: tuning\ndata: ${JSON.stringify({
+            receivedAt: runtime.lastPacketAt,
+            tuning: runtime.latestTuning,
           })}\n\n`);
         }
         if (runtime.latestRoad) {

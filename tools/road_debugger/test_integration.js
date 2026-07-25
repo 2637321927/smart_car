@@ -102,12 +102,21 @@ async function main() {
       have_target: 1,
       item_flag: 1,
     })));
+    await sendUdp(Buffer.from(JSON.stringify({
+      packet_type: 'tuning',
+      P: 454,
+      I: 14,
+      gyro: 1,
+      dbTurnAngle: 25,
+      udp: 2,
+    })));
     await sendUdp(makeRoadPacket());
     await delay(120);
 
     const statusResponse = await request('GET', '/api/status');
     assert.strictEqual(statusResponse.status, 200);
-    assert.strictEqual(statusResponse.json.jsonPackets, 1);
+    assert.strictEqual(statusResponse.json.jsonPackets, 2);
+    assert.strictEqual(statusResponse.json.tuningPackets, 1);
     assert.strictEqual(statusResponse.json.roadPackets, 1);
     assert.strictEqual(statusResponse.json.invalidPackets, 0);
 
@@ -119,10 +128,24 @@ async function main() {
     assert(pageResponse.text.includes('driveByLeft'));
     assert(pageResponse.text.includes('driveByRight'));
     assert(pageResponse.text.includes('driveByTestButton'));
+    assert(pageResponse.text.includes('tuningControls'));
+    assert(pageResponse.text.includes('tuningSnapshotTime'));
+
+    const appResponse = await request('GET', '/app.js');
+    assert.strictEqual(appResponse.status, 200);
+    [
+      'P', 'I', 'D', 'spd', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
+      'gyro', 'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax',
+      'gSign', 'tSign', 'dbNormalSpd', 'dbRecSpd', 'dbTurnAngle', 'dbPassDist',
+      'dbExitDist', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
+      'dbHKd', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
+      'dbBrakeRelease', 'dbBrakeTimeout', 'dbTestDist', 'circle_exit', 'udp', 'vofa',
+      'is_udp_img',
+    ].forEach((key) => assert(appResponse.text.includes(`key: '${key}'`), key));
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
     assert.strictEqual(stopResponse.status, 200);
-    assert.strictEqual(stopResponse.json.recording.eventCount, 2);
+    assert.strictEqual(stopResponse.json.recording.eventCount, 3);
 
     const listResponse = await request('GET', '/api/recordings');
     assert.strictEqual(listResponse.status, 200);
@@ -146,6 +169,7 @@ async function main() {
       'utf8');
     assert(recordingText.includes('"type":"params"'));
     assert(recordingText.includes('"type":"road"'));
+    assert(recordingText.includes('"type":"tuning"'));
     console.log('Road debugger integration test passed');
   } finally {
     services.udpReceiver.close();

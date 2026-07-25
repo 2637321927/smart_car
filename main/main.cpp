@@ -747,6 +747,9 @@ namespace {
 constexpr int kRoadTelemetryMaxPoints = 64;
 constexpr uint16_t kRoadTelemetryHeaderSize = 52;
 constexpr int kRoadTelemetryMinIntervalMs = 12;
+// 可调参数变化远慢于控制波形。单独低频发送参数快照，既能让前端和录像
+// 精确还原调参状态，也不会继续膨胀已经较大的 12ms 动态 JSON 数据包。
+constexpr int kTuningTelemetryIntervalMs = 250;
 
 void telemetry_write_u16(uint8_t *&cursor, uint16_t value)
 {
@@ -868,6 +871,80 @@ void road_telemetry_send()
     telemetry_write_line(cursor, rpts1s, rpts1s_num, right_count);
 
     udp_client_debugger.udp_send(packet, static_cast<size_t>(cursor - packet));
+}
+
+void tuning_telemetry_send()
+{
+    if (udp_debug_mode < 1) {
+        return;
+    }
+
+    static steady_clock::time_point last_sent =
+        steady_clock::now() - milliseconds(kTuningTelemetryIntervalMs);
+    const steady_clock::time_point now = steady_clock::now();
+    if (duration_cast<milliseconds>(now - last_sent).count() <
+        kTuningTelemetryIntervalMs) {
+        return;
+    }
+    last_sent = now;
+
+    char tuning_str[2048];
+    const int tuning_length = snprintf(
+        tuning_str,
+        sizeof(tuning_str),
+        "{"
+        "\"packet_type\":\"tuning\","
+        "\"P\":%.3f,\"I\":%.3f,\"D\":%.3f,\"spd\":%.2f,"
+        "\"dirP\":%.4f,\"dirD\":%.4f,\"AIM\":%.3f,"
+        "\"spd_slow_ratio\":%d,\"begin_x\":%d,"
+        "\"gyro\":%d,\"gDbg\":%d,\"gTar\":%.2f,"
+        "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
+        "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
+        "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
+        "\"dbTurnAngle\":%.2f,\"dbPassDist\":%.3f,"
+        "\"dbExitDist\":%.3f,\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
+        "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
+        "\"dbHKp\":%.3f,\"dbHKd\":%.3f,\"dbYawSign\":%.1f,"
+        "\"dbTurnRps\":%d,\"dbForwardRps\":%d,\"dbExitRps\":%d,"
+        "\"dbBrakePwm\":%d,\"dbBrakeRelease\":%.2f,"
+        "\"dbBrakeTimeout\":%d,\"dbTestDist\":%.3f,"
+        "\"circle_exit\":%.3f,\"udp\":%d,\"vofa\":%d,\"is_udp_img\":%d"
+        "}",
+        safe_float(P), safe_float(I), safe_float(D),
+        safe_float(set_speed_of_motor1_rps),
+        safe_float(dir_P), safe_float(dir_D), safe_float(AIM),
+        spd_slow_ratio, begin_x,
+        gyro_yaw_rate_feedback_enabled,
+        gyro_manual_target_enabled,
+        safe_float(gyro_manual_target_dps),
+        safe_float(gyro_outer_kp), safe_float(gyro_outer_kd),
+        safe_float(gyro_inner_kp), safe_float(gyro_inner_ki),
+        safe_float(gyro_target_max_dps), safe_float(gyro_turn_max_rps),
+        safe_float(gyro_z_sign), safe_float(gyro_turn_sign),
+        safe_float(drive_by_normal_speed_rps),
+        safe_float(drive_by_recognition_speed_rps),
+        safe_float(drive_by_turn_angle_deg),
+        safe_float(drive_by_pass_distance_m),
+        safe_float(drive_by_exit_distance_m),
+        safe_float(drive_by_target_after_margin_m),
+        safe_float(drive_by_rps_to_mps),
+        safe_float(drive_by_view_angle_max_deg),
+        drive_by_view_wait_timeout_ms,
+        safe_float(drive_by_heading_kp), safe_float(drive_by_heading_kd),
+        safe_float(drive_by_yaw_sign),
+        drive_by_turn_speed_rps, drive_by_forward_speed_rps,
+        drive_by_exit_speed_rps, drive_by_brake_pwm,
+        safe_float(drive_by_brake_release_rps),
+        drive_by_brake_timeout_ms,
+        safe_float(drive_by_test_target_distance_m),
+        safe_float(circle_exit_distance_m),
+        udp_debug_mode, vofa_telemetry_enabled, is_udp_img);
+
+    if (tuning_length > 0 &&
+        tuning_length < static_cast<int>(sizeof(tuning_str))) {
+        udp_client_debugger.udp_send(
+            tuning_str, static_cast<size_t>(tuning_length));
+    }
 }
 
 } // namespace
@@ -1028,6 +1105,9 @@ if (json_length > 0 && json_length < static_cast<int>(sizeof(encoder_str))) {
         udp_client_debugger.udp_send(encoder_str, static_cast<size_t>(json_length));
     }
 }
+
+// 调参快照采用独立的低频数据包，不占用12ms动态波形包的空间。
+tuning_telemetry_send();
 /*ssize_t sent =    udp_client_img.udp_send_image(bgr_bird, JPEG_QUALITY);
   if (sent < 0) {
           printf("ERROR: Failed to send image\r\n");

@@ -57,6 +57,9 @@ const elements = {
   driveByLeft: $('driveByLeft'),
   driveByRight: $('driveByRight'),
   driveByTestButton: $('driveByTestButton'),
+  tuningControls: $('tuningControls'),
+  tuningSnapshotTime: $('tuningSnapshotTime'),
+  tuningModeHint: $('tuningModeHint'),
   toast: $('toast'),
 };
 
@@ -147,6 +150,94 @@ const SCOPE_PRESETS = {
 const SCOPE_CHANNELS_STORAGE_KEY = 'scopeChannels';
 const ROAD_COLUMN_STORAGE_KEY = 'roadColumnPercent';
 
+// 这里只列出小车端 main.cpp 当前真正支持的在线命令。连续量统一使用
+// “滑块 + 数值框”，离散模式使用开关或分段按钮，避免误发无效指令。
+const TUNING_GROUPS = [
+  {
+    title: '速度环',
+    subtitle: '增量式PID与基准速度',
+    controls: [
+      { key: 'P', label: '速度P', min: 0, max: 1000, step: 1, defaultValue: 454 },
+      { key: 'I', label: '速度I', min: 0, max: 100, step: 0.1, defaultValue: 14 },
+      { key: 'D', label: '速度D', min: 0, max: 200, step: 0.1, defaultValue: 0 },
+      { key: 'spd', label: '基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 0 },
+    ],
+  },
+  {
+    title: '视觉方向与道路',
+    subtitle: '视觉PD、前瞻与弯道减速',
+    controls: [
+      { key: 'dirP', label: '方向P', min: 0, max: 2, step: 0.001, defaultValue: 0.128 },
+      { key: 'dirD', label: '方向D', min: 0, max: 10, step: 0.01, defaultValue: 1.55 },
+      { key: 'AIM', label: '前瞻距离', min: 0.05, max: 1.2, step: 0.01, unit: 'm', defaultValue: 0.25 },
+      { key: 'spd_slow_ratio', label: '最大减速比例', min: 0, max: 50, step: 1, unit: '%', defaultValue: 30 },
+      { key: 'begin_x', label: '巡线起点X', min: 0, max: 160, step: 1, unit: 'px', defaultValue: 40 },
+      { key: 'circle_exit', label: '环岛出环距离', min: 0.1, max: 3, step: 0.01, unit: 'm', defaultValue: 1.2 },
+    ],
+  },
+  {
+    title: '角速度环',
+    subtitle: '视觉外环与陀螺仪内环',
+    controls: [
+      { key: 'gyro', label: '角速度反馈', kind: 'toggle', defaultValue: 1 },
+      { key: 'gDbg', label: '手动目标模式', kind: 'toggle', defaultValue: 0 },
+      { key: 'gTar', label: '手动目标角速度', min: -360, max: 360, step: 1, unit: 'dps', defaultValue: 0 },
+      { key: 'gOP', label: '外环P', min: 0, max: 15, step: 0.01, defaultValue: 4.5 },
+      { key: 'gOD', label: '外环D', min: 0, max: 10, step: 0.01, defaultValue: 3.3 },
+      { key: 'gIP', label: '内环P', min: 0, max: 1.5, step: 0.005, defaultValue: 0.4 },
+      { key: 'gII', label: '内环I', min: 0, max: 0.2, step: 0.001, defaultValue: 0 },
+      { key: 'gTMax', label: '目标角速度上限', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 360 },
+      { key: 'gRMax', label: '差速上限', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 20 },
+      { key: 'gSign', label: '陀螺仪符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: -1 },
+      { key: 'tSign', label: '差速输出符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: 1 },
+    ],
+  },
+  {
+    title: '绕行几何',
+    subtitle: '识别速度、距离与航向外环',
+    controls: [
+      { key: 'dbNormalSpd', label: '正常巡线速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
+      { key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 10 },
+      { key: 'dbTurnAngle', label: '横移转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 25 },
+      { key: 'dbPassDist', label: '通过距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.8 },
+      { key: 'dbExitDist', label: '退出稳定距离', min: 0, max: 1, step: 0.01, unit: 'm', defaultValue: 0.15 },
+      { key: 'dbSafeDist', label: '目标后安全余量', min: 0, max: 1, step: 0.01, unit: 'm', defaultValue: 0.3 },
+      { key: 'dbRpsMps', label: 'RPS转m/s', min: 0.01, max: 0.1, step: 0.001, defaultValue: 0.047 },
+      { key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 45 },
+      { key: 'dbViewWait', label: '观察等待上限', min: 0, max: 2000, step: 10, unit: 'ms', defaultValue: 120 },
+      { key: 'dbHKp', label: '航向外环P', min: 0, max: 20, step: 0.1, defaultValue: 8 },
+      { key: 'dbHKd', label: '航向外环D', min: 0, max: 5, step: 0.05, defaultValue: 0.2 },
+      { key: 'dbYawSign', label: '绕行航向符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: -1 },
+    ],
+  },
+  {
+    title: '绕行速度与制动',
+    subtitle: '运动阶段速度、制动与测试距离',
+    controls: [
+      { key: 'dbTurnRps', label: '转向阶段速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10 },
+      { key: 'dbForwardRps', label: '通过阶段速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10 },
+      { key: 'dbExitRps', label: '退出阶段速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10 },
+      { key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 4000, step: 50, defaultValue: 4000 },
+      { key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 15 },
+      { key: 'dbBrakeTimeout', label: '制动超时', min: 1, max: 2000, step: 10, unit: 'ms', defaultValue: 300 },
+      { key: 'dbTestDist', label: 'TEST目标距离', min: 0, max: 5, step: 0.01, unit: 'm', defaultValue: 0.5 },
+    ],
+  },
+  {
+    title: '通信与图像',
+    subtitle: 'UDP链路和调试图像模式',
+    controls: [
+      { key: 'udp', label: 'Debugger UDP', kind: 'segment', options: [[0, '关闭'], [1, '波形'], [2, '波形+三线']], defaultValue: 2 },
+      { key: 'vofa', label: '传统VOFA回传', kind: 'toggle', defaultValue: 0 },
+      { key: 'is_udp_img', label: 'JPEG调试图像', kind: 'segment', options: [[0, '关闭'], [1, '鸟瞰'], [2, '原图']], defaultValue: 0 },
+    ],
+  },
+];
+
+const TUNING_CONFIGS = TUNING_GROUPS.flatMap((group) => group.controls);
+const TUNING_DEFAULTS = Object.fromEntries(
+  TUNING_CONFIGS.map((config) => [config.key, config.defaultValue]));
+
 function loadStoredScopeChannels() {
   try {
     const stored = localStorage.getItem(SCOPE_CHANNELS_STORAGE_KEY);
@@ -168,10 +259,13 @@ const state = {
   mode: 'live',
   liveParams: null,
   liveRoad: null,
+  liveTuning: null,
   displayParams: null,
   displayRoad: null,
+  displayTuning: null,
   displayParamTime: null,
   displayRoadTime: null,
+  displayTuningTime: null,
   lastPacketAt: 0,
   lastRoadAt: 0,
   previousRoadSequence: null,
@@ -183,10 +277,12 @@ const state = {
   scopeChannels: loadStoredScopeChannels(),
   roadColumnPercent: loadStoredRoadColumnPercent(),
   driveByTestDirection: 2,
+  pendingTuning: new Map(),
   replay: {
     events: [],
     paramEvents: [],
     roadEvents: [],
+    tuningEvents: [],
     duration: 0,
     currentTime: 0,
     playing: false,
@@ -200,6 +296,7 @@ let toastTimer = 0;
 let parameterLayoutKey = '';
 let parameterRows = new Map();
 let scopeOptionsKey = '';
+const tuningControlElements = new Map();
 
 function showToast(message) {
   elements.toast.textContent = message;
@@ -329,6 +426,223 @@ function applyRoadColumnPercent(percent, persist = true) {
   elements.dashboard.style.setProperty('--scope-column-size', `${100 - normalized}fr`);
   elements.roadColumnReset.textContent = `图像 ${normalized}%`;
   if (persist) localStorage.setItem(ROAD_COLUMN_STORAGE_KEY, String(normalized));
+}
+
+function tuningStepDecimals(step) {
+  const text = String(step);
+  return text.includes('.') ? text.length - text.indexOf('.') - 1 : 0;
+}
+
+function normalizeTuningValue(config, rawValue) {
+  let value = Number(rawValue);
+  if (!Number.isFinite(value)) value = Number(config.defaultValue);
+  if (config.kind === 'toggle') return value ? 1 : 0;
+  if (config.kind === 'segment') {
+    return config.options.some(([optionValue]) => Number(optionValue) === value)
+      ? value
+      : Number(config.defaultValue);
+  }
+  value = Math.max(config.min, Math.min(config.max, value));
+  const decimals = tuningStepDecimals(config.step);
+  const steps = Math.round((value - config.min) / config.step);
+  return Number((config.min + steps * config.step).toFixed(decimals));
+}
+
+function commandTuningValue(config, value) {
+  if (config.kind === 'toggle' || config.kind === 'segment') return String(Number(value));
+  return Number(value).toFixed(tuningStepDecimals(config.step));
+}
+
+function tuningValuesForDisplay() {
+  return { ...TUNING_DEFAULTS, ...(state.displayTuning || {}) };
+}
+
+function renderTuningControls() {
+  const values = tuningValuesForDisplay();
+  const replaying = state.mode === 'replay';
+
+  for (const [key, control] of tuningControlElements) {
+    const value = normalizeTuningValue(control.config, values[key]);
+    const editing = document.activeElement === control.range ||
+      document.activeElement === control.number;
+    control.root.classList.toggle('replay-locked', replaying);
+
+    if (control.range) {
+      control.range.disabled = replaying;
+      control.number.disabled = replaying;
+      if (!editing) {
+        control.range.value = String(value);
+        control.number.value = String(value);
+        control.root.classList.remove('has-preview');
+      }
+    }
+    if (control.toggle) {
+      control.toggle.disabled = replaying;
+      control.toggle.checked = Boolean(Number(value));
+    }
+    if (control.buttons) {
+      control.buttons.forEach((button) => {
+        button.disabled = replaying;
+        const selected = Number(button.dataset.value) === Number(value);
+        button.classList.toggle('selected', selected);
+        button.setAttribute('aria-pressed', String(selected));
+      });
+    }
+  }
+
+  if (replaying) {
+    elements.tuningSnapshotTime.textContent = state.displayTuningTime === null
+      ? '录像无调参快照'
+      : `参数 ${formatTime(state.displayTuningTime)}`;
+    elements.tuningModeHint.textContent = '回放模式仅显示，不能向小车发送';
+  } else {
+    elements.tuningSnapshotTime.textContent = state.liveTuning
+      ? '小车参数已同步'
+      : '等待参数快照';
+    elements.tuningModeHint.textContent = '拖动时只预览，松开滑块后发送';
+  }
+}
+
+async function commitTuningValue(config, rawValue) {
+  if (state.mode !== 'live') {
+    throw new Error('回放模式不能向小车发送调参指令');
+  }
+
+  const value = normalizeTuningValue(config, rawValue);
+  const activeControl = tuningControlElements.get(config.key);
+  if (activeControl) activeControl.root.classList.remove('has-preview');
+  const previousValue = (state.liveTuning && config.key in state.liveTuning)
+    ? state.liveTuning[config.key]
+    : config.defaultValue;
+  state.pendingTuning.set(config.key, { value, sentAt: Date.now() });
+  state.liveTuning = { ...TUNING_DEFAULTS, ...(state.liveTuning || {}), [config.key]: value };
+  state.displayTuning = state.liveTuning;
+  renderTuningControls();
+
+  try {
+    await sendCommand(`#${config.key}=${commandTuningValue(config, value)};`, { quiet: true });
+  } catch (error) {
+    const pending = state.pendingTuning.get(config.key);
+    if (pending && Number(pending.value) === Number(value)) {
+      state.pendingTuning.delete(config.key);
+      state.liveTuning = { ...state.liveTuning, [config.key]: previousValue };
+      state.displayTuning = state.liveTuning;
+      renderTuningControls();
+    }
+    throw error;
+  }
+}
+
+function buildTuningControls() {
+  const groupElements = TUNING_GROUPS.map((group) => {
+    const groupElement = document.createElement('section');
+    groupElement.className = 'tuning-group';
+    const heading = document.createElement('div');
+    heading.className = 'tuning-group-heading';
+    const title = document.createElement('h3');
+    title.textContent = group.title;
+    const subtitle = document.createElement('span');
+    subtitle.textContent = group.subtitle;
+    heading.append(title, subtitle);
+    groupElement.append(heading);
+
+    group.controls.forEach((config) => {
+      const root = document.createElement('div');
+      root.className = 'tuning-control';
+      root.dataset.tuningKey = config.key;
+      const labelRow = document.createElement('div');
+      labelRow.className = 'tuning-label-row';
+      const label = document.createElement('span');
+      label.textContent = config.label;
+      const code = document.createElement('code');
+      code.textContent = config.key;
+      labelRow.append(label, code);
+      root.append(labelRow);
+
+      const control = { config, root };
+      if (config.kind === 'toggle') {
+        const toggleLabel = document.createElement('label');
+        toggleLabel.className = 'tuning-toggle';
+        const toggle = document.createElement('input');
+        toggle.type = 'checkbox';
+        toggle.setAttribute('aria-label', config.label);
+        const track = document.createElement('span');
+        track.className = 'tuning-toggle-track';
+        const stateText = document.createElement('span');
+        stateText.className = 'tuning-toggle-text';
+        stateText.textContent = '关闭 / 开启';
+        toggleLabel.append(toggle, track, stateText);
+        root.append(toggleLabel);
+        control.toggle = toggle;
+        toggle.addEventListener('change', () => {
+          commitTuningValue(config, toggle.checked ? 1 : 0)
+            .catch((error) => showToast(error.message));
+        });
+      } else if (config.kind === 'segment') {
+        const segment = document.createElement('div');
+        segment.className = 'tuning-segment';
+        control.buttons = config.options.map(([value, text]) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.value = String(value);
+          button.textContent = text;
+          button.addEventListener('click', () => {
+            commitTuningValue(config, value).catch((error) => showToast(error.message));
+          });
+          segment.append(button);
+          return button;
+        });
+        root.append(segment);
+      } else {
+        const inputRow = document.createElement('div');
+        inputRow.className = 'tuning-input-row';
+        const range = document.createElement('input');
+        range.type = 'range';
+        range.min = String(config.min);
+        range.max = String(config.max);
+        range.step = String(config.step);
+        range.setAttribute('aria-label', `${config.label}滑块`);
+        const number = document.createElement('input');
+        number.type = 'number';
+        number.min = String(config.min);
+        number.max = String(config.max);
+        number.step = String(config.step);
+        number.setAttribute('aria-label', `${config.label}数值`);
+        const unit = document.createElement('span');
+        unit.className = 'tuning-unit';
+        unit.textContent = config.unit || '';
+        inputRow.append(range, number, unit);
+        root.append(inputRow);
+        control.range = range;
+        control.number = number;
+
+        range.addEventListener('input', () => {
+          number.value = range.value;
+          root.classList.add('has-preview');
+        });
+        range.addEventListener('change', () => {
+          commitTuningValue(config, range.value).catch((error) => showToast(error.message));
+        });
+        number.addEventListener('input', () => {
+          if (Number.isFinite(Number(number.value))) range.value = number.value;
+          root.classList.add('has-preview');
+        });
+        number.addEventListener('change', () => {
+          commitTuningValue(config, number.value).catch((error) => showToast(error.message));
+        });
+        number.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') number.blur();
+        });
+      }
+
+      tuningControlElements.set(config.key, control);
+      groupElement.append(root);
+    });
+    return groupElement;
+  });
+
+  elements.tuningControls.replaceChildren(...groupElements);
+  renderTuningControls();
 }
 
 function renderParameters(params) {
@@ -679,6 +993,7 @@ function updateScopeModeText() {
 function renderDisplaySnapshot() {
   updateScopeOptions(state.displayParams || {});
   renderParameters(state.displayParams || {});
+  renderTuningControls();
   elements.parameterTimestamp.textContent = state.mode === 'live'
     ? '实时'
     : (state.displayParamTime === null ? '参数 --' : `参数 ${formatTime(state.displayParamTime)}`);
@@ -721,6 +1036,31 @@ function applyRoad(receivedAt, road) {
   }
 }
 
+function applyTuning(receivedAt, tuning) {
+  const merged = { ...TUNING_DEFAULTS, ...tuning };
+  const now = Date.now();
+
+  // 指令发出到下一份250ms快照之间保留前端预期值。快照确认一致后清除，
+  // 若1.5秒仍未确认则以小车实际回传为准，避免界面长期显示假状态。
+  for (const [key, pending] of state.pendingTuning) {
+    if (Number(merged[key]) === Number(pending.value)) {
+      state.pendingTuning.delete(key);
+    } else if (now - pending.sentAt < 1500) {
+      merged[key] = pending.value;
+    } else {
+      state.pendingTuning.delete(key);
+    }
+  }
+
+  state.liveTuning = merged;
+  state.lastPacketAt = receivedAt;
+  if (state.mode === 'live') {
+    state.displayTuning = merged;
+    state.displayTuningTime = receivedAt;
+    renderTuningControls();
+  }
+}
+
 function applyStatus(status) {
   state.serverStatus = status;
   elements.udpPort.textContent = status.udpPort;
@@ -752,8 +1092,10 @@ function setMode(mode) {
     state.trend = state.liveTrend;
     state.displayParams = state.liveParams;
     state.displayRoad = state.liveRoad;
+    state.displayTuning = state.liveTuning;
     state.displayParamTime = state.lastPacketAt || null;
     state.displayRoadTime = state.lastRoadAt || null;
+    state.displayTuningTime = state.liveTuning ? state.lastPacketAt : null;
     renderDisplaySnapshot();
     drawTrend();
   } else {
@@ -778,15 +1120,19 @@ function applyReplayTime(time) {
   const clamped = Math.max(0, Math.min(state.replay.duration, time));
   const paramIndex = eventIndexAtTime(clamped, state.replay.paramEvents);
   const roadIndex = eventIndexAtTime(clamped, state.replay.roadEvents);
+  const tuningIndex = eventIndexAtTime(clamped, state.replay.tuningEvents);
   const paramEvent = paramIndex >= 0 ? state.replay.paramEvents[paramIndex] : null;
   const roadEvent = roadIndex >= 0 ? state.replay.roadEvents[roadIndex] : null;
+  const tuningEvent = tuningIndex >= 0 ? state.replay.tuningEvents[tuningIndex] : null;
   const roadDisabled = paramEvent && 'udp_mode' in paramEvent.data && Number(paramEvent.data.udp_mode) < 2;
 
   state.replay.currentTime = clamped;
   state.displayParams = paramEvent?.data || null;
   state.displayRoad = roadDisabled ? null : (roadEvent?.data || null);
+  state.displayTuning = tuningEvent?.data || null;
   state.displayParamTime = paramEvent?.t ?? null;
   state.displayRoadTime = roadEvent?.t ?? null;
+  state.displayTuningTime = tuningEvent?.t ?? null;
   elements.timeline.value = String(Math.round(clamped));
   elements.playbackTime.textContent = formatTime(clamped);
   elements.frameInterval.textContent = roadEvent
@@ -859,12 +1205,13 @@ async function loadSelectedRecording() {
   const events = text.split(/\r?\n/)
     .filter(Boolean)
     .map((line) => JSON.parse(line))
-    .filter((event) => event.type === 'params' || event.type === 'road')
+    .filter((event) => event.type === 'params' || event.type === 'road' || event.type === 'tuning')
     .sort((left, right) => left.t - right.t);
   if (!events.length) throw new Error('录像中没有有效遥测事件');
   state.replay.events = events;
   state.replay.paramEvents = events.filter((event) => event.type === 'params');
   state.replay.roadEvents = events.filter((event) => event.type === 'road');
+  state.replay.tuningEvents = events.filter((event) => event.type === 'tuning');
   state.replay.duration = events[events.length - 1].t;
   state.replay.currentTime = 0;
   elements.timeline.max = String(Math.max(1, Math.ceil(state.replay.duration)));
@@ -887,7 +1234,7 @@ async function toggleRecording() {
   await loadRecordings();
 }
 
-async function sendCommand(command) {
+async function sendCommand(command, options = {}) {
   const normalized = String(command || '').trim();
   if (!normalized) return;
   const response = await fetch('/api/command', {
@@ -902,7 +1249,8 @@ async function sendCommand(command) {
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error || '发送失败');
   elements.commandStatus.textContent = `已发送 ${payload.command} → ${payload.ip}:${payload.port}`;
-  showToast(`已发送 ${payload.command}`);
+  if (!options.quiet) showToast(`已发送 ${payload.command}`);
+  return payload;
 }
 
 function bindEvents() {
@@ -970,6 +1318,10 @@ function connectEvents() {
     const payload = JSON.parse(event.data);
     applyParams(payload.receivedAt, payload.params);
   });
+  source.addEventListener('tuning', (event) => {
+    const payload = JSON.parse(event.data);
+    applyTuning(payload.receivedAt, payload.tuning);
+  });
   source.addEventListener('road', (event) => {
     const payload = JSON.parse(event.data);
     applyRoad(payload.receivedAt, payload.road);
@@ -997,6 +1349,7 @@ async function initialize() {
   applyRoadColumnPercent(state.roadColumnPercent, false);
   renderScopeLegend();
   updateScopeOptions({});
+  buildTuningControls();
   bindEvents();
   drawRoad();
   drawDetection();
