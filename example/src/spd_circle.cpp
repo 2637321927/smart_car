@@ -13,6 +13,7 @@ namespace {
 
 constexpr int kMaxForwardPwm = 8000;
 constexpr int kMaxReversePwm = 4000;
+constexpr int kMaxBrakeReversePwm = 7000;
 
 // 增量式PID不仅依赖当前PWM，还依赖前两次误差。主动制动结束或停车时，
 // 两类状态必须一起清零，否则下一次闭环会把制动前后的误差突变再次叠加到PWM。
@@ -29,10 +30,18 @@ int clamp_pwm(int pwm)
     return pwm;
 }
 
-void apply_motor_pwm(int motor1_pwm, int motor2_pwm)
+int clamp_brake_pwm(int pwm)
 {
-    current_pwm1 = clamp_pwm(motor1_pwm);
-    current_pwm2 = clamp_pwm(motor2_pwm);
+    // This path is braking-only: forward PWM is rejected rather than clamped.
+    if (pwm > 0) return 0;
+    if (pwm < -kMaxBrakeReversePwm) return -kMaxBrakeReversePwm;
+    return pwm;
+}
+
+void write_motor_pwm(int motor1_pwm, int motor2_pwm)
+{
+    current_pwm1 = motor1_pwm;
+    current_pwm2 = motor2_pwm;
 
     if (current_pwm1 >= 0) {
         polar_pwm1.gpio_level_set(GPIO_HIGH);
@@ -49,6 +58,17 @@ void apply_motor_pwm(int motor1_pwm, int motor2_pwm)
         polar_pwm2.gpio_level_set(GPIO_LOW);
         pwm2.atim_pwm_set_duty(-current_pwm2);
     }
+}
+
+void apply_motor_pwm(int motor1_pwm, int motor2_pwm)
+{
+    write_motor_pwm(clamp_pwm(motor1_pwm), clamp_pwm(motor2_pwm));
+}
+
+void apply_motor_brake_pwm(int motor1_pwm, int motor2_pwm)
+{
+    write_motor_pwm(clamp_brake_pwm(motor1_pwm),
+                    clamp_brake_pwm(motor2_pwm));
 }
 
 } // namespace
@@ -132,6 +152,14 @@ void motor_speed_force_pwm(int motor1_pwm, int motor2_pwm)
     // 可避免绕行脚本绕过软件的正反向PWM限幅。
     std::lock_guard<std::mutex> lock(g_motor_speed_mutex);
     apply_motor_pwm(motor1_pwm, motor2_pwm);
+}
+
+void motor_speed_force_brake_pwm(int motor1_pwm, int motor2_pwm)
+{
+    // Only the active-brake state calls this API. Normal PID and force-PWM
+    // paths remain limited to 4000 reverse PWM by apply_motor_pwm().
+    std::lock_guard<std::mutex> lock(g_motor_speed_mutex);
+    apply_motor_brake_pwm(motor1_pwm, motor2_pwm);
 }
 
 /********************************************************************************

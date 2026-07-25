@@ -55,7 +55,7 @@ volatile float drive_by_heading_tolerance_deg = 2.0f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
 volatile float drive_by_yaw_sign = -1.0f;
-volatile int drive_by_brake_pwm = 4000;
+volatile int drive_by_brake_pwm = 7000;
 volatile float drive_by_brake_release_rps = 15.0f;
 volatile int drive_by_brake_confirm_count = 2;
 volatile int drive_by_brake_timeout_ms = 300;
@@ -64,6 +64,7 @@ volatile float drive_by_test_target_distance_m = 0.50f;
 namespace {
 
 constexpr int kInferFrames = 3;
+constexpr int kBrakePwmMax = 7000;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
 constexpr int kHeadingSettleCycles = 3;
@@ -402,7 +403,8 @@ void start_active_brake()
     g_brake_confirm_count = 0;
     g_brake_start = DriveByClock::now();
     g_debug.brake_active = 1;
-    g_debug.brake_pwm = -std::abs((int)drive_by_brake_pwm);
+    g_debug.brake_pwm = -std::min(kBrakePwmMax,
+                                  std::abs((int)drive_by_brake_pwm));
     g_debug.brake_elapsed_ms = 0;
 }
 
@@ -1491,10 +1493,11 @@ bool drive_by_speed_control_update()
         return true;
     }
 
-    const int brake_pwm = std::min(4000, std::abs((int)drive_by_brake_pwm));
+    const int brake_pwm = std::min(kBrakePwmMax,
+                                   std::abs((int)drive_by_brake_pwm));
     g_debug.brake_active = 1;
     g_debug.brake_pwm = -brake_pwm;
-    motor_speed_force_pwm(-brake_pwm, -brake_pwm);
+    motor_speed_force_brake_pwm(-brake_pwm, -brake_pwm);
     return true;
 }
 
