@@ -88,7 +88,7 @@ void gyro_yaw_rate_control_init(void);
 void gyro_yaw_rate_control_reset(void);
 
 // 只清空角速度控制器的历史误差和积分，不清空异步陀螺仪缓存。
-// 绕行脚本进入 S 形时使用，避免 reset 后等待下一次硬件采样。
+// 绕行脚本进入航向控制阶段时使用，避免 reset 后等待下一次硬件采样。
 void gyro_yaw_rate_control_reset_controller(void);
 
 // 返回 MPU6050 是否初始化并完成零偏标定。

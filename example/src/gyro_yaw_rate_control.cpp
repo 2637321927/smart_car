@@ -399,7 +399,7 @@ void gyro_yaw_rate_control_reset(void)
 
 void gyro_yaw_rate_control_reset_controller(void)
 {
-    // 绕行进入 S 形时只清除控制器历史量，保留最近一次有效陀螺仪数据。
+    // 绕行进入航向控制阶段时只清除控制器历史量，保留最近一次有效陀螺仪数据。
     // 如果调用完整 reset，下一次异步采样到来前会短暂被判定为 stale。
     g_last_vision_error = 0.0f;
     g_rate_integral = 0.0f;

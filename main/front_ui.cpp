@@ -231,7 +231,7 @@ void front_ui_poll()
     if (pressed_edge(key_prev, prev_state)) {
         drive_by_toggle_enable();
         if (drive_by_is_enabled()) {
-            // 目标板模式正常阶段固定35RPS，红色触发后由drive_by降到20RPS。
+            // 目标板模式正常阶段固定35RPS，红色触发后由drive_by主动制动并降到10RPS。
             select_speed_strategy(35);
         }
         dirty = true;

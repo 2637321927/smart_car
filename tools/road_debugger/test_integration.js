@@ -108,6 +108,8 @@ async function main() {
       I: 14,
       gyro: 1,
       dbTurnAngle: 25,
+      dbReturnBias: 5,
+      dbHMax: 200,
       udp: 2,
     })));
     await sendUdp(makeRoadPacket());
@@ -137,8 +139,8 @@ async function main() {
       'P', 'I', 'D', 'spd', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
       'gyro', 'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax',
       'gSign', 'tSign', 'dbNormalSpd', 'dbRecSpd', 'dbTurnAngle', 'dbPassDist',
-      'dbExitDist', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
-      'dbHKd', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
+      'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
+      'dbHKd', 'dbHMax', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
       'dbBrakeRelease', 'dbBrakeTimeout', 'dbTestDist', 'circle_exit', 'udp', 'vofa',
       'is_udp_img',
     ].forEach((key) => assert(appResponse.text.includes(`key: '${key}'`), key));

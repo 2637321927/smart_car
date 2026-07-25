@@ -16,7 +16,7 @@
 
 using DriveByClock = std::chrono::steady_clock;
 
-// ===================== 高速识别和 S 形绕行调参区 =====================
+// ===================== 高速识别和三阶段绕行调参区 =====================
 // K0 开启但没有目标时按 35RPS 正常巡线；红色触发后只把“基准速度”降到
 // 10RPS，普通方向环仍会在该基准上叠加左右差速。
 volatile float drive_by_normal_speed_rps = 35.0f;
@@ -25,10 +25,10 @@ volatile float drive_by_rps_to_mps = 0.047f;
 
 // 这些整数变量保留原名称，避免之前的调参经验失效。闭环版本中
 // drive_by_turn_speed_rps 表示转向阶段的前进基准速度，不再表示外侧轮速度。
-int drive_by_turn_speed_rps = 10;
+int drive_by_turn_speed_rps = 15;
 int drive_by_turn_inner_speed_rps = 0; // 兼容旧脚本，新的角度闭环不直接使用。
-int drive_by_forward_speed_rps = 10;
-int drive_by_exit_speed_rps = 10;
+int drive_by_forward_speed_rps = 20;
+int drive_by_exit_speed_rps = 15;
 int drive_by_turn_out_ms = 600;        // 兼容旧参数，新的状态切换主要看角度。
 int drive_by_forward_ms = 400;         // 兼容旧参数，新的状态切换主要看距离。
 int drive_by_turn_back_ms = 800;       // 兼容旧参数，新的状态切换主要看角度。
@@ -38,8 +38,8 @@ int drive_by_infer_timeout_ms = 500;
 int drive_by_cooldown_ms = 1000;
 
 volatile float drive_by_turn_angle_deg = 25.0f;
-volatile float drive_by_pass_distance_m = 0.80f;
-volatile float drive_by_exit_distance_m = 0.15f;
+volatile float drive_by_return_bias_deg = 5.0f;
+volatile float drive_by_pass_distance_m = 0.35f;
 volatile float drive_by_target_after_margin_m = 0.30f;
 volatile float drive_by_view_angle_max_deg = 45.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
@@ -90,11 +90,9 @@ enum DriveByState {
     DB_INFER,
     DB_WAIT_BRAKE,
     DB_START_MOTION_PENDING,
-    DB_SHIFT_OUT_A,
-    DB_SHIFT_OUT_B,
-    DB_PASS_TARGET,
-    DB_SHIFT_IN_A,
-    DB_SHIFT_IN_B,
+    DB_TURN_OUT,
+    DB_PASS_SHORT,
+    DB_TURN_TO_TRACK,
     DB_FINISH_PENDING,
 };
 
@@ -175,6 +173,7 @@ volatile bool g_brake_completed = false;
 volatile bool g_inference_complete = false;
 volatile bool g_test_mode = false;
 volatile bool g_stop_requested = false;
+volatile bool g_report_pending = false;
 DriveByState g_state = DB_IDLE;
 DriveByAbortReason g_abort_reason = DB_ABORT_NONE;
 DriveByClock::time_point g_state_start = DriveByClock::now();
@@ -236,11 +235,9 @@ const char *state_name(DriveByState state)
     case DB_INFER: return "INFER";
     case DB_WAIT_BRAKE: return "WAIT_BRAKE";
     case DB_START_MOTION_PENDING: return "START_MOTION_PENDING";
-    case DB_SHIFT_OUT_A: return "SHIFT_OUT_A";
-    case DB_SHIFT_OUT_B: return "SHIFT_OUT_B";
-    case DB_PASS_TARGET: return "PASS_TARGET";
-    case DB_SHIFT_IN_A: return "SHIFT_IN_A";
-    case DB_SHIFT_IN_B: return "SHIFT_IN_B";
+    case DB_TURN_OUT: return "TURN_OUT";
+    case DB_PASS_SHORT: return "PASS_SHORT";
+    case DB_TURN_TO_TRACK: return "TURN_TO_TRACK";
     case DB_FINISH_PENDING: return "FINISH_PENDING";
     default: return "UNKNOWN";
     }
@@ -254,11 +251,9 @@ int detection_stage(DriveByState state)
     case DB_INFER: return 3;
     case DB_WAIT_BRAKE: return 3;
     case DB_START_MOTION_PENDING:
-    case DB_SHIFT_OUT_A:
-    case DB_SHIFT_OUT_B:
-    case DB_PASS_TARGET:
-    case DB_SHIFT_IN_A:
-    case DB_SHIFT_IN_B:
+    case DB_TURN_OUT:
+    case DB_PASS_SHORT:
+    case DB_TURN_TO_TRACK:
     case DB_FINISH_PENDING:
         return 4;
     default:
@@ -792,6 +787,7 @@ void reset_runtime(bool restore_outputs)
     g_inference_complete = false;
     g_test_mode = false;
     g_stop_requested = false;
+    g_report_pending = false;
     g_state = DB_IDLE;
     g_abort_reason = DB_ABORT_NONE;
     g_candidate_retry_after = DriveByClock::now();
@@ -833,6 +829,7 @@ void finish_session(DriveByAbortReason reason)
     g_inference_complete = false;
     g_test_mode = false;
     g_stop_requested = false;
+    g_report_pending = false;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
     g_far_candidate_count = 0;
@@ -855,6 +852,7 @@ void start_approach_session(const FarRedCandidate& candidate)
     g_inference_complete = false;
     g_test_mode = false;
     g_stop_requested = false;
+    g_report_pending = false;
     g_debug.test_mode = 0;
     g_abort_reason = DB_ABORT_NONE;
     item_flag = 1;
@@ -953,7 +951,7 @@ void begin_motion_script(int result)
     g_track_heading_reference_deg = g_target_track_heading_global_deg;
     g_track_reference_valid = true;
     gyro_yaw_rate_control_reset_controller();
-    enter_state(DB_SHIFT_OUT_A);
+    enter_state(DB_TURN_OUT);
 }
 
 bool heading_is_settled(float heading_error_deg, float gyro_dps)
@@ -970,9 +968,14 @@ bool heading_is_settled(float heading_error_deg, float gyro_dps)
 float phase_offset_deg()
 {
     const float side_offset = g_turn_side * drive_by_yaw_sign * drive_by_turn_angle_deg;
+    const float return_offset =
+        -g_turn_side * drive_by_yaw_sign * std::fabs((float)drive_by_return_bias_deg);
     switch (g_state) {
-    case DB_SHIFT_OUT_A: return side_offset;
-    case DB_SHIFT_IN_A: return -side_offset;
+    case DB_TURN_OUT:
+    case DB_PASS_SHORT:
+        return side_offset;
+    case DB_TURN_TO_TRACK:
+        return return_offset;
     default: return 0.0f;
     }
 }
@@ -980,15 +983,15 @@ float phase_offset_deg()
 float phase_base_speed_rps()
 {
     switch (g_state) {
-    case DB_PASS_TARGET: return (float)drive_by_forward_speed_rps;
-    case DB_SHIFT_IN_B: return (float)drive_by_exit_speed_rps;
+    case DB_PASS_SHORT: return (float)drive_by_forward_speed_rps;
+    case DB_TURN_TO_TRACK: return (float)drive_by_exit_speed_rps;
     default: return (float)drive_by_turn_speed_rps;
     }
 }
 
 bool motion_phase_guard_exceeded()
 {
-    if (g_state == DB_PASS_TARGET) {
+    if (g_state == DB_PASS_SHORT) {
         return elapsed_ms(g_state_start) > kPassPhaseTimeoutMs ||
             g_phase_distance_m > kPassPhaseMaxDistanceM;
     }
@@ -1007,6 +1010,35 @@ void request_motion_stop(DriveByAbortReason reason)
     set_speed_of_motor2_rps = 0.0f;
     pwm1_duty_rps = 0.0f;
     pwm2_duty_rps = 0.0f;
+}
+
+void complete_motion_handoff()
+{
+    // 该函数运行在dir_timer中，只修改缓存控制状态，不能在这里打印。
+    // busy清零后，main.cpp会在同一个8ms回调内使用最新视觉误差执行普通方向环。
+    clear_active_brake(true);
+    gyro_yaw_rate_control_reset_controller();
+
+    // 不恢复识别前保存的旧差速，普通方向环会立刻计算一份新的差速。
+    g_saved.valid = false;
+    command_motion_wheels(drive_by_normal_speed_rps, 0.0f);
+
+    g_abort_reason = DB_ABORT_NONE;
+    g_debug.abort_reason = (int)DB_ABORT_NONE;
+    g_drive_by_busy = false;
+    g_inference_complete = false;
+    g_test_mode = false;
+    g_stop_requested = false;
+    g_debug.test_mode = 0;
+    g_state = DB_IDLE;
+    g_far_candidate_count = 0;
+    g_debug.red_candidate = 0;
+    g_debug.red_candidate_count = 0;
+    g_debug.detection_stage = 0;
+    g_cooldown_start = DriveByClock::now();
+
+    // 报告留给相机线程输出，避免控制权交接被printf阻塞。
+    g_report_pending = true;
 }
 
 void update_motion_state()
@@ -1047,39 +1079,25 @@ void update_motion_state()
     g_debug.turn_rps = turn_rps;
 
     switch (g_state) {
-    case DB_SHIFT_OUT_A:
+    case DB_TURN_OUT:
         if (heading_is_settled(heading_error_deg, gyro_dps)) {
-            enter_state(DB_SHIFT_OUT_B);
+            enter_state(DB_PASS_SHORT);
         }
         break;
 
-    case DB_SHIFT_OUT_B:
-        if (heading_is_settled(heading_error_deg, gyro_dps)) {
-            enter_state(DB_PASS_TARGET);
-        }
-        break;
-
-    case DB_PASS_TARGET: {
+    case DB_PASS_SHORT: {
         const float pass_end_distance =
             g_target_distance_at_trigger_m + drive_by_target_after_margin_m;
-        if (g_distance_since_trigger_m >= pass_end_distance) {
-            enter_state(DB_SHIFT_IN_A);
+        if (g_phase_distance_m >= drive_by_pass_distance_m &&
+            g_distance_since_trigger_m >= pass_end_distance) {
+            enter_state(DB_TURN_TO_TRACK);
         }
         break;
     }
 
-    case DB_SHIFT_IN_A:
+    case DB_TURN_TO_TRACK:
         if (heading_is_settled(heading_error_deg, gyro_dps)) {
-            enter_state(DB_SHIFT_IN_B);
-        }
-        break;
-
-    case DB_SHIFT_IN_B:
-        if (heading_is_settled(heading_error_deg, gyro_dps) &&
-            g_phase_distance_m >= drive_by_exit_distance_m) {
-            // 报告输出和控制参数恢复留给相机主线程，避免在8ms方向线程printf。
-            command_motion_wheels(drive_by_normal_speed_rps, 0.0f);
-            enter_state(DB_FINISH_PENDING);
+            complete_motion_handoff();
         }
         break;
 
@@ -1177,12 +1195,10 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
         // 由下一次8ms方向周期启动闭环，相机线程不写运动控制量。
         break;
 
-    case DB_SHIFT_OUT_A:
-    case DB_SHIFT_OUT_B:
-    case DB_PASS_TARGET:
-    case DB_SHIFT_IN_A:
-    case DB_SHIFT_IN_B:
-        // 绕行运动闭环已迁移到8ms dir_timer，相机线程只继续更新道路几何缓存。
+    case DB_TURN_OUT:
+    case DB_PASS_SHORT:
+    case DB_TURN_TO_TRACK:
+        // 绕行运动闭环在8ms dir_timer中运行，相机线程只更新道路几何缓存。
         break;
 
     case DB_FINISH_PENDING:
@@ -1245,6 +1261,12 @@ void drive_by_init()
 
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
 {
+    if (g_report_pending) {
+        // 8ms控制回调已经恢复普通巡线，这里只补做不会影响转向的报告输出。
+        g_report_pending = false;
+        print_recognition_report(item_flag);
+    }
+
     // TEST模式不改变K0开关，因此即使目标板模式关闭，也必须允许已经启动的
     // 测试脚本继续运行；只有普通识别流程受K0开关约束。
     if (!g_drive_by_enable && !g_test_mode) {
@@ -1367,6 +1389,7 @@ bool drive_by_start_test(int simulated_item_flag,
     g_track_reference_valid = false;
     g_abort_reason = DB_ABORT_NONE;
     g_stop_requested = false;
+    g_report_pending = false;
     g_inference_complete = true;
     g_pending_result = simulated_item_flag;
     item_flag = simulated_item_flag;
@@ -1419,7 +1442,7 @@ void drive_by_update_track_geometry()
         g_current_track_heading_relative_deg = current_heading_relative_deg;
     }
 
-    // 目标位置和观察夹角只在识别阶段需要。进入S形后锁定目标位置处切线，
+    // 目标位置和观察夹角只在识别阶段需要。进入三阶段运动后锁定目标位置处切线，
     // 不再用横移时的视觉中线更新目标，否则目标航向会跟着车身一起漂移。
     float target_track_heading_relative_deg = 0.0f;
     float view_angle_deg = g_debug.view_angle_deg;
@@ -1471,11 +1494,9 @@ bool drive_by_is_recognizing()
 bool drive_by_is_motion_phase()
 {
     return g_drive_by_busy &&
-        (g_state == DB_SHIFT_OUT_A ||
-         g_state == DB_SHIFT_OUT_B ||
-         g_state == DB_PASS_TARGET ||
-         g_state == DB_SHIFT_IN_A ||
-         g_state == DB_SHIFT_IN_B);
+        (g_state == DB_TURN_OUT ||
+         g_state == DB_PASS_SHORT ||
+         g_state == DB_TURN_TO_TRACK);
 }
 
 bool drive_by_should_suspend_track_features()

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>高速滚动识别与 S 形绕行设计及实验方案</title>
+  <title>高速滚动识别与三阶段绕行设计及实验方案</title>
   <style>
     :root {
       --ink: #17211b;
@@ -246,11 +246,11 @@
   <header class="hero">
     <div class="hero-inner">
       <p class="eyebrow">SMART CAR · DRIVE-BY EXPERIMENT</p>
-      <h1>高速滚动识别与 S 形绕行设计及实验方案</h1>
-      <p class="subtitle">当前只进行方案设计和基线采集。明日完成实验并反馈数据，随后修订实现计划，审核通过后再修改控制代码。</p>
+      <h1>高速滚动识别与三阶段绕行设计及实验方案</h1>
+      <p class="subtitle">当前实现采用主动制动、三帧投票和三阶段航向闭环；本文用于记录原理、默认参数和实车调试方法。</p>
       <div class="badges">
         <span class="badge">巡线目标 35RPS</span>
-        <span class="badge">绕行目标 24.5RPS</span>
+        <span class="badge">绕行速度 15/20/15RPS</span>
         <span class="badge">红色出现后才推理</span>
         <span class="badge">有限时域双积分</span>
       </div>
@@ -265,7 +265,7 @@
       <li><a href="#recognition">识别与性能策略</a></li>
       <li><a href="#geometry">目标位置、切线与车板连线</a></li>
       <li><a href="#integration">有限时域陀螺仪与编码器积分</a></li>
-      <li><a href="#states">S 形绕行状态机</a></li>
+      <li><a href="#states">三阶段绕行状态机</a></li>
       <li><a href="#straight-example">直道完整绕行示例</a></li>
       <li><a href="#curve-example">缓弯完整绕行示例</a></li>
       <li><a href="#experiments">明日实验计划</a></li>
@@ -277,22 +277,22 @@
   <main>
     <section id="goal">
       <h2>1. 任务目标</h2>
-      <p>当前目标板流程为：</p>
+      <p>改造前的历史流程为：</p>
       <pre><code>检测到红色
 → 停车约 200ms
-→ 停车状态下完成 5 帧推理
+→ 停车状态下完成多帧推理
 → 按固定轮速、固定时间执行绕行
 → 恢复巡线</code></pre>
-      <p>计划改造为：</p>
+      <p>当前实现流程为：</p>
       <pre><code>35RPS 正常巡线
 → 只执行低负担红色检测
 → 检测到红色后才启动 NCNN
-→ 3 帧异步推理，同时将目标速度直接改为 24.5RPS
-→ 到达触发距离后开始 S 形绕行
+→ 远距候选成立后主动制动，释放后以 10RPS 识别
+→ 三帧投票完成且制动完成后开始三阶段绕行
 → 绕行期间使用陀螺仪角度积分和编码器距离积分
-→ 视觉赛道切线用于修正缓弯参考方向
-→ 回正后立即恢复正常巡线和 35RPS</code></pre>
-      <div class="notice">本方案不在软件中增加速度斜坡。目标速度从 35RPS 直接切换到 24.5RPS，由现有速度环和车辆约 150ms 的响应完成减速。</div>
+→ 锁定目标位置处赛道切线作为三阶段航向基准
+→ 第二转朝赛道内侧预偏 5° 后立即恢复正常巡线和 35RPS</code></pre>
+      <div class="notice">三阶段默认基准速度依次为15RPS、20RPS、15RPS，实测换算采用1RPS≈0.047m/s。</div>
     </section>
 
     <section id="overview">
@@ -304,12 +304,12 @@
           <tr><td>NCNN 分类</td><td>判断直行、左绕或右绕</td><td>只在检测到红色后运行 3 个有效新帧</td></tr>
           <tr><td>视觉赛道切线</td><td>给出直道或缓弯的实时方向基准</td><td>接近目标和绕行期间</td></tr>
           <tr><td>MPU6050 角速度</td><td>角速度内环反馈</td><td>正常行驶和绕行期间</td></tr>
-          <tr><td>MPU6050 角度积分</td><td>记录本次绕行中的连续车身航向</td><td>只从 S 形开始到回正结束</td></tr>
-          <tr><td>编码器积分</td><td>判断已经行驶多远、是否越过目标</td><td>只从 S 形开始到回正结束</td></tr>
+          <tr><td>MPU6050 角度积分</td><td>记录本次绕行中的连续车身航向</td><td>从目标会话开始到第二转结束</td></tr>
+          <tr><td>编码器积分</td><td>判断已经行驶多远、是否越过目标</td><td>从目标会话开始到第二转结束</td></tr>
           <tr><td>速度环</td><td>执行左右轮目标速度</td><td>始终运行</td></tr>
         </tbody>
       </table>
-      <p>正常巡线期间不累计绕行航向和距离。每次开始 S 形时清零积分，最后回正后停止并丢弃本次积分，避免陀螺仪零偏长期累计。</p>
+      <p>正常巡线期间不累计绕行航向和距离。目标会话开始时清零积分，第二转完成后停止并丢弃本次积分，避免陀螺仪零偏长期累计。</p>
     </section>
 
     <section id="recognition">
@@ -320,11 +320,11 @@
 
 K0 开启、没有红色
 → 每 2 帧对裁剪后的识别区域做一次 HSV 红色检测
-→ NCNN worker 保持休眠
+→ 不调用 NCNN
 
 确认检测到红色
 → 提取目标 ROI
-→ 目标速度直接设置为 24.5RPS
+→ 主动制动释放后把基准速度设置为 10RPS
 → 判断目标板观察角度
 → 观察角度合适时才提交 NCNN</code></pre>
       <p>红色检测只处理有效裁剪区域，不对整幅 <code>320×240</code> 图像执行完整 HSV、形态学和轮廓搜索。</p>
@@ -337,7 +337,7 @@ K0 开启、没有红色
         <li><code>1:1:1</code>、超时或不足 3 帧时按直行处理。</li>
         <li>worker 无任务时通过条件变量休眠。</li>
       </ul>
-      <div class="notice">当前代码仍然是停车后同步推理 5 帧。明日实验测量的是当前识别能力和性能基线，不代表高速版已经实现。</div>
+      <div class="notice">当前代码采用同步三帧投票；若前两帧有效结果一致，会直接形成多数票并提前结束。识别期间保持10RPS基准和普通方向环。</div>
     </section>
 
     <section id="geometry">
@@ -372,7 +372,7 @@ K0 开启、没有红色
 drive_by_yaw_deg 不累计
 drive_by_distance_m 不累计
 
-进入 S 形：
+目标会话开始：
 drive_by_yaw_deg = 0°
 drive_by_distance_m = 0m
 phase_distance_m = 0m
@@ -383,10 +383,10 @@ phase_distance_m = 0m
 drive_by_yaw_deg += gyro_dps × dt
 drive_by_distance_m += 平均编码器RPS × db_rps_to_mps × dt
 
-回正完成：
+第二转完成：
 恢复正常视觉巡线和 35RPS
 停止并丢弃本次两项积分</code></pre>
-      <p>一次 S 形预计持续约 <code>1～2s</code>。陀螺仪积分在有限时域内是重要的连续姿态数据，但不会在正常巡线中无限累计。</p>
+      <p>一次三阶段绕行预计持续约 <code>1～2s</code>。陀螺仪积分在有限时域内是重要的连续姿态数据，但不会在正常巡线中无限累计。</p>
       <h3>5.2 陀螺仪与视觉赛道方向融合</h3>
       <pre><code>vehicle_yaw = drive_by_yaw_deg
 track_heading = vehicle_yaw + track_relative_heading
@@ -399,102 +399,87 @@ heading_error = desired_vehicle_yaw - vehicle_yaw</code></pre>
         <li>回正后丢弃积分，不产生长期漂移。</li>
       </ul>
       <h3>5.3 编码器比例必须实测</h3>
-      <pre><code>db_rps_to_mps = 2 / 35 ≈ 0.0571</code></pre>
-      <div class="notice">该数值只是根据“35RPS 约 2m/s”得到的经验初值。当前全局里程计按轮胎周长换算，与实车经验速度不一致，高速绕行必须先做定距测速。</div>
+      <pre><code>db_rps_to_mps = 0.047</code></pre>
+      <div class="notice">该值来自当前定距测速，是三阶段距离积分的实测初值；更换轮胎、传动比或场地后仍应重新标定。</div>
     </section>
 
     <section id="states">
-      <h2>6. S 形绕行状态机</h2>
+      <h2>6. 三阶段绕行状态机</h2>
       <table>
-        <thead><tr><th>阶段</th><th>相对赛道航向目标</th><th>目的</th></tr></thead>
+        <thead><tr><th>阶段</th><th>相对目标位置赛道切线的航向</th><th>默认基准速度</th><th>目的</th></tr></thead>
         <tbody>
-          <tr><td><code>SHIFT_OUT_A</code></td><td>左右对应 ±25°</td><td>向要求的一侧移出</td></tr>
-          <tr><td><code>SHIFT_OUT_B</code></td><td>0°</td><td>重新与赛道平行</td></tr>
-          <tr><td><code>PASS_TARGET</code></td><td>0°</td><td>沿赛道方向通过目标</td></tr>
-          <tr><td><code>SHIFT_IN_A</code></td><td>与第一次相反的 ∓25°</td><td>向原赛道中心回移</td></tr>
-          <tr><td><code>SHIFT_IN_B</code></td><td>0°</td><td>最终回正</td></tr>
-          <tr><td>完成</td><td>正常视觉巡线</td><td>立即恢复，无额外直行阶段</td></tr>
+          <tr><td><code>TURN_OUT</code></td><td>绕行侧25°</td><td>15RPS</td><td>向目标板侧方移出</td></tr>
+          <tr><td><code>PASS_SHORT</code></td><td>继续保持绕行侧25°</td><td>20RPS</td><td>沿斜向轨迹越过目标板</td></tr>
+          <tr><td><code>TURN_TO_TRACK</code></td><td>赛道内侧5°</td><td>15RPS</td><td>反向多转一点，让车头指向赛道</td></tr>
+          <tr><td>完成</td><td>普通视觉方向环接管</td><td>35RPS</td><td>不再执行固定回正或退出直行</td></tr>
         </tbody>
       </table>
-      <pre><code>target_yaw_rate =
-clamp(heading_kp × heading_error,
-      -max_yaw_rate,
-      +max_yaw_rate)</code></pre>
+      <p>左右绕行完全镜像。以左绕为例，第一次目标为左偏25°，第二次目标为右偏5°，因此第二次实际反转约30°。</p>
+      <pre><code>desired_yaw = locked_track_heading + phase_offset
+target_yaw_rate = clamp(
+    heading_kp * heading_error - heading_kd * gyro_dps,
+    -dbHMax,
+    +dbHMax)</code></pre>
       <p>目标角速度继续交给现有 <code>gIP/gII/gRMax</code> 内环产生左右轮差速。</p>
-      <pre><code>阶段完成：
+      <pre><code>两个转向阶段的完成条件：
 abs(heading_error) &lt;= 2°
 abs(gyro_dps) &lt;= 20dps
 连续满足 3 个 8ms 控制周期
 
-开始回线：
-绕行总距离 &gt;= 触发时目标沿线距离 + 目标后安全余量</code></pre>
-      <p>安全余量暂定 <code>0.30m</code>，等待实测后调整。</p>
+PASS_SHORT必须同时满足：
+phase_distance &gt;= dbPassDist
+distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
+      <p><code>dbPassDist</code>默认0.35m，<code>dbSafeDist</code>默认0.30m。第二转稳定后，8ms方向定时器直接释放脚本并在同周期恢复普通方向环，不恢复识别前保存的旧差速。</p>
+      <h3>6.1 三阶段调参接口</h3>
+      <table>
+        <thead><tr><th>VOFA参数</th><th>作用</th><th>默认值</th></tr></thead>
+        <tbody>
+          <tr><td><code>dbTurnAngle</code></td><td>第一次向绕行侧偏转的角度</td><td>25deg</td></tr>
+          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>5deg</td></tr>
+          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0.35m</td></tr>
+          <tr><td><code>dbSafeDist</code></td><td>越过目标位置后的安全余量</td><td>0.30m</td></tr>
+          <tr><td><code>dbTurnRps</code></td><td>TURN_OUT基准速度</td><td>15RPS</td></tr>
+          <tr><td><code>dbForwardRps</code></td><td>PASS_SHORT基准速度</td><td>20RPS</td></tr>
+          <tr><td><code>dbExitRps</code></td><td>TURN_TO_TRACK基准速度</td><td>15RPS</td></tr>
+          <tr><td><code>dbHMax</code></td><td>航向外环允许输出的最大目标角速度</td><td>200dps</td></tr>
+          <tr><td><code>dbNormalSpd</code></td><td>脚本成功交接后的巡线基准速度</td><td>35RPS</td></tr>
+        </tbody>
+      </table>
+      <p>旧命令<code>#dbExitDist=...;</code>仍会被接收，但只打印“已废弃并忽略”，不参与三阶段状态切换。</p>
     </section>
 
     <section id="straight-example">
       <h2>7. 直道完整绕行示例</h2>
       <div class="example"><strong>虚构示例：</strong>以下数字只解释状态机，不可直接作为实车参数。</div>
-      <pre><code>巡线速度：35RPS，约 2.0m/s
-绕行速度：24.5RPS，约 1.4m/s
-首次红色检测距离：1.30m
-S 形触发距离：0.80m
-目标后安全余量：0.30m
-最大相对航向偏角：25°
-单次推理耗时：约 40ms</code></pre>
-      <h3>7.1 识别与接近</h3>
+      <p>假设左绕目标在触发时位于前方0.50m，安全余量为0.30m，开始运动脚本时车辆从红色触发点累计行驶了0.30m。</p>
       <table>
-        <thead><tr><th>相对时刻</th><th>状态</th><th>目标速度</th><th>目标距离</th><th>说明</th></tr></thead>
+        <thead><tr><th>阶段</th><th>示例持续时间</th><th>基准速度</th><th>航向变化</th><th>距离说明</th></tr></thead>
         <tbody>
-          <tr><td>0ms</td><td>正常巡线</td><td>35RPS</td><td>1.30m</td><td>首次稳定检测到红色</td></tr>
-          <tr><td>0ms</td><td>开始目标会话</td><td>24.5RPS</td><td>1.30m</td><td>直接修改速度目标</td></tr>
-          <tr><td>40ms</td><td>第 1 帧完成</td><td>24.5RPS</td><td>约 1.23m</td><td>分类为左绕</td></tr>
-          <tr><td>85ms</td><td>第 2 帧完成</td><td>24.5RPS</td><td>约 1.15m</td><td>分类为左绕</td></tr>
-          <tr><td>130ms</td><td>第 3 帧完成</td><td>24.5RPS</td><td>约 1.08m</td><td>分类为直行，最终 2:1 左绕</td></tr>
-          <tr><td>150ms</td><td>减速基本完成</td><td>24.5RPS</td><td>约 1.05m</td><td>实际速度接近 1.4m/s</td></tr>
-          <tr><td>330ms</td><td>达到触发距离</td><td>24.5RPS</td><td>0.80m</td><td>清零积分，开始 S 形</td></tr>
+          <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后10RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
+          <tr><td>TURN_OUT</td><td>180ms</td><td>15RPS</td><td>0°→左25°</td><td>总里程继续累计</td></tr>
+          <tr><td>PASS_SHORT</td><td>400ms</td><td>20RPS</td><td>保持左25°</td><td>本阶段约0.38m，超过0.35m最短距离</td></tr>
+          <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左25°</td><td>总里程达到0.50+0.30=0.80m后才允许第二转</td></tr>
+          <tr><td>TURN_TO_TRACK</td><td>180ms</td><td>15RPS</td><td>左25°→右5°</td><td>车头朝赛道内侧</td></tr>
+          <tr><td>普通巡线</td><td>下一个8ms周期</td><td>35RPS</td><td>最新视觉误差接管</td><td>不再执行额外回正阶段</td></tr>
         </tbody>
       </table>
-      <h3>7.2 S 形阶段</h3>
-      <table>
-        <thead><tr><th>阶段</th><th>示例持续时间</th><th>航向积分变化</th><th>总距离积分变化</th></tr></thead>
-        <tbody>
-          <tr><td>SHIFT_OUT_A</td><td>220ms</td><td>0°→+25°</td><td>0→0.31m</td></tr>
-          <tr><td>SHIFT_OUT_B</td><td>220ms</td><td>+25°→0°</td><td>0.31→0.62m</td></tr>
-          <tr><td>PASS_TARGET</td><td>340ms</td><td>保持约 0°</td><td>0.62→1.10m</td></tr>
-          <tr><td>SHIFT_IN_A</td><td>220ms</td><td>0°→-25°</td><td>1.10→1.41m</td></tr>
-          <tr><td>SHIFT_IN_B</td><td>220ms</td><td>-25°→0°</td><td>1.41→1.72m</td></tr>
-        </tbody>
-      </table>
-      <p><code>0.80m + 0.30m = 1.10m</code>，因此车辆累计行驶约 1.10m 后才开始回线。最后回正后，下一个方向控制周期立即恢复正常视觉巡线。</p>
+      <p><code>PASS_SHORT</code>不是只看固定时间。速度或识别距离变化时，编码器双距离条件仍会阻止车辆在尚未越过目标板时提前转回。</p>
     </section>
 
     <section id="curve-example">
       <h2>8. 缓弯完整绕行示例</h2>
       <div class="example"><strong>虚构示例：</strong>以下角度只用于说明弯道几何关系。</div>
-      <pre><code>首次检测时车辆附近赛道切线：+6°
-目标位置处赛道切线：+16°
-车辆到目标板连线方向：+31°
-目标板法向方向：+16°
-
-view_angle = abs(31° - 16°) = 15°</code></pre>
-      <p><code>+31°</code> 只表示目标相对车辆的位置，<code>+16°</code> 才是目标位置处赛道方向，不能让车头朝 +31° 行驶。</p>
-      <h3>8.1 缓弯 S 形过程</h3>
+      <p>假设识别时车辆当前航向为+8°，目标位置处赛道切线为+16°，并执行左绕：</p>
       <table>
-        <thead><tr><th>阶段</th><th>当前赛道切线</th><th>横移偏角</th><th>车辆目标航向</th></tr></thead>
+        <thead><tr><th>阶段</th><th>锁定的赛道切线</th><th>相对偏角</th><th>车辆目标航向</th></tr></thead>
         <tbody>
-          <tr><td>开始接管</td><td>+8°</td><td>0°</td><td>+8°</td></tr>
-          <tr><td>SHIFT_OUT_A</td><td>+8°→+12°</td><td>+25°</td><td>+33°→+37°</td></tr>
-          <tr><td>SHIFT_OUT_B</td><td>+12°→+15°</td><td>0°</td><td>+15°</td></tr>
-          <tr><td>PASS_TARGET</td><td>+15°→+20°</td><td>0°</td><td>+15°→+20°</td></tr>
-          <tr><td>SHIFT_IN_A</td><td>+20°→+22°</td><td>-25°</td><td>-5°→-3°</td></tr>
-          <tr><td>SHIFT_IN_B</td><td>+22°→+24°</td><td>0°</td><td>+24°</td></tr>
+          <tr><td>TURN_OUT</td><td>+16°</td><td>左偏25°</td><td>+41°</td></tr>
+          <tr><td>PASS_SHORT</td><td>+16°</td><td>左偏25°</td><td>保持+41°</td></tr>
+          <tr><td>TURN_TO_TRACK</td><td>+16°</td><td>右偏5°</td><td>+11°</td></tr>
+          <tr><td>普通巡线</td><td>使用最新视觉中线</td><td>由视觉误差决定</td><td>跟随当前缓弯继续调整</td></tr>
         </tbody>
       </table>
-      <pre><code>最终 drive_by_yaw_deg ≈ +24°
-
-真正的回正条件：
-车辆航向 - 当前赛道切线 ≈ 0°</code></pre>
-      <p>赛道本身已经转过约 24°，所以积分不回到 0° 是正确现象。车辆航向和赛道切线都约为 +24° 时即可恢复正常巡线，随后丢弃本次短期积分。</p>
+      <p>第二次转向不是回到陀螺仪积分的0°，也不是长期追踪识别时的+16°。脚本只在短时间内把车头送到朝向赛道的一侧；释放控制后，普通视觉外环根据当时真实赛道继续修正。</p>
     </section>
 
     <section id="experiments">
@@ -522,19 +507,19 @@ view_angle = abs(31° - 16°) = 15°</code></pre>
 换算系数 = 实际速度 / 平均编码器RPS</code></pre>
       <p>不同速度的换算系数差异超过 10% 时，暂不进入距离闭环实现。</p>
 
-      <h3>9.2 实验二：35RPS 与 24.5RPS 切换响应</h3>
+      <h3>9.2 实验二：35RPS 与 20RPS 切换响应</h3>
       <pre><code>35RPS 保持 2s
-→ 24.5RPS 保持 2s
+→ 20RPS 保持 2s
 → 35RPS 保持 2s
 重复 5 次</code></pre>
       <p>VOFA 显示 <code>ex_rps1/2</code>、<code>encoder1/2_speed_avg</code> 和 <code>current_pwm1/2</code>。</p>
       <table>
         <thead><tr><th>指标</th><th>左轮</th><th>右轮</th></tr></thead>
         <tbody>
-          <tr><td>35→24.5 开始响应延迟</td><td></td><td></td></tr>
-          <tr><td>35→24.5 稳定时间</td><td></td><td></td></tr>
-          <tr><td>24.5→35 开始响应延迟</td><td></td><td></td></tr>
-          <tr><td>24.5→35 上升时间</td><td></td><td></td></tr>
+          <tr><td>35→20 开始响应延迟</td><td></td><td></td></tr>
+          <tr><td>35→20 稳定时间</td><td></td><td></td></tr>
+          <tr><td>20→35 开始响应延迟</td><td></td><td></td></tr>
+          <tr><td>20→35 上升时间</td><td></td><td></td></tr>
           <tr><td>最大超调</td><td></td><td></td></tr>
           <tr><td>最大下冲</td><td></td><td></td></tr>
         </tbody>
@@ -554,15 +539,16 @@ view_angle = abs(31° - 16°) = 15°</code></pre>
         </tbody>
       </table>
       <pre><code>2秒角度漂移 ≈ gyro_dps平均值 × 2</code></pre>
-      <p>随后手推小车完成约 2 秒的 S 形姿态：左转约 25°、回到平行、右转约 25°、最终回正。导出 gyro CSV 并拍摄俯视视频，后续统一计算每段积分角度。</p>
+      <p>随后手推小车完成约2秒的三阶段姿态：向左转约25°、保持该航向向前移动、再向右转到相对赛道右偏约5°。导出 gyro CSV 并拍摄俯视视频，后续统一计算每段积分角度。</p>
 
       <h3>9.4 实验四：红色首次检测距离与分类角度</h3>
-      <div class="notice danger">当前代码投票结束后可能执行旧脚本。建议架空车轮并随时准备按 K2。</div>
-      <pre><code>#spd=0;
+      <div class="notice danger">当前代码投票得到左绕或右绕后会进入三阶段脚本。静态识别必须架空车轮，并随时准备按K2。</div>
+      <pre><code>#dbNormalSpd=0;
+#dbRecSpd=0;
 #run=1;</code></pre>
       <p>打开 K0，固定车辆并缓慢移动目标板。分别测试 0°、15°、30°、45°，每个角度重复 3 次。</p>
       <table>
-        <thead><tr><th>观察夹角</th><th>次数</th><th>首次 target found 距离</th><th>是否连续检测</th><th>五帧投票结果</th></tr></thead>
+        <thead><tr><th>观察夹角</th><th>次数</th><th>首次 target found 距离</th><th>是否连续检测</th><th>三帧投票结果</th></tr></thead>
         <tbody>
           <tr><td>0°</td><td>1</td><td></td><td></td><td></td></tr>
           <tr><td>0°</td><td>2</td><td></td><td></td><td></td></tr>
@@ -578,7 +564,7 @@ view_angle = abs(31° - 16°) = 15°</code></pre>
           <tr><td>45°</td><td>3</td><td></td><td></td><td></td></tr>
         </tbody>
       </table>
-      <p>当前程序仍使用五帧投票。本实验先判断不同角度下的分类稳定性，后续再据此确认高速版三帧投票是否足够。</p>
+      <p>当前程序最多处理连续三帧；前两帧有效结果一致时会提前结束。本实验用于判断不同角度下的分类稳定性。</p>
 
       <h3>9.5 实验五：目标距离与图像位置关系</h3>
       <p>在 1.5、1.2、1.0、0.8、0.6m 放置目标板并保存原始图片。</p>
@@ -625,23 +611,23 @@ view_angle = abs(31° - 16°) = 15°</code></pre>
         <thead><tr><th>数据</th><th>推荐形式</th></tr></thead>
         <tbody>
           <tr><td>15/25/35RPS 定距测速</td><td>填写表格并提供 UDP CSV</td></tr>
-          <tr><td>35RPS 与 24.5RPS 切换</td><td>1 秒时间轴 VOFA 截图或 CSV</td></tr>
+          <tr><td>35RPS 与 20RPS 切换</td><td>1 秒时间轴 VOFA 截图或 CSV</td></tr>
           <tr><td>静止 60 秒陀螺仪</td><td>CSV</td></tr>
-          <tr><td>手推约 2 秒 S 形</td><td>陀螺仪 CSV + 俯视视频</td></tr>
-          <tr><td>不同观察角度识别</td><td>距离、五帧结果、现场照片</td></tr>
+          <tr><td>手推约2秒三阶段轨迹</td><td>陀螺仪 CSV + 俯视视频</td></tr>
+          <tr><td>不同观察角度识别</td><td>距离、三帧结果、现场照片</td></tr>
           <tr><td>不同距离目标板</td><td>原始相机图片</td></tr>
           <tr><td>直道和缓弯中线</td><td>鸟瞰截图</td></tr>
           <tr><td>三种负载场景</td><td>UDP 数据和控制台日志</td></tr>
-          <tr><td>当天全部参数</td><td>P/I/D/gOP/gOD/gIP/gII/gRMax/gTMax/AIM/spd</td></tr>
+          <tr><td>当天全部参数</td><td>P/I/D/gOP/gOD/gIP/gII/gRMax/gTMax/AIM/spd及全部db*参数</td></tr>
         </tbody>
       </table>
       <p><strong>文件命名建议：</strong></p>
       <pre><code>speed_15_run1.csv
 speed_25_run1.csv
 speed_35_run1.csv
-speed_step_35_24_5.csv
+speed_step_35_20.csv
 gyro_static_60s.csv
-gyro_manual_s_curve.csv
+gyro_manual_three_stage.csv
 target_30deg_1m.jpg
 birdview_curve_outer_offset.jpg
 timeout_k0_off.txt
@@ -653,20 +639,20 @@ timeout_k0_on_target.txt</code></pre>
       <h2>11. 收到数据后的计划修订</h2>
       <ol>
         <li>计算正式的 <code>db_rps_to_mps</code>。</li>
-        <li>确定 35→24.5RPS 的实际减速时间和距离。</li>
+        <li>确定35→20RPS的实际响应时间和距离。</li>
         <li>判断当前红色检测距离是否满足高速提前量。</li>
         <li>判断 3 帧投票在不同观察角度下是否可靠。</li>
         <li>确定最大允许推理观察夹角。</li>
-        <li>确定 S 形触发距离和目标后安全余量。</li>
+        <li>确定最短斜行距离和目标后安全余量。</li>
         <li>判断直道与缓弯是否能共用同一最大偏角。</li>
         <li>评估陀螺仪在 1～2 秒内的积分误差。</li>
         <li>验证横向偏移后视觉中线是否仍能提供切线。</li>
         <li>根据实测数据生成最终代码实施计划和分阶段验收标准。</li>
       </ol>
-      <div class="notice danger"><strong>执行边界：</strong>在以上数据确认之前，不执行高速绕行控制代码修改。</div>
+      <div class="notice danger"><strong>执行边界：</strong>当前三阶段代码作为实验基线；以上数据确认前只通过VOFA调整参数，不继续改变状态机结构。</div>
     </section>
   </main>
 
-  <footer>高速滚动识别与 S 形绕行 · 设计与实验基线文档</footer>
+  <footer>高速滚动识别与三阶段绕行 · 设计与实验基线文档</footer>
 </body>
 </html>

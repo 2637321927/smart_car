@@ -447,6 +447,13 @@ if (sscanf(buf, "#dbTurnAngle=%f;", &ftmp) == 1)
     printf("[VOFA] dbTurnAngle = %.2f deg\n", drive_by_turn_angle_deg);
 }
 
+if (sscanf(buf, "#dbReturnBias=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    drive_by_return_bias_deg = ftmp > 45.0f ? 45.0f : ftmp;
+    printf("[VOFA] dbReturnBias = %.2f deg\n", drive_by_return_bias_deg);
+}
+
 if (sscanf(buf, "#dbPassDist=%f;", &ftmp) == 1)
 {
     drive_by_pass_distance_m = ftmp < 0.0f ? 0.0f : ftmp;
@@ -455,8 +462,7 @@ if (sscanf(buf, "#dbPassDist=%f;", &ftmp) == 1)
 
 if (sscanf(buf, "#dbExitDist=%f;", &ftmp) == 1)
 {
-    drive_by_exit_distance_m = ftmp < 0.0f ? 0.0f : ftmp;
-    printf("[VOFA] dbExitDist = %.3f m\n", drive_by_exit_distance_m);
+    printf("[VOFA] dbExitDist is deprecated and ignored\n");
 }
 
 if (sscanf(buf, "#dbSafeDist=%f;", &ftmp) == 1)
@@ -496,6 +502,13 @@ if (sscanf(buf, "#dbHKd=%f;", &ftmp) == 1)
 {
     drive_by_heading_kd = ftmp;
     printf("[VOFA] dbHKd = %.3f\n", drive_by_heading_kd);
+}
+
+if (sscanf(buf, "#dbHMax=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    drive_by_heading_max_dps = ftmp > 720.0f ? 720.0f : ftmp;
+    printf("[VOFA] dbHMax = %.2f dps\n", drive_by_heading_max_dps);
 }
 
 if (sscanf(buf, "#dbYawSign=%f;", &ftmp) == 1)
@@ -901,10 +914,10 @@ void tuning_telemetry_send()
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
         "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
-        "\"dbTurnAngle\":%.2f,\"dbPassDist\":%.3f,"
-        "\"dbExitDist\":%.3f,\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
+        "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
+        "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
-        "\"dbHKp\":%.3f,\"dbHKd\":%.3f,\"dbYawSign\":%.1f,"
+        "\"dbHKp\":%.3f,\"dbHKd\":%.3f,\"dbHMax\":%.2f,\"dbYawSign\":%.1f,"
         "\"dbTurnRps\":%d,\"dbForwardRps\":%d,\"dbExitRps\":%d,"
         "\"dbBrakePwm\":%d,\"dbBrakeRelease\":%.2f,"
         "\"dbBrakeTimeout\":%d,\"dbTestDist\":%.3f,"
@@ -924,13 +937,14 @@ void tuning_telemetry_send()
         safe_float(drive_by_normal_speed_rps),
         safe_float(drive_by_recognition_speed_rps),
         safe_float(drive_by_turn_angle_deg),
+        safe_float(drive_by_return_bias_deg),
         safe_float(drive_by_pass_distance_m),
-        safe_float(drive_by_exit_distance_m),
         safe_float(drive_by_target_after_margin_m),
         safe_float(drive_by_rps_to_mps),
         safe_float(drive_by_view_angle_max_deg),
         drive_by_view_wait_timeout_ms,
         safe_float(drive_by_heading_kp), safe_float(drive_by_heading_kd),
+        safe_float(drive_by_heading_max_dps),
         safe_float(drive_by_yaw_sign),
         drive_by_turn_speed_rps, drive_by_forward_speed_rps,
         drive_by_exit_speed_rps, drive_by_brake_pwm,
@@ -1310,7 +1324,7 @@ gyro_yaw_rate_control_init();
           (!drive_by_is_busy() || drive_by_is_recognizing())) {
         PID_control_test(latest_error);
       } else if (front_ui_is_running() && drive_by_is_motion_phase()) {
-        // S形运动阶段由 drive_by 航向闭环独占左右轮目标。
+        // 三阶段绕行运动由 drive_by 航向闭环独占左右轮目标。
         // drive_by_control_update()已在本周期完成控制，这里不再运行普通方向环。
       } else if (!front_ui_is_running()) {
         gyro_yaw_rate_control_reset();

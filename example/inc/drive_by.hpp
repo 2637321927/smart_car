@@ -25,8 +25,8 @@ extern int drive_by_cooldown_ms;
 
 // 目标板几何和航向闭环参数。
 extern volatile float drive_by_turn_angle_deg;
+extern volatile float drive_by_return_bias_deg;
 extern volatile float drive_by_pass_distance_m;
-extern volatile float drive_by_exit_distance_m;
 extern volatile float drive_by_target_after_margin_m;
 extern volatile float drive_by_view_angle_max_deg;
 extern volatile int drive_by_view_wait_timeout_ms;
