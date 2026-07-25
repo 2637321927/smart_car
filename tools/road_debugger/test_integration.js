@@ -109,8 +109,10 @@ async function main() {
       gyro: 1,
       dbMode: 0,
       dbTurnAngle: 25,
-      Bias: 5,
+      dbReturnBias: 46,
+      dbPassDist: 0.14,
       dbHMax: 200,
+      dbRecoverDps: 55,
       udp: 2,
     })));
     await sendUdp(makeRoadPacket());
@@ -131,6 +133,18 @@ async function main() {
     assert(pageResponse.text.includes('driveByLeft'));
     assert(pageResponse.text.includes('driveByRight'));
     assert(pageResponse.text.includes('driveByTestButton'));
+    assert(pageResponse.text.includes('#spd=35;'));
+    assert(pageResponse.text.includes('#spd=0;'));
+    assert(pageResponse.text.includes('#drive=1;'));
+    assert(pageResponse.text.includes('#drive=0;'));
+    assert(pageResponse.text.includes('#udp=0;'));
+    assert(pageResponse.text.includes('#udp=2;'));
+    assert(!pageResponse.text.includes('#spd=20;'));
+    assert(!pageResponse.text.includes('#udp=1;'));
+    assert(pageResponse.text.includes('remoteUp'));
+    assert(pageResponse.text.includes('remoteDown'));
+    assert(pageResponse.text.includes('remoteLeft'));
+    assert(pageResponse.text.includes('remoteRight'));
     assert(pageResponse.text.includes('tuningControls'));
     assert(pageResponse.text.includes('tuningSnapshotTime'));
 
@@ -141,10 +155,12 @@ async function main() {
       'gyro', 'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax',
       'gSign', 'tSign', 'dbMode', 'dbNormalSpd', 'dbRecSpd', 'dbTurnAngle', 'dbPassDist',
       'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
-      'dbHKd', 'dbHMax', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
+      'dbHKd', 'dbHMax', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
       'dbBrakeRelease', 'dbBrakeTimeout', 'dbTestDist', 'circle_exit', 'udp', 'vofa',
       'is_udp_img',
     ].forEach((key) => assert(appResponse.text.includes(`key: '${key}'`), key));
+    assert(appResponse.text.includes("#remote=0;"));
+    assert(appResponse.text.includes('sendRemoteHeartbeat'));
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
     assert.strictEqual(stopResponse.status, 200);

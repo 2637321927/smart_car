@@ -35,6 +35,8 @@ extern volatile int drive_by_view_wait_timeout_ms;
 extern volatile float drive_by_heading_kp;
 extern volatile float drive_by_heading_kd;
 extern volatile float drive_by_heading_max_dps;
+// 回程丢失中线时使用的固定目标角速度，单位deg/s。
+extern volatile float drive_by_recovery_yaw_rate_dps;
 extern volatile float drive_by_heading_tolerance_deg;
 extern volatile float drive_by_rate_tolerance_dps;
 extern volatile int drive_by_gyro_stale_ms;

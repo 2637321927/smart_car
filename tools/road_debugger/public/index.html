@@ -152,19 +152,38 @@
           <div class="quick-commands">
             <button class="run-command start-command" type="button" data-command="#run=1;">发车</button>
             <button class="run-command stop-command" type="button" data-command="#run=0;">停车</button>
-            <button type="button" data-command="#spd=20;">20RPS</button>
             <button type="button" data-command="#spd=35;">35RPS</button>
-            <button type="button" data-command="#gyro=1;">陀螺仪开</button>
-            <button type="button" data-command="#gyro=0;">陀螺仪关</button>
+            <button type="button" data-command="#spd=0;">0RPS</button>
+            <button id="driveEnableCommand" class="recognition-command" type="button" data-command="#drive=1;">识别开启</button>
+            <button id="driveDisableCommand" class="recognition-command" type="button" data-command="#drive=0;">识别关闭</button>
             <button type="button" data-command="#udp=0;">UDP关闭</button>
-            <button type="button" data-command="#udp=1;">仅波形</button>
-            <button type="button" data-command="#udp=2;">波形+道路</button>
+            <button type="button" data-command="#udp=2;">UDP+道路三线</button>
             <div class="drive-by-test-controls">
               <div class="drive-by-direction" role="group" aria-label="测试绕行方向">
                 <button id="driveByLeft" class="direction-option" type="button" aria-pressed="false">左绕</button>
                 <button id="driveByRight" class="direction-option selected" type="button" aria-pressed="true">右绕</button>
               </div>
               <button id="driveByTestButton" class="drive-by-test-button" type="button" disabled>TEST绕行</button>
+            </div>
+            <div class="remote-controls">
+              <div class="remote-heading">
+                <strong>停车遥控</strong>
+                <span>仅run=0可用，按住移动、松开即停</span>
+              </div>
+              <div class="remote-pad" role="group" aria-label="停车遥控方向">
+                <button id="remoteUp" class="remote-up" type="button" data-remote="1" disabled>
+                  <span>↑</span><small>前进 15RPS</small>
+                </button>
+                <button id="remoteLeft" class="remote-left" type="button" data-remote="3" disabled>
+                  <span>←</span><small>左转 60dps</small>
+                </button>
+                <button id="remoteRight" class="remote-right" type="button" data-remote="4" disabled>
+                  <span>→</span><small>右转 60dps</small>
+                </button>
+                <button id="remoteDown" class="remote-down" type="button" data-remote="2" disabled>
+                  <span>↓</span><small>后退 15RPS</small>
+                </button>
+              </div>
             </div>
           </div>
           <p id="commandStatus" class="muted">指令发送到小车UDP 8082端口</p>

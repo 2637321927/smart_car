@@ -411,12 +411,12 @@ heading_error = desired_vehicle_yaw - vehicle_yaw</code></pre>
         <tbody>
           <tr><td><code>TURN_OUT</code></td><td>绕行侧25°</td><td>15RPS</td><td>向目标板侧方移出</td></tr>
           <tr><td><code>PASS_SHORT</code></td><td>继续保持绕行侧25°</td><td>20RPS</td><td>沿斜向轨迹越过目标板</td></tr>
-          <tr><td><code>TURN_TO_TRACK</code></td><td>赛道内侧5°</td><td>15RPS</td><td>反向多转一点，让车头指向赛道</td></tr>
-          <tr><td><code>RECOVER_CENTER_LINE</code></td><td>左绕向右、右绕向左给满100</td><td>15RPS</td><td>仅在第二转结束仍找不到中线时启用</td></tr>
+          <tr><td><code>TURN_TO_TRACK</code></td><td>赛道内侧46°</td><td>15RPS</td><td>反向转向，让车头主动朝赛道内侧</td></tr>
+          <tr><td><code>RECOVER_CENTER_LINE</code></td><td>左绕+55dps、右绕-55dps</td><td>15RPS</td><td>仅在第二转结束仍找不到中线时启用</td></tr>
           <tr><td>完成</td><td>普通视觉方向环接管</td><td>35RPS</td><td>中线可靠后立即恢复普通巡线</td></tr>
         </tbody>
       </table>
-      <p>左右绕行完全镜像。以左绕为例，第一次目标为左偏25°，第二次目标为右偏5°，因此第二次实际反转约30°。</p>
+      <p>左右绕行完全镜像。以左绕为例，第一次目标为左偏25°，第二次目标为右偏46°，因此第二次实际反转约71°。</p>
       <pre><code>desired_yaw = locked_track_heading + phase_offset
 target_yaw_rate = clamp(
     heading_kp * heading_error - heading_kd * gyro_dps,
@@ -431,32 +431,33 @@ abs(gyro_dps) &lt;= 20dps
 PASS_SHORT必须同时满足：
 phase_distance &gt;= dbPassDist
 distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
-      <p><code>dbPassDist</code>默认0.35m，<code>dbSafeDist</code>默认0.30m。第二转稳定后先检查中线：可靠时直接恢复普通方向环；仍丢线时左绕向右给+100、右绕向左给-100，并保持dbExitRps直到中线恢复。交还时不恢复识别前保存的旧差速。</p>
+      <p><code>dbPassDist</code>默认0.14m，<code>dbSafeDist</code>默认0.30m。第二转稳定后先检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
       <h4>三阶段调参接口</h4>
       <table>
         <thead><tr><th>VOFA参数</th><th>作用</th><th>默认值</th></tr></thead>
         <tbody>
           <tr><td><code>dbTurnAngle</code></td><td>第一次向绕行侧偏转的角度</td><td>25deg</td></tr>
-          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>5deg</td></tr>
-          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0.35m</td></tr>
+          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>46deg</td></tr>
+          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0.14m</td></tr>
           <tr><td><code>dbSafeDist</code></td><td>越过目标位置后的安全余量</td><td>0.30m</td></tr>
           <tr><td><code>dbTurnRps</code></td><td>TURN_OUT基准速度</td><td>15RPS</td></tr>
           <tr><td><code>dbForwardRps</code></td><td>PASS_SHORT基准速度</td><td>20RPS</td></tr>
           <tr><td><code>dbExitRps</code></td><td>TURN_TO_TRACK基准速度</td><td>15RPS</td></tr>
           <tr><td><code>dbHMax</code></td><td>航向外环允许输出的最大目标角速度</td><td>200dps</td></tr>
+          <tr><td><code>dbRecoverDps</code></td><td>回程丢线时固定目标角速度</td><td>55dps</td></tr>
           <tr><td><code>dbNormalSpd</code></td><td>脚本成功交接后的巡线基准速度</td><td>35RPS</td></tr>
         </tbody>
       </table>
       <p>旧命令<code>#dbExitDist=...;</code>仍会被接收，但只打印“已废弃并忽略”，不参与三阶段状态切换。</p>
       <h3>6.2 两套方案共用的回程丢线保护</h3>
-      <p>无论选择哪套方案，回到赛道时都必须先确认中线剩余有效点不少于15点。左绕后找不到中线就向右给+100，右绕后找不到中线就向左给-100，直到中线恢复。dbMode=0找线时保持dbExitRps，dbMode=1保持dbForwardRps。</p>
+      <p>无论选择哪套方案，回到赛道时都必须先确认中线剩余有效点不少于15点。左绕后找不到中线就给+dbRecoverDps，右绕后找不到中线就给-dbRecoverDps，默认幅值55dps，直到中线恢复。陀螺仪不可用时才回退到±100视觉误差。dbMode=0找线时保持dbExitRps，dbMode=1保持dbForwardRps。</p>
       <h3>6.3 边线瞄准实验方案（dbMode=1）</h3>
       <p>该方案保留相同的红块检测、主动制动和识别投票，只替换识别完成后的运动控制。</p>
       <div class="table-wrap"><table>
         <thead><tr><th>状态</th><th>左绕</th><th>右绕</th><th>结束条件</th></tr></thead>
         <tbody>
           <tr><td><code>FOLLOW_SIDE_LINE</code></td><td>原始左边线作为瞄准线</td><td>原始右边线作为瞄准线</td><td>持续500ms</td></tr>
-          <tr><td><code>RECOVER_CENTER_LINE</code></td><td>切回中线，丢线时给+100向右找线</td><td>切回中线，丢线时给-100向左找线</td><td>中线剩余有效点不少于15点</td></tr>
+          <tr><td><code>RECOVER_CENTER_LINE</code></td><td>切回中线，丢线时给+dbRecoverDps向右找线</td><td>切回中线，丢线时给-dbRecoverDps向左找线</td><td>中线剩余有效点不少于15点</td></tr>
           <tr><td>完成</td><td>普通中线和方向环接管</td><td>普通中线和方向环接管</td><td>同一个8ms周期恢复dbNormalSpd</td></tr>
         </tbody>
       </table></div>
@@ -473,9 +474,9 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         <tbody>
           <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后10RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
           <tr><td>TURN_OUT</td><td>180ms</td><td>15RPS</td><td>0°→左25°</td><td>总里程继续累计</td></tr>
-          <tr><td>PASS_SHORT</td><td>400ms</td><td>20RPS</td><td>保持左25°</td><td>本阶段约0.38m，超过0.35m最短距离</td></tr>
+          <tr><td>PASS_SHORT</td><td>400ms</td><td>20RPS</td><td>保持左25°</td><td>本阶段约0.38m，超过0.14m最短距离</td></tr>
           <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左25°</td><td>总里程达到0.50+0.30=0.80m后才允许第二转</td></tr>
-          <tr><td>TURN_TO_TRACK</td><td>180ms</td><td>15RPS</td><td>左25°→右5°</td><td>车头朝赛道内侧</td></tr>
+          <tr><td>TURN_TO_TRACK</td><td>180ms</td><td>15RPS</td><td>左25°→右46°</td><td>车头朝赛道内侧</td></tr>
           <tr><td>普通巡线</td><td>下一个8ms周期</td><td>35RPS</td><td>最新视觉误差接管</td><td>不再执行额外回正阶段</td></tr>
         </tbody>
       </table>
@@ -491,7 +492,7 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         <tbody>
           <tr><td>TURN_OUT</td><td>+16°</td><td>左偏25°</td><td>+41°</td></tr>
           <tr><td>PASS_SHORT</td><td>+16°</td><td>左偏25°</td><td>保持+41°</td></tr>
-          <tr><td>TURN_TO_TRACK</td><td>+16°</td><td>右偏5°</td><td>+11°</td></tr>
+          <tr><td>TURN_TO_TRACK</td><td>+16°</td><td>右偏46°</td><td>-30°</td></tr>
           <tr><td>普通巡线</td><td>使用最新视觉中线</td><td>由视觉误差决定</td><td>跟随当前缓弯继续调整</td></tr>
         </tbody>
       </table>
@@ -555,7 +556,7 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         </tbody>
       </table>
       <pre><code>2秒角度漂移 ≈ gyro_dps平均值 × 2</code></pre>
-      <p>随后手推小车完成约2秒的三阶段姿态：向左转约25°、保持该航向向前移动、再向右转到相对赛道右偏约5°。导出 gyro CSV 并拍摄俯视视频，后续统一计算每段积分角度。</p>
+      <p>随后手推小车完成约2秒的三阶段姿态：向左转约25°、保持该航向向前移动、再向右转到相对赛道右偏约46°。导出 gyro CSV 并拍摄俯视视频，后续统一计算每段积分角度。</p>
 
       <h3>9.4 实验四：红色首次检测距离与分类角度</h3>
       <div class="notice danger">当前代码投票得到左绕或右绕后会进入三阶段脚本。静态识别必须架空车轮，并随时准备按K2。</div>

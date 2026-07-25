@@ -429,6 +429,11 @@ if (sscanf(buf, "#vofa=%d;", &itmp) == 1)
            vofa_telemetry_enabled ? "开启" : "关闭");
 }
 
+if (sscanf(buf, "#drive=%d;", &itmp) == 1)
+{
+    drive_by_set_enable(itmp != 0);
+}
+
 // ==================== 目标板高速绕行在线调参 ====================
 // 识别阶段的 dbRecSpd 只改变基准速度，普通方向环仍会继续产生左右差速。
 if (sscanf(buf, "#dbMode=%d;", &itmp) == 1)
@@ -520,6 +525,14 @@ if (sscanf(buf, "#dbHMax=%f;", &ftmp) == 1)
     if (ftmp < 0.0f) ftmp = -ftmp;
     drive_by_heading_max_dps = ftmp > 720.0f ? 720.0f : ftmp;
     printf("[VOFA] dbHMax = %.2f dps\n", drive_by_heading_max_dps);
+}
+
+if (sscanf(buf, "#dbRecoverDps=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    drive_by_recovery_yaw_rate_dps = ftmp > 720.0f ? 720.0f : ftmp;
+    printf("[VOFA] dbRecoverDps = %.2f dps\n",
+           drive_by_recovery_yaw_rate_dps);
 }
 
 if (sscanf(buf, "#dbYawSign=%f;", &ftmp) == 1)
@@ -626,6 +639,13 @@ if (sscanf(buf, "#run=%f;", &ftmp) == 1)
 {
     front_ui_set_running(ftmp != 0.0f);
     printf("[VOFA] run = %d\n", front_ui_is_running() ? 1 : 0);
+}
+
+if (sscanf(buf, "#remote=%d;", &itmp) == 1)
+{
+    // 0停、1前、2后、3左、4右。前端按住期间会周期续发；这里禁止逐包打印，
+    // 避免100ms遥控心跳给行车线程制造额外终端I/O负担。
+    front_ui_remote_set(itmp);
 }
 
 if (sscanf(buf, "#gyro=%f;", &ftmp) == 1)
@@ -928,7 +948,8 @@ void tuning_telemetry_send()
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
-        "\"dbHKp\":%.3f,\"dbHKd\":%.3f,\"dbHMax\":%.2f,\"dbYawSign\":%.1f,"
+        "\"dbHKp\":%.3f,\"dbHKd\":%.3f,\"dbHMax\":%.2f,"
+        "\"dbRecoverDps\":%.2f,\"dbYawSign\":%.1f,"
         "\"dbTurnRps\":%d,\"dbForwardRps\":%d,\"dbExitRps\":%d,"
         "\"dbBrakePwm\":%d,\"dbBrakeRelease\":%.2f,"
         "\"dbBrakeTimeout\":%d,\"dbTestDist\":%.3f,"
@@ -957,6 +978,7 @@ void tuning_telemetry_send()
         drive_by_view_wait_timeout_ms,
         safe_float(drive_by_heading_kp), safe_float(drive_by_heading_kd),
         safe_float(drive_by_heading_max_dps),
+        safe_float(drive_by_recovery_yaw_rate_dps),
         safe_float(drive_by_yaw_sign),
         drive_by_turn_speed_rps, drive_by_forward_speed_rps,
         drive_by_exit_speed_rps, drive_by_brake_pwm,
@@ -1306,13 +1328,15 @@ gyro_yaw_rate_control_init();
     });
 
    speed_timer.set_seconds_ms(3, []() {
-     // 发车后才允许速度环驱动电机；停车时持续清零输出。
+     // 正常发车优先级最高；run=0时只有按住遥控按钮才允许速度环工作。
      if (front_ui_is_running()) {
        // 主动制动期间由drive_by直接输出受限反向PWM；返回false时，普通速度PID
        // 在同一周期从已复位状态接管10RPS目标。
        if (!drive_by_speed_control_update()) {
          test_enc_and_motor_rps();
        }
+     } else if (front_ui_remote_is_active()) {
+       test_enc_and_motor_rps();
      } else {
        front_ui_hold_stop();
      }
@@ -1338,6 +1362,9 @@ gyro_yaw_rate_control_init();
         PID_control_test(latest_error);
       } else if (front_ui_is_running() && drive_by_is_motion_phase()) {
         // 只有旧三阶段绕行会到这里，由drive_by航向闭环独占左右轮目标。
+      } else if (front_ui_remote_is_active()) {
+        // 停车遥控完全绕过视觉方向环：前后给固定RPS，左右给固定60dps。
+        front_ui_remote_control_update();
       } else if (!front_ui_is_running()) {
         gyro_yaw_rate_control_reset();
         front_ui_hold_stop();
@@ -1635,8 +1662,9 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
             else latest_error = filter_error(-error); 
         }
 
-        // 新视觉绕行只在这里覆盖最终误差：边线阶段丢线时继续向绕行侧，
-        // 切回中线后丢线时按反方向给满100，直到收到一帧可靠中线。
+        // 新视觉绕行只在这里覆盖最终误差：边线阶段丢线时继续向绕行侧；
+        // 回程丢中线时，陀螺仪可用则由脚本直接给dbRecoverDps，
+        // 否则这里保留反方向±100视觉误差兜底。
         latest_error = drive_by_adjust_visual_error(
             latest_error, drive_by_aim_line, drive_by_aim_line_valid);
         

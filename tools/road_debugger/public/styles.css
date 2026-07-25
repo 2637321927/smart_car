@@ -361,6 +361,11 @@ h2 { font-size: 1.05rem; }
   border-color: rgba(255, 100, 95, 0.76);
   background: var(--red);
 }
+.quick-commands .recognition-command.selected-command {
+  color: #071012;
+  border-color: rgba(81, 216, 208, 0.85);
+  background: var(--cyan);
+}
 .drive-by-test-controls {
   display: grid;
   grid-column: 1 / -1;
@@ -388,6 +393,48 @@ h2 { font-size: 1.05rem; }
   font-size: 0.86rem;
   font-weight: 850;
 }
+.remote-controls {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid rgba(139, 190, 190, 0.14);
+}
+.remote-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.remote-heading strong { color: var(--text); font-size: 0.8rem; }
+.remote-heading span { color: var(--muted); font-size: 0.66rem; }
+.remote-pad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(76px, 1fr));
+  grid-template-areas:
+    ". up ."
+    "left . right"
+    ". down .";
+  gap: 7px;
+}
+.quick-commands .remote-pad button {
+  grid-column: auto;
+  min-height: 50px;
+  padding: 5px;
+  touch-action: none;
+  user-select: none;
+}
+.remote-pad button span { display: block; font-size: 1.2rem; line-height: 1; }
+.remote-pad button small { display: block; margin-top: 4px; color: var(--muted); font-size: 0.62rem; }
+.remote-pad button.remote-active {
+  color: #071012;
+  border-color: rgba(81, 216, 208, 0.9);
+  background: var(--cyan);
+}
+.remote-pad button.remote-active small { color: rgba(7, 16, 18, 0.72); }
+.remote-up { grid-area: up; }
+.remote-left { grid-area: left; }
+.remote-right { grid-area: right; }
+.remote-down { grid-area: down; }
 .quick-commands button:disabled {
   cursor: not-allowed;
   opacity: 0.38;
@@ -677,6 +724,7 @@ h2 { font-size: 1.05rem; }
   .quick-commands { grid-template-columns: repeat(2, 1fr); }
   .quick-commands button, .quick-commands .run-command { grid-column: span 1; }
   .drive-by-test-controls { grid-template-columns: 1fr; }
+  .remote-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
   .tuning-heading-status { align-items: flex-start; justify-content: flex-start; }
   .tuning-controls { grid-template-columns: 1fr; padding-inline: 16px; }
 }

@@ -11,7 +11,20 @@ void front_ui_start();
 void front_ui_stop();
 void front_ui_set_running(bool running);
 
-// 停车保持：定时器在停车状态下调用，持续把目标速度和 PWM 清零。
+// 停车遥控命令。仅run=0时接受；前端按住按钮期间需要周期续发，
+// 超过看门狗时间未收到续发会自动停止，防止UDP断开后持续运动。
+enum FrontUiRemoteCommand {
+    FRONT_UI_REMOTE_STOP = 0,
+    FRONT_UI_REMOTE_FORWARD = 1,
+    FRONT_UI_REMOTE_BACKWARD = 2,
+    FRONT_UI_REMOTE_LEFT = 3,
+    FRONT_UI_REMOTE_RIGHT = 4,
+};
+bool front_ui_remote_set(int command);
+bool front_ui_remote_is_active();
+void front_ui_remote_control_update();
+
+// 停车保持：停车且未启用遥控时调用，持续把目标速度和PWM清零。
 void front_ui_hold_stop();
 
 // 给主控制循环判断：当前是否允许速度环/方向环工作。

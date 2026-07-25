@@ -39,8 +39,8 @@ int drive_by_infer_timeout_ms = 500;
 int drive_by_cooldown_ms = 1000;
 
 volatile float drive_by_turn_angle_deg = 25.0f;
-volatile float drive_by_return_bias_deg = 5.0f;
-volatile float drive_by_pass_distance_m = 0.35f;
+volatile float drive_by_return_bias_deg = 46.0f;
+volatile float drive_by_pass_distance_m = 0.14f;
 volatile float drive_by_target_after_margin_m = 0.30f;
 volatile float drive_by_view_angle_max_deg = 45.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
@@ -50,6 +50,7 @@ volatile float drive_by_heading_kp = 8.0f;
 volatile float drive_by_heading_kd = 0.2f;
 // 这是航向外环允许给出的目标角速度上限；接近目标角度时，KP/KD仍会主动降速。
 volatile float drive_by_heading_max_dps = 200.0f;
+volatile float drive_by_recovery_yaw_rate_dps = 55.0f;
 volatile float drive_by_heading_tolerance_deg = 2.0f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
@@ -1045,6 +1046,12 @@ float visual_forced_error(bool recovering_center)
     return g_turn_side > 0 ? -kVisualRecoveryError : kVisualRecoveryError;
 }
 
+bool recovery_uses_gyro_rate_control()
+{
+    return gyro_yaw_rate_feedback_enabled != 0 &&
+        gyro_yaw_rate_control_is_ready();
+}
+
 void request_motion_stop(DriveByAbortReason reason)
 {
     // 8ms方向线程不直接操作PWM。这里只清目标并提交停车请求，3ms速度线程
@@ -1151,7 +1158,7 @@ void update_motion_state()
             if (g_visual_aim_line_valid) {
                 complete_motion_handoff();
             } else {
-                // 左绕回程找不到中线时向右打满，右绕则向左打满。
+                // 左绕回程找不到中线时向右转，右绕则向左转。
                 // 后续由相机线程持续检查中线，不能只依赖一次检测结果。
                 enter_state(DB_RECOVER_CENTER_LINE);
                 latest_error = visual_forced_error(true);
@@ -1182,7 +1189,7 @@ void update_visual_motion_state()
 
     if (g_state == DB_FOLLOW_SIDE_LINE &&
         elapsed_ms(g_state_start) >= kVisualSideFollowMs) {
-        // 先清掉边线帧的有效标志，再切回中线。切换当周期直接给反方向100，
+        // 先清掉边线帧的有效标志，再切回中线。切换当周期先标记为丢线，
         // 后续只有相机线程明确提交一帧有效中线后才允许交还普通巡线。
         g_visual_aim_line_valid = false;
         enter_state(DB_RECOVER_CENTER_LINE);
@@ -1190,8 +1197,26 @@ void update_visual_motion_state()
         return;
     }
 
-    if (g_state == DB_RECOVER_CENTER_LINE && g_visual_aim_line_valid) {
-        complete_motion_handoff();
+    if (g_state == DB_RECOVER_CENTER_LINE) {
+        if (g_visual_aim_line_valid) {
+            complete_motion_handoff();
+            return;
+        }
+
+        if (recovery_uses_gyro_rate_control()) {
+            // 丢线保护直接给目标角速度，不再把100误差交给视觉外环换算。
+            // 左绕回程向右为正，右绕回程向左为负；实际轮速差仍由现有角速度内环生成。
+            const float recovery_rate = std::fabs(
+                (float)drive_by_recovery_yaw_rate_dps);
+            const float target_yaw_rate_dps =
+                g_turn_side > 0 ? recovery_rate : -recovery_rate;
+            const float turn_rps =
+                gyro_yaw_rate_control_update_target_yaw_rate(
+                    target_yaw_rate_dps);
+            command_motion_wheels(visual_base_rps, turn_rps);
+            g_debug.target_yaw_rate_dps = target_yaw_rate_dps;
+            g_debug.turn_rps = turn_rps;
+        }
     }
 }
 
@@ -1606,9 +1631,16 @@ bool drive_by_is_motion_phase()
 
 bool drive_by_uses_visual_direction_control()
 {
-    return g_drive_by_busy &&
-        (g_state == DB_FOLLOW_SIDE_LINE ||
-         g_state == DB_RECOVER_CENTER_LINE);
+    if (!g_drive_by_busy) {
+        return false;
+    }
+    if (g_state == DB_FOLLOW_SIDE_LINE) {
+        return true;
+    }
+    // MPU6050可用时，回程丢线由drive_by直接给固定目标角速度；
+    // 未开启或未就绪时才保留原来的±100视觉误差兜底。
+    return g_state == DB_RECOVER_CENTER_LINE &&
+        !recovery_uses_gyro_rate_control();
 }
 
 int drive_by_visual_aim_line()
@@ -1676,7 +1708,7 @@ void drive_by_set_enable(bool enable)
     if (!enable) {
         reset_runtime(true);
     }
-    printf("[drive_by] enable=%d\n", enable ? 1 : 0);
+    printf("[目标板识别] 状态=%s\n", enable ? "开启" : "关闭");
 }
 
 void drive_by_toggle_enable()

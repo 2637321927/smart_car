@@ -41,6 +41,12 @@ constexpr auto kDebounceTime = std::chrono::milliseconds(180);
 // 没有按键动作时，也定时刷新一次屏幕，方便显示当前输出值。
 constexpr auto kRefreshTime = std::chrono::milliseconds(500);
 
+// 遥控只用于run=0时把车低速开回起点。前进/后退固定15RPS，
+// 左右使用陀螺仪角速度内环原地转向，固定目标角速度60dps。
+constexpr float kRemoteLinearSpeedRps = 15.0f;
+constexpr float kRemoteYawRateDps = 60.0f;
+constexpr auto kRemoteCommandTimeout = std::chrono::milliseconds(250);
+
 // 引脚来自 Doc/301母版引脚资源分配.png：
 // GPIO44 -> 按键0，GPIO45 -> 按键1，GPIO80 -> 按键2。
 ls_gpio key_prev(PIN_44, GPIO_MODE_IN);
@@ -62,6 +68,22 @@ ButtonState start_stop_state;
 std::chrono::steady_clock::time_point last_refresh =
     std::chrono::steady_clock::now() - kRefreshTime;
 bool tft_ready = false;
+volatile int remote_command = FRONT_UI_REMOTE_STOP;
+std::chrono::steady_clock::time_point remote_last_refresh =
+    std::chrono::steady_clock::now() - kRemoteCommandTimeout;
+
+void clear_remote_outputs()
+{
+    remote_command = FRONT_UI_REMOTE_STOP;
+    set_speed_of_motor1_rps = 0.0f;
+    set_speed_of_motor2_rps = 0.0f;
+    pwm1_duty_rps = 0.0f;
+    pwm2_duty_rps = 0.0f;
+    gyro_yaw_rate_control_reset_controller();
+    motor_speed_pid_reset();
+    pwm1.atim_pwm_set_duty(0);
+    pwm2.atim_pwm_set_duty(0);
+}
 
 bool is_pressed(ls_gpio &key)
 {
@@ -113,6 +135,7 @@ void stop_car()
     reset_special_track_state();
     // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
     car_running = false;
+    remote_command = FRONT_UI_REMOTE_STOP;
     gyro_yaw_rate_control_reset();
     set_speed_of_motor1_rps = 0;
     set_speed_of_motor2_rps = 0;
@@ -129,8 +152,13 @@ void stop_car()
 void start_car()
 {
     // 发车时不直接写死速度，而是使用当前屏幕上选中的速度策略。
+    // 遥控松开包即使稍晚到达，也不能覆盖已经开始的正常行驶。
+    remote_command = FRONT_UI_REMOTE_STOP;
     car_running = true;
     gyro_yaw_rate_control_reset();
+    motor_speed_pid_reset();
+    pwm1.atim_pwm_set_duty(0);
+    pwm2.atim_pwm_set_duty(0);
     apply_speed_strategy();
     std::cout << "run\n";
 
@@ -287,6 +315,96 @@ void front_ui_set_running(bool running)
     } else {
         front_ui_stop();
     }
+}
+
+bool front_ui_remote_set(int command)
+{
+    if (command < FRONT_UI_REMOTE_STOP || command > FRONT_UI_REMOTE_RIGHT) {
+        return false;
+    }
+
+    if (command == FRONT_UI_REMOTE_STOP) {
+        // 如果车辆已经正常发车，只清遥控标志，绝不能把正常巡线目标清零。
+        remote_command = FRONT_UI_REMOTE_STOP;
+        if (!car_running) {
+            clear_remote_outputs();
+        }
+        return true;
+    }
+
+    // 遥控只属于停车模式。run=1时无条件拒绝，确保不会插入正常方向环。
+    if (car_running) {
+        remote_command = FRONT_UI_REMOTE_STOP;
+        return false;
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    if (remote_command != command) {
+        // 切换方向时清除上一个速度/角速度控制器的历史量，避免反向瞬间残留。
+        gyro_yaw_rate_control_reset_controller();
+        motor_speed_pid_reset();
+        set_speed_of_motor1_rps = 0.0f;
+        set_speed_of_motor2_rps = 0.0f;
+        pwm1_duty_rps = 0.0f;
+        pwm2_duty_rps = 0.0f;
+        pwm1.atim_pwm_set_duty(0);
+        pwm2.atim_pwm_set_duty(0);
+    }
+    remote_last_refresh = now;
+    remote_command = command;
+    return true;
+}
+
+bool front_ui_remote_is_active()
+{
+    if (car_running || remote_command == FRONT_UI_REMOTE_STOP) {
+        return false;
+    }
+
+    if (std::chrono::steady_clock::now() - remote_last_refresh >
+        kRemoteCommandTimeout) {
+        clear_remote_outputs();
+        return false;
+    }
+    return true;
+}
+
+void front_ui_remote_control_update()
+{
+    if (!front_ui_remote_is_active()) {
+        return;
+    }
+
+    const int command = remote_command;
+    if (command == FRONT_UI_REMOTE_FORWARD ||
+        command == FRONT_UI_REMOTE_BACKWARD) {
+        const float target_rps = command == FRONT_UI_REMOTE_FORWARD
+            ? kRemoteLinearSpeedRps
+            : -kRemoteLinearSpeedRps;
+        set_speed_of_motor1_rps = target_rps;
+        set_speed_of_motor2_rps = target_rps;
+        pwm1_duty_rps = target_rps;
+        pwm2_duty_rps = target_rps;
+        return;
+    }
+
+    set_speed_of_motor1_rps = 0.0f;
+    set_speed_of_motor2_rps = 0.0f;
+    if (!gyro_yaw_rate_control_is_ready()) {
+        // 没有角速度反馈时无法保证60dps，宁可保持停止，也不盲目给固定差速。
+        pwm1_duty_rps = 0.0f;
+        pwm2_duty_rps = 0.0f;
+        return;
+    }
+
+    // 当前符号约定：负目标角速度左转，正目标角速度右转。
+    const float target_yaw_rate_dps = command == FRONT_UI_REMOTE_LEFT
+        ? -kRemoteYawRateDps
+        : kRemoteYawRateDps;
+    const float turn_rps =
+        gyro_yaw_rate_control_update_target_yaw_rate(target_yaw_rate_dps);
+    pwm1_duty_rps = turn_rps;
+    pwm2_duty_rps = -turn_rps;
 }
 
 void front_ui_hold_stop()

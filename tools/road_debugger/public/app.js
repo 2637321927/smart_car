@@ -57,6 +57,9 @@ const elements = {
   driveByLeft: $('driveByLeft'),
   driveByRight: $('driveByRight'),
   driveByTestButton: $('driveByTestButton'),
+  driveEnableCommand: $('driveEnableCommand'),
+  driveDisableCommand: $('driveDisableCommand'),
+  remoteButtons: [...document.querySelectorAll('[data-remote]')],
   tuningControls: $('tuningControls'),
   tuningSnapshotTime: $('tuningSnapshotTime'),
   tuningModeHint: $('tuningModeHint'),
@@ -200,8 +203,8 @@ const TUNING_GROUPS = [
       { key: 'dbNormalSpd', label: '正常巡线速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
       { key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 10 },
       { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 25 },
-      { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 5 },
-      { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.35 },
+      { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 46 },
+      { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.14 },
       { key: 'dbSafeDist', label: '目标后安全余量', min: 0, max: 1, step: 0.01, unit: 'm', defaultValue: 0.3 },
       { key: 'dbRpsMps', label: 'RPS转m/s', min: 0.01, max: 0.1, step: 0.001, defaultValue: 0.047 },
       { key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 45 },
@@ -209,6 +212,7 @@ const TUNING_GROUPS = [
       { key: 'dbHKp', label: '航向外环P', min: 0, max: 20, step: 0.1, defaultValue: 8 },
       { key: 'dbHKd', label: '航向外环D', min: 0, max: 5, step: 0.05, defaultValue: 0.2 },
       { key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 200 },
+      { key: 'dbRecoverDps', label: '丢线保护角速度', min: 0, max: 360, step: 1, unit: 'dps', defaultValue: 55 },
       { key: 'dbYawSign', label: '绕行航向符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: -1 },
     ],
   },
@@ -299,6 +303,11 @@ let parameterLayoutKey = '';
 let parameterRows = new Map();
 let scopeOptionsKey = '';
 const tuningControlElements = new Map();
+let remoteHoldDirection = 0;
+let remoteHoldButton = null;
+let remoteHoldTimer = 0;
+let remoteHoldToken = 0;
+let remoteHeartbeatInFlight = false;
 
 function showToast(message) {
   elements.toast.textContent = message;
@@ -971,10 +980,67 @@ function updateSummary() {
   const liveParams = state.liveParams || {};
   const liveRunning = Boolean(Number(liveParams.run ?? 0));
   const driveBusy = Boolean(Number(liveParams.drive_busy ?? 0));
+  const driveEnabled = Boolean(Number(liveParams.drive_enabled ?? 0));
   elements.driveByTestButton.disabled = !liveRunning || driveBusy;
   elements.driveByTestButton.title = !liveRunning
     ? '车辆停车时不可启动绕行测试'
     : (driveBusy ? '绕行脚本正在执行' : '启动绕行脚本测试');
+  elements.driveEnableCommand.classList.toggle('selected-command', driveEnabled);
+  elements.driveDisableCommand.classList.toggle('selected-command', !driveEnabled);
+
+  const remoteEnabled = state.mode === 'live' && Boolean(state.liveParams) && !liveRunning;
+  elements.remoteButtons.forEach((button) => {
+    button.disabled = !remoteEnabled;
+    button.title = remoteEnabled ? '按住移动，松开立即停止' : '仅实时模式且run=0时可用';
+  });
+  if (!remoteEnabled && remoteHoldDirection !== 0) {
+    stopRemoteHold();
+  }
+}
+
+async function sendRemoteHeartbeat(token) {
+  if (token !== remoteHoldToken || remoteHoldDirection === 0 || remoteHeartbeatInFlight) return;
+  remoteHeartbeatInFlight = true;
+  try {
+    await sendCommand(`#remote=${remoteHoldDirection};`, { quiet: true, silentStatus: true });
+  } catch (error) {
+    showToast(`遥控发送失败：${error.message}`);
+    stopRemoteHold();
+  } finally {
+    remoteHeartbeatInFlight = false;
+    // 方向包发送期间如果已经松开，再补发一次停止，避免网络乱序留下旧方向。
+    if (token !== remoteHoldToken || remoteHoldDirection === 0) {
+      sendCommand('#remote=0;', { quiet: true, silentStatus: true }).catch(() => {});
+    }
+  }
+}
+
+function startRemoteHold(direction, button) {
+  const liveRunning = Boolean(Number(state.liveParams?.run ?? 0));
+  if (state.mode !== 'live' || !state.liveParams || liveRunning || button.disabled) return;
+
+  stopRemoteHold(false);
+  remoteHoldDirection = direction;
+  remoteHoldButton = button;
+  remoteHoldButton.classList.add('remote-active');
+  remoteHoldToken += 1;
+  const token = remoteHoldToken;
+  elements.commandStatus.textContent = `停车遥控中：${button.textContent.trim()}`;
+  sendRemoteHeartbeat(token);
+  remoteHoldTimer = window.setInterval(() => sendRemoteHeartbeat(token), 100);
+}
+
+function stopRemoteHold(sendStop = true) {
+  if (remoteHoldTimer) window.clearInterval(remoteHoldTimer);
+  remoteHoldTimer = 0;
+  remoteHoldDirection = 0;
+  remoteHoldToken += 1;
+  if (remoteHoldButton) remoteHoldButton.classList.remove('remote-active');
+  remoteHoldButton = null;
+  if (sendStop) {
+    sendCommand('#remote=0;', { quiet: true, silentStatus: true }).catch(() => {});
+    elements.commandStatus.textContent = '停车遥控已停止';
+  }
 }
 
 function setDriveByTestDirection(direction) {
@@ -1250,7 +1316,9 @@ async function sendCommand(command, options = {}) {
   });
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error || '发送失败');
-  elements.commandStatus.textContent = `已发送 ${payload.command} → ${payload.ip}:${payload.port}`;
+  if (!options.silentStatus) {
+    elements.commandStatus.textContent = `已发送 ${payload.command} → ${payload.ip}:${payload.port}`;
+  }
   if (!options.quiet) showToast(`已发送 ${payload.command}`);
   return payload;
 }
@@ -1301,6 +1369,25 @@ function bindEvents() {
   elements.driveByRight.addEventListener('click', () => setDriveByTestDirection(2));
   elements.driveByTestButton.addEventListener('click', () => {
     sendCommand(`#test_driveby=${state.driveByTestDirection};`).catch((error) => showToast(error.message));
+  });
+  elements.remoteButtons.forEach((button) => {
+    button.addEventListener('contextmenu', (event) => event.preventDefault());
+    button.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      button.setPointerCapture?.(event.pointerId);
+      startRemoteHold(Number(button.dataset.remote), button);
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((eventName) => {
+      button.addEventListener(eventName, () => {
+        if (remoteHoldButton === button) stopRemoteHold();
+      });
+    });
+  });
+  window.addEventListener('blur', () => {
+    if (remoteHoldDirection !== 0) stopRemoteHold();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && remoteHoldDirection !== 0) stopRemoteHold();
   });
 }
 
