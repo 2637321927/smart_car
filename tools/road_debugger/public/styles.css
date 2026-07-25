@@ -359,6 +359,38 @@ h2 { font-size: 1.05rem; }
   border-color: rgba(255, 100, 95, 0.76);
   background: var(--red);
 }
+.drive-by-test-controls {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(140px, 1fr) minmax(150px, 1.3fr);
+  gap: 8px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(139, 190, 190, 0.14);
+}
+.drive-by-direction {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.quick-commands .drive-by-direction button,
+.quick-commands .drive-by-test-button { grid-column: auto; min-height: 42px; }
+.quick-commands .direction-option.selected {
+  color: #071012;
+  border-color: rgba(81, 216, 208, 0.85);
+  background: var(--cyan);
+}
+.quick-commands .drive-by-test-button {
+  color: #1a1203;
+  border-color: rgba(255, 196, 75, 0.78);
+  background: var(--yellow);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+.quick-commands button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+  filter: none;
+}
 .command-panel .muted { padding: 0 18px 16px; }
 
 .muted { margin: 0; color: var(--muted); font-size: 0.72rem; }
@@ -447,4 +479,5 @@ h2 { font-size: 1.05rem; }
   .record-row .grow, .replay-row .grow { flex-basis: 100%; }
   .quick-commands { grid-template-columns: repeat(2, 1fr); }
   .quick-commands button, .quick-commands .run-command { grid-column: span 1; }
+  .drive-by-test-controls { grid-template-columns: 1fr; }
 }

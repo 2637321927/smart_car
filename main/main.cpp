@@ -522,6 +522,48 @@ if (sscanf(buf, "#dbExitRps=%f;", &ftmp) == 1)
     printf("[VOFA] dbExitRps = %d\n", drive_by_exit_speed_rps);
 }
 
+if (sscanf(buf, "#dbBrakePwm=%d;", &itmp) == 1)
+{
+    if (itmp < 0) itmp = -itmp;
+    if (itmp > 4000) itmp = 4000;
+    drive_by_brake_pwm = itmp;
+    printf("[VOFA] dbBrakePwm = %d\n", drive_by_brake_pwm);
+}
+
+if (sscanf(buf, "#dbBrakeRelease=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    if (ftmp > 200.0f) ftmp = 200.0f;
+    drive_by_brake_release_rps = ftmp;
+    printf("[VOFA] dbBrakeRelease = %.2f RPS\n", drive_by_brake_release_rps);
+}
+
+if (sscanf(buf, "#dbBrakeTimeout=%d;", &itmp) == 1)
+{
+    if (itmp < 1) itmp = 1;
+    if (itmp > 2000) itmp = 2000;
+    drive_by_brake_timeout_ms = itmp;
+    printf("[VOFA] dbBrakeTimeout = %d ms\n", drive_by_brake_timeout_ms);
+}
+
+if (sscanf(buf, "#dbTestDist=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = 0.0f;
+    if (ftmp > 5.0f) ftmp = 5.0f;
+    drive_by_test_target_distance_m = ftmp;
+    printf("[VOFA] dbTestDist = %.3f m\n", drive_by_test_target_distance_m);
+}
+
+if (sscanf(buf, "#test_driveby=%d;", &itmp) == 1)
+{
+    const bool started = drive_by_start_test(
+        itmp, drive_by_test_target_distance_m);
+    printf("[VOFA] TEST绕行：方向=%s 距离=%.3fm 结果=%s\n",
+           itmp == 0 ? "左绕" : (itmp == 2 ? "右绕" : "无效"),
+           drive_by_test_target_distance_m,
+           started ? "已启动" : "已拒绝（需先发车、方向为0/2且脚本空闲）");
+}
+
 // 环岛出环里程阈值，单位米。进入 RUNNING 态后累计行驶超过该距离则触发出环。
 if (sscanf(buf, "#circle_exit=%f;", &ftmp) == 1)
 {
@@ -831,7 +873,7 @@ void road_telemetry_send()
 } // namespace
 
 void udp_send(void){
-    char encoder_str[1800];
+    char encoder_str[2048];
     static uint32_t udp_sequence = 0;
     static const steady_clock::time_point udp_started_at = steady_clock::now();
     const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
@@ -877,6 +919,11 @@ void udp_send(void){
              "\"drive_abort_reason\":\"%s\","
              "\"drive_recognizing\":%d,"
              "\"drive_motion\":%d,"
+             "\"drive_test_mode\":%d,"
+             "\"drive_brake_active\":%d,"
+             "\"drive_brake_pwm\":%d,"
+             "\"drive_brake_elapsed_ms\":%d,"
+             "\"drive_test_target_distance_m\":%.3f,"
              "\"drive_yaw_deg\":%.2f,"
              "\"drive_target_yaw_deg\":%.2f,"
              "\"drive_heading_error_deg\":%.2f,"
@@ -936,6 +983,11 @@ void udp_send(void){
              drive_by_abort_reason(),
              drive_by_is_recognizing() ? 1 : 0,
              drive_by_is_motion_phase() ? 1 : 0,
+             drive_debug.test_mode,
+             drive_debug.brake_active,
+             drive_debug.brake_pwm,
+             drive_debug.brake_elapsed_ms,
+             safe_float(drive_by_test_target_distance_m),
              safe_float(drive_debug.yaw_deg),
              safe_float(drive_debug.target_yaw_deg),
              safe_float(drive_debug.heading_error_deg),
@@ -1150,7 +1202,11 @@ gyro_yaw_rate_control_init();
    speed_timer.set_seconds_ms(3, []() {
      // 发车后才允许速度环驱动电机；停车时持续清零输出。
      if (front_ui_is_running()) {
-       test_enc_and_motor_rps();
+       // 主动制动期间由drive_by直接输出受限反向PWM；返回false时，普通速度PID
+       // 在同一周期从已复位状态接管10RPS目标。
+       if (!drive_by_speed_control_update()) {
+         test_enc_and_motor_rps();
+       }
      } else {
        front_ui_hold_stop();
      }
@@ -1164,6 +1220,10 @@ gyro_yaw_rate_control_init();
     });
 
     dir_timer.set_seconds_ms(8, []() {
+      if (front_ui_is_running()) {
+        // 普通状态只经过一次快速状态判断；仅绕行会执行缓存积分和航向闭环。
+        drive_by_control_update();
+      }
       // K0 只是目标板功能开关，不应该在没有目标时关闭正常方向环。
       // 远距离红块候选后的接近/推理阶段也继续巡线，只把基准速度降为10RPS。
       if (front_ui_is_running() &&
@@ -1171,7 +1231,7 @@ gyro_yaw_rate_control_init();
         PID_control_test(latest_error);
       } else if (front_ui_is_running() && drive_by_is_motion_phase()) {
         // S形运动阶段由 drive_by 航向闭环独占左右轮目标。
-        // 这里故意不 reset 角速度环，否则会清掉脚本正在使用的积分。
+        // drive_by_control_update()已在本周期完成控制，这里不再运行普通方向环。
       } else if (!front_ui_is_running()) {
         gyro_yaw_rate_control_reset();
         front_ui_hold_stop();

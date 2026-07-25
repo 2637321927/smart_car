@@ -53,6 +53,11 @@ volatile float drive_by_heading_tolerance_deg = 2.0f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
 volatile float drive_by_yaw_sign = -1.0f;
+volatile int drive_by_brake_pwm = 4000;
+volatile float drive_by_brake_release_rps = 15.0f;
+volatile int drive_by_brake_confirm_count = 2;
+volatile int drive_by_brake_timeout_ms = 300;
+volatile float drive_by_test_target_distance_m = 0.50f;
 
 namespace {
 
@@ -83,11 +88,14 @@ enum DriveByState {
     DB_APPROACH,
     DB_WAIT_VIEW,
     DB_INFER,
+    DB_WAIT_BRAKE,
+    DB_START_MOTION_PENDING,
     DB_SHIFT_OUT_A,
     DB_SHIFT_OUT_B,
     DB_PASS_TARGET,
     DB_SHIFT_IN_A,
     DB_SHIFT_IN_B,
+    DB_FINISH_PENDING,
 };
 
 enum DriveByAbortReason {
@@ -97,6 +105,7 @@ enum DriveByAbortReason {
     DB_ABORT_GYRO_NOT_READY,
     DB_ABORT_GYRO_STALE,
     DB_ABORT_PHASE_TIMEOUT,
+    DB_ABORT_BRAKE_TIMEOUT,
 };
 
 enum RecognitionFrameStatus {
@@ -160,6 +169,11 @@ bool g_recognition_triggered = false;
 bool g_target_geometry_captured = false;
 bool g_track_reference_valid = false;
 bool g_current_track_heading_valid = false;
+volatile bool g_brake_active = false;
+volatile bool g_brake_completed = false;
+volatile bool g_inference_complete = false;
+volatile bool g_test_mode = false;
+volatile bool g_stop_requested = false;
 DriveByState g_state = DB_IDLE;
 DriveByAbortReason g_abort_reason = DB_ABORT_NONE;
 DriveByClock::time_point g_state_start = DriveByClock::now();
@@ -168,9 +182,12 @@ DriveByClock::time_point g_recognition_start = DriveByClock::now();
 DriveByClock::time_point g_last_integration_time = DriveByClock::now();
 DriveByClock::time_point g_cooldown_start = DriveByClock::now();
 DriveByClock::time_point g_candidate_retry_after = DriveByClock::now();
+DriveByClock::time_point g_brake_start = DriveByClock::now();
 int g_detect_frame_counter = 0;
 int g_far_candidate_count = 0;
 int g_heading_settle_count = 0;
+int g_brake_confirm_count = 0;
+int g_pending_result = 1;
 int g_turn_side = 0;
 float g_yaw_deg = 0.0f;
 float g_distance_since_trigger_m = 0.0f;
@@ -216,11 +233,14 @@ const char *state_name(DriveByState state)
     case DB_APPROACH: return "APPROACH";
     case DB_WAIT_VIEW: return "WAIT_VIEW";
     case DB_INFER: return "INFER";
+    case DB_WAIT_BRAKE: return "WAIT_BRAKE";
+    case DB_START_MOTION_PENDING: return "START_MOTION_PENDING";
     case DB_SHIFT_OUT_A: return "SHIFT_OUT_A";
     case DB_SHIFT_OUT_B: return "SHIFT_OUT_B";
     case DB_PASS_TARGET: return "PASS_TARGET";
     case DB_SHIFT_IN_A: return "SHIFT_IN_A";
     case DB_SHIFT_IN_B: return "SHIFT_IN_B";
+    case DB_FINISH_PENDING: return "FINISH_PENDING";
     default: return "UNKNOWN";
     }
 }
@@ -231,11 +251,14 @@ int detection_stage(DriveByState state)
     case DB_APPROACH: return 1;
     case DB_WAIT_VIEW: return 2;
     case DB_INFER: return 3;
+    case DB_WAIT_BRAKE: return 3;
+    case DB_START_MOTION_PENDING:
     case DB_SHIFT_OUT_A:
     case DB_SHIFT_OUT_B:
     case DB_PASS_TARGET:
     case DB_SHIFT_IN_A:
     case DB_SHIFT_IN_B:
+    case DB_FINISH_PENDING:
         return 4;
     default:
         return 0;
@@ -251,6 +274,7 @@ const char *abort_reason_name(DriveByAbortReason reason)
     case DB_ABORT_GYRO_NOT_READY: return "gyro_not_ready";
     case DB_ABORT_GYRO_STALE: return "gyro_stale";
     case DB_ABORT_PHASE_TIMEOUT: return "phase_timeout";
+    case DB_ABORT_BRAKE_TIMEOUT: return "brake_timeout";
     default: return "unknown";
     }
 }
@@ -357,6 +381,31 @@ void command_motion_wheels(float base_rps, float turn_rps)
     set_speed_of_motor2_rps = base_rps;
     pwm1_duty_rps = left_rps;
     pwm2_duty_rps = right_rps;
+}
+
+void start_active_brake()
+{
+    // 相机线程只提交制动状态，不直接碰电机。真正的反向PWM由3ms速度线程输出，
+    // 因而不会和普通速度PID在同一个周期争抢硬件。
+    g_brake_active = true;
+    g_brake_completed = false;
+    g_brake_confirm_count = 0;
+    g_brake_start = DriveByClock::now();
+    g_debug.brake_active = 1;
+    g_debug.brake_pwm = -std::abs((int)drive_by_brake_pwm);
+    g_debug.brake_elapsed_ms = 0;
+}
+
+void clear_active_brake(bool clear_completed)
+{
+    g_brake_active = false;
+    if (clear_completed) {
+        g_brake_completed = false;
+    }
+    g_brake_confirm_count = 0;
+    g_debug.brake_active = 0;
+    g_debug.brake_pwm = 0;
+    g_debug.brake_elapsed_ms = 0;
 }
 
 bool should_detect_this_frame()
@@ -710,6 +759,8 @@ void enter_state(DriveByState next)
 
 void reset_runtime(bool restore_outputs)
 {
+    clear_active_brake(true);
+    motor_speed_pid_reset();
     if (restore_outputs) {
         restore_control();
     }
@@ -720,18 +771,23 @@ void reset_runtime(bool restore_outputs)
     g_target_geometry_captured = false;
     g_track_reference_valid = false;
     g_current_track_heading_valid = false;
+    g_inference_complete = false;
+    g_test_mode = false;
+    g_stop_requested = false;
     g_state = DB_IDLE;
     g_abort_reason = DB_ABORT_NONE;
     g_candidate_retry_after = DriveByClock::now();
     g_detect_frame_counter = 0;
     g_far_candidate_count = 0;
     g_heading_settle_count = 0;
+    g_pending_result = 1;
     g_turn_side = 0;
     g_yaw_deg = 0.0f;
     g_distance_since_trigger_m = 0.0f;
     g_phase_distance_m = 0.0f;
     g_report = RecognitionReport{};
     g_debug = DriveByDebug{};
+    g_debug.test_target_distance_m = drive_by_test_target_distance_m;
     have_target = false;
     red_block_rect = cv::Rect();
     plate_rect = cv::Rect();
@@ -740,6 +796,8 @@ void reset_runtime(bool restore_outputs)
 
 void finish_session(DriveByAbortReason reason)
 {
+    clear_active_brake(true);
+    motor_speed_pid_reset();
     g_abort_reason = reason;
     g_debug.abort_reason = (int)reason;
     // 正常左右绕行可能在推理结束几秒后才完成，不能把整段绕行时间误写成
@@ -754,6 +812,10 @@ void finish_session(DriveByAbortReason reason)
     restore_control();
     gyro_yaw_rate_control_reset_controller();
     g_drive_by_busy = false;
+    g_inference_complete = false;
+    g_test_mode = false;
+    g_stop_requested = false;
+    g_debug.test_mode = 0;
     g_state = DB_IDLE;
     g_far_candidate_count = 0;
     g_debug.red_candidate = 0;
@@ -772,6 +834,10 @@ void start_approach_session(const FarRedCandidate& candidate)
     g_target_geometry_captured = false;
     g_track_reference_valid = false;
     g_current_track_heading_valid = false;
+    g_inference_complete = false;
+    g_test_mode = false;
+    g_stop_requested = false;
+    g_debug.test_mode = 0;
     g_abort_reason = DB_ABORT_NONE;
     item_flag = 1;
     g_session_start = DriveByClock::now();
@@ -784,6 +850,7 @@ void start_approach_session(const FarRedCandidate& candidate)
     g_report.trigger_left_rps = encoder1_speed_avg;
     g_report.trigger_right_rps = encoder2_speed_avg;
     g_debug = DriveByDebug{};
+    g_debug.test_target_distance_m = drive_by_test_target_distance_m;
     g_debug.red_candidate = 1;
     g_debug.red_candidate_count = g_far_candidate_count;
     g_debug.red_contour_area = candidate.max_contour_area;
@@ -792,6 +859,7 @@ void start_approach_session(const FarRedCandidate& candidate)
     plate_rect = cv::Rect();
     red_contour_area = 0;
     command_recognition_base_speed();
+    start_active_brake();
     enter_state(DB_APPROACH);
 }
 
@@ -811,6 +879,8 @@ void cancel_false_candidate()
 {
     // 远距离检测只负责提前减速。300ms内始终达不到严格红块条件时，
     // 恢复原巡线输出，短暂冷却后允许同一目标在变大时再次触发。
+    clear_active_brake(true);
+    motor_speed_pid_reset();
     restore_control();
     gyro_yaw_rate_control_reset_controller();
     g_drive_by_busy = false;
@@ -822,6 +892,10 @@ void cancel_false_candidate()
     g_far_candidate_count = 0;
     g_target_geometry_captured = false;
     g_track_reference_valid = false;
+    g_inference_complete = false;
+    g_test_mode = false;
+    g_stop_requested = false;
+    g_debug.test_mode = 0;
     g_debug.red_candidate = 0;
     g_debug.red_candidate_count = 0;
     g_debug.detection_stage = 0;
@@ -835,21 +909,28 @@ void begin_motion_script(int result)
 {
     if (!g_target_geometry_captured) {
         item_flag = 1;
-        finish_session(DB_ABORT_NO_TARGET_GEOMETRY);
+        g_abort_reason = DB_ABORT_NO_TARGET_GEOMETRY;
+        g_debug.abort_reason = (int)g_abort_reason;
+        enter_state(DB_FINISH_PENDING);
         return;
     }
     if (!gyro_yaw_rate_control_is_ready()) {
         item_flag = 1;
-        finish_session(DB_ABORT_GYRO_NOT_READY);
+        g_abort_reason = DB_ABORT_GYRO_NOT_READY;
+        g_debug.abort_reason = (int)g_abort_reason;
+        enter_state(DB_FINISH_PENDING);
         return;
     }
     if (gyro_yaw_rate_control_gyro_age_ms() > drive_by_gyro_stale_ms) {
         item_flag = 1;
-        finish_session(DB_ABORT_GYRO_STALE);
+        g_abort_reason = DB_ABORT_GYRO_STALE;
+        g_debug.abort_reason = (int)g_abort_reason;
+        enter_state(DB_FINISH_PENDING);
         return;
     }
 
     // 左绕和右绕只改变相对赛道切线的偏角符号。
+    clear_active_brake(false);
     g_turn_side = result == 0 ? 1 : -1;
     g_track_heading_reference_deg = g_target_track_heading_global_deg;
     g_track_reference_valid = true;
@@ -897,33 +978,34 @@ bool motion_phase_guard_exceeded()
         g_phase_distance_m > kTurnPhaseMaxDistanceM;
 }
 
-void abort_motion_and_stop(DriveByAbortReason reason)
+void request_motion_stop(DriveByAbortReason reason)
 {
-    // 绕行已经接近目标板，异常时恢复35RPS巡线可能直接撞板，因此阶段保护、
-    // 陀螺仪失效都采用安全停车。停车完成后重新写回退出原因，供UDP事后查看。
+    // 8ms方向线程不直接操作PWM。这里只清目标并提交停车请求，3ms速度线程
+    // 会在下一个周期执行真正的停车，最坏额外等待约3ms。
     g_abort_reason = reason;
     g_debug.abort_reason = (int)reason;
-    print_recognition_report(item_flag);
-    front_ui_stop();
-    g_abort_reason = reason;
-    g_debug.abort_reason = (int)reason;
+    g_stop_requested = true;
+    set_speed_of_motor1_rps = 0.0f;
+    set_speed_of_motor2_rps = 0.0f;
+    pwm1_duty_rps = 0.0f;
+    pwm2_duty_rps = 0.0f;
 }
 
 void update_motion_state()
 {
     if (!gyro_yaw_rate_control_is_ready()) {
         item_flag = 1;
-        abort_motion_and_stop(DB_ABORT_GYRO_NOT_READY);
+        request_motion_stop(DB_ABORT_GYRO_NOT_READY);
         return;
     }
     if (gyro_yaw_rate_control_gyro_age_ms() > drive_by_gyro_stale_ms) {
         item_flag = 1;
-        abort_motion_and_stop(DB_ABORT_GYRO_STALE);
+        request_motion_stop(DB_ABORT_GYRO_STALE);
         return;
     }
     if (motion_phase_guard_exceeded()) {
         item_flag = 1;
-        abort_motion_and_stop(DB_ABORT_PHASE_TIMEOUT);
+        request_motion_stop(DB_ABORT_PHASE_TIMEOUT);
         return;
     }
 
@@ -977,7 +1059,9 @@ void update_motion_state()
     case DB_SHIFT_IN_B:
         if (heading_is_settled(heading_error_deg, gyro_dps) &&
             g_phase_distance_m >= drive_by_exit_distance_m) {
-            finish_session(DB_ABORT_NONE);
+            // 报告输出和控制参数恢复留给相机主线程，避免在8ms方向线程printf。
+            command_motion_wheels(drive_by_normal_speed_rps, 0.0f);
+            enter_state(DB_FINISH_PENDING);
         }
         break;
 
@@ -993,17 +1077,21 @@ void complete_inference()
     g_report.finish_right_rps = encoder2_speed_avg;
     item_flag = choose_vote_result();
 
-    if (item_flag == 1) {
+    g_pending_result = item_flag;
+    g_inference_complete = true;
+    if (!g_brake_completed || g_brake_active) {
+        // 无论投票结果是否需要左右绕行，都先等主动制动完整结束。
+        // 这样“直行”结果不会在仍高于释放速度时突然恢复35RPS。
+        enter_state(DB_WAIT_BRAKE);
+    } else if (g_pending_result == 0 || g_pending_result == 2) {
+        enter_state(DB_START_MOTION_PENDING);
+    } else {
         finish_session(DB_ABORT_NONE);
-        return;
     }
-    begin_motion_script(item_flag);
 }
 
 void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
 {
-    integrate_session_motion();
-
     switch (g_state) {
     case DB_APPROACH: {
         command_recognition_base_speed();
@@ -1063,12 +1151,24 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
         }
         break;
 
+    case DB_WAIT_BRAKE:
+        command_recognition_base_speed();
+        break;
+
+    case DB_START_MOTION_PENDING:
+        // 由下一次8ms方向周期启动闭环，相机线程不写运动控制量。
+        break;
+
     case DB_SHIFT_OUT_A:
     case DB_SHIFT_OUT_B:
     case DB_PASS_TARGET:
     case DB_SHIFT_IN_A:
     case DB_SHIFT_IN_B:
-        update_motion_state();
+        // 绕行运动闭环已迁移到8ms dir_timer，相机线程只继续更新道路几何缓存。
+        break;
+
+    case DB_FINISH_PENDING:
+        finish_session(g_abort_reason);
         break;
 
     default:
@@ -1127,7 +1227,9 @@ void drive_by_init()
 
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
 {
-    if (!g_drive_by_enable) {
+    // TEST模式不改变K0开关，因此即使目标板模式关闭，也必须允许已经启动的
+    // 测试脚本继续运行；只有普通识别流程受K0开关约束。
+    if (!g_drive_by_enable && !g_test_mode) {
         if (g_drive_by_busy) {
             reset_runtime(true);
         }
@@ -1143,6 +1245,147 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
         command_normal_base_speed();
         update_idle_detection(frame, ncnn);
     }
+}
+
+void drive_by_control_update()
+{
+    if (!g_drive_by_busy) {
+        return;
+    }
+
+    // 编码器和陀螺仪均读取现有缓存，dt使用真实调度间隔。该函数不访问相机、
+    // NCNN、I2C或PWM硬件，因此可以稳定放在8ms方向定时器中。
+    integrate_session_motion();
+    if (g_state == DB_START_MOTION_PENDING && !g_stop_requested) {
+        // 速度线程只提交该状态；航向闭环的初始化与首次更新统一留在方向线程。
+        begin_motion_script(g_pending_result);
+    }
+    if (drive_by_is_motion_phase() && !g_stop_requested) {
+        update_motion_state();
+    }
+}
+
+bool drive_by_speed_control_update()
+{
+    if (g_stop_requested) {
+        const DriveByAbortReason reason = g_abort_reason;
+        const int stopped_brake_elapsed_ms = g_debug.brake_elapsed_ms;
+        g_stop_requested = false;
+        front_ui_stop();
+        // front_ui_stop()会取消脚本并清空运行态；把原因写回调试快照，便于事后定位。
+        g_abort_reason = reason;
+        g_debug.abort_reason = (int)reason;
+        g_debug.brake_elapsed_ms = stopped_brake_elapsed_ms;
+        return true;
+    }
+
+    if (!g_brake_active) {
+        return false;
+    }
+
+    const int brake_elapsed_ms = (int)elapsed_ms(g_brake_start);
+    g_debug.brake_elapsed_ms = brake_elapsed_ms;
+
+    const float release_rps = std::fabs((float)drive_by_brake_release_rps);
+    const bool both_wheels_slow =
+        std::fabs((float)encoder1_speed_avg) <= release_rps &&
+        std::fabs((float)encoder2_speed_avg) <= release_rps;
+    g_brake_confirm_count = both_wheels_slow ? g_brake_confirm_count + 1 : 0;
+
+    const int required_count = std::max(1, (int)drive_by_brake_confirm_count);
+    if (g_brake_confirm_count >= required_count) {
+        // 先撤销PWM独占并完整复位增量式PID，再让main.cpp在同一个3ms周期
+        // 调用普通速度环，从零状态接管10RPS目标。
+        clear_active_brake(false);
+        g_brake_completed = true;
+        motor_speed_pid_reset();
+        command_recognition_base_speed();
+        if (g_inference_complete && g_state == DB_WAIT_BRAKE) {
+            if (g_pending_result == 0 || g_pending_result == 2) {
+                enter_state(DB_START_MOTION_PENDING);
+            } else {
+                // 报告打印与参数恢复交给相机线程，3ms速度线程只提交结束状态。
+                enter_state(DB_FINISH_PENDING);
+            }
+        }
+        return false;
+    }
+
+    if (brake_elapsed_ms >= std::max(1, (int)drive_by_brake_timeout_ms)) {
+        const DriveByAbortReason reason = DB_ABORT_BRAKE_TIMEOUT;
+        clear_active_brake(true);
+        motor_speed_pid_reset();
+        g_abort_reason = reason;
+        g_debug.abort_reason = (int)reason;
+        front_ui_stop();
+        // 停车会复位脚本状态，重新写回原因供UDP事后查看。
+        g_abort_reason = reason;
+        g_debug.abort_reason = (int)reason;
+        g_debug.brake_elapsed_ms = brake_elapsed_ms;
+        return true;
+    }
+
+    const int brake_pwm = std::min(4000, std::abs((int)drive_by_brake_pwm));
+    g_debug.brake_active = 1;
+    g_debug.brake_pwm = -brake_pwm;
+    motor_speed_force_pwm(-brake_pwm, -brake_pwm);
+    return true;
+}
+
+bool drive_by_start_test(int simulated_item_flag,
+                         float simulated_target_distance_m)
+{
+    if (!front_ui_is_running() || g_drive_by_busy ||
+        (simulated_item_flag != 0 && simulated_item_flag != 2)) {
+        return false;
+    }
+
+    save_control_once();
+    g_drive_by_busy = true;
+    g_test_mode = true;
+    g_seen_lock = false;
+    g_recognition_triggered = true;
+    g_target_geometry_captured = true;
+    g_track_reference_valid = false;
+    g_abort_reason = DB_ABORT_NONE;
+    g_stop_requested = false;
+    g_inference_complete = true;
+    g_pending_result = simulated_item_flag;
+    item_flag = simulated_item_flag;
+
+    const DriveByClock::time_point now = DriveByClock::now();
+    g_session_start = now;
+    g_recognition_start = now;
+    g_last_integration_time = now;
+    g_yaw_deg = 0.0f;
+    g_distance_since_trigger_m = 0.0f;
+    g_phase_distance_m = 0.0f;
+    g_report = RecognitionReport{};
+    g_report.trigger_left_rps = encoder1_speed_avg;
+    g_report.trigger_right_rps = encoder2_speed_avg;
+
+    float track_heading_relative_deg = 0.0f;
+    g_current_track_heading_valid =
+        compute_current_track_heading(&track_heading_relative_deg);
+    g_current_track_heading_relative_deg = g_current_track_heading_valid
+        ? track_heading_relative_deg
+        : 0.0f;
+    g_target_track_heading_global_deg = normalize_angle_deg(
+        g_yaw_deg + g_current_track_heading_relative_deg);
+    g_target_distance_at_trigger_m = std::max(0.0f, simulated_target_distance_m);
+
+    g_debug = DriveByDebug{};
+    g_debug.test_mode = 1;
+    g_debug.target_geometry_valid = 1;
+    g_debug.view_ready = 1;
+    g_debug.target_track_heading_deg = g_target_track_heading_global_deg;
+    g_debug.target_distance_m = g_target_distance_at_trigger_m;
+    g_debug.test_target_distance_m = g_target_distance_at_trigger_m;
+
+    command_recognition_base_speed();
+    start_active_brake();
+    enter_state(DB_WAIT_BRAKE);
+    return true;
 }
 
 void drive_by_update_track_geometry()
@@ -1203,7 +1446,8 @@ bool drive_by_is_busy()
 bool drive_by_is_recognizing()
 {
     return g_drive_by_busy &&
-        (g_state == DB_APPROACH || g_state == DB_WAIT_VIEW || g_state == DB_INFER);
+        (g_state == DB_APPROACH || g_state == DB_WAIT_VIEW ||
+         g_state == DB_INFER || g_state == DB_WAIT_BRAKE);
 }
 
 bool drive_by_is_motion_phase()

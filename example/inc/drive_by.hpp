@@ -38,6 +38,13 @@ extern volatile float drive_by_rate_tolerance_dps;
 extern volatile int drive_by_gyro_stale_ms;
 extern volatile float drive_by_yaw_sign;
 
+// 主动制动参数。PWM为正数幅值，实际制动时由速度线程输出负PWM。
+extern volatile int drive_by_brake_pwm;
+extern volatile float drive_by_brake_release_rps;
+extern volatile int drive_by_brake_confirm_count;
+extern volatile int drive_by_brake_timeout_ms;
+extern volatile float drive_by_test_target_distance_m;
+
 typedef struct
 {
     float yaw_deg;
@@ -59,10 +66,22 @@ typedef struct
     int red_candidate_count;
     int red_contour_area;
     int detection_stage;
+    int test_mode;
+    int brake_active;
+    int brake_pwm;
+    int brake_elapsed_ms;
+    float test_target_distance_m;
 } DriveByDebug;
 
 void drive_by_init();
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn);
+// 由8ms方向定时器调用：只读取缓存并更新绕行闭环，不做图像、推理、打印或硬件I/O。
+void drive_by_control_update();
+// 由3ms速度定时器调用。返回true表示本周期由绕行模块独占电机PWM。
+bool drive_by_speed_control_update();
+// 跳过红块与NCNN，直接模拟左绕(0)或右绕(2)，用于单独调试运动脚本。
+bool drive_by_start_test(int simulated_item_flag,
+                         float simulated_target_distance_m);
 bool drive_by_is_busy();
 bool drive_by_is_recognizing();
 bool drive_by_is_motion_phase();

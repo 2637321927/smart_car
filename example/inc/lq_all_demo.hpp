@@ -86,6 +86,10 @@ void close_circle_control(
     void test_enc_and_motor(int expected_speed_of_motor1_pwm,int expected_speed_of_motor2_pwm);
     void input_speed_rps();
     void  test_enc_and_motor_rps();
+// 清空增量式速度PID的PWM累积量和前两次误差；停车、主动制动释放时调用。
+void motor_speed_pid_reset();
+// 在速度线程中直接写左右轮PWM，内部仍执行软件正反向限幅。
+void motor_speed_force_pwm(int motor1_pwm, int motor2_pwm);
 void vofa_receive(lq_udp_client &udp);
 
 

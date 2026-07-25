@@ -54,6 +54,9 @@ const elements = {
   commandInput: $('commandInput'),
   sendCommand: $('sendCommand'),
   commandStatus: $('commandStatus'),
+  driveByLeft: $('driveByLeft'),
+  driveByRight: $('driveByRight'),
+  driveByTestButton: $('driveByTestButton'),
   toast: $('toast'),
 };
 
@@ -90,6 +93,11 @@ const PARAMETER_LABELS = {
   drive_abort_reason: '绕行退出原因',
   drive_recognizing: '识别阶段',
   drive_motion: '绕行运动阶段',
+  drive_test_mode: 'TEST绕行模式',
+  drive_brake_active: '主动制动中',
+  drive_brake_pwm: '主动制动PWM',
+  drive_brake_elapsed_ms: '主动制动耗时',
+  drive_test_target_distance_m: 'TEST虚拟目标距离',
   drive_yaw_deg: '绕行累计航向',
   drive_target_yaw_deg: '绕行目标航向',
   drive_heading_error_deg: '绕行航向误差',
@@ -174,6 +182,7 @@ const state = {
   recording: { active: false },
   scopeChannels: loadStoredScopeChannels(),
   roadColumnPercent: loadStoredRoadColumnPercent(),
+  driveByTestDirection: 2,
   replay: {
     events: [],
     paramEvents: [],
@@ -212,7 +221,8 @@ function formatValue(key, value) {
   if (typeof value === 'boolean') return value ? '是' : '否';
   if (key === 'run' || key === 'drive_enabled' || key === 'drive_busy' || key === 'have_target' ||
       key === 'drive_recognizing' || key === 'drive_motion' || key === 'drive_geometry_valid' ||
-      key === 'drive_view_ready' || key === 'red_candidate') {
+      key === 'drive_view_ready' || key === 'red_candidate' || key === 'drive_test_mode' ||
+      key === 'drive_brake_active') {
     return Number(value) ? '是' : '否';
   }
   if (key === 'drive_detection_stage') {
@@ -642,6 +652,22 @@ function updateSummary() {
   elements.centerCount.textContent = road?.sourceCounts.center ?? params.mid_n ?? 0;
   elements.rightCount.textContent = road?.sourceCounts.right ?? params.right_n ?? 0;
   elements.frameSequence.textContent = road ? `帧 ${road.sequence}` : '帧 --';
+  const liveParams = state.liveParams || {};
+  const liveRunning = Boolean(Number(liveParams.run ?? 0));
+  const driveBusy = Boolean(Number(liveParams.drive_busy ?? 0));
+  elements.driveByTestButton.disabled = !liveRunning || driveBusy;
+  elements.driveByTestButton.title = !liveRunning
+    ? '车辆停车时不可启动绕行测试'
+    : (driveBusy ? '绕行脚本正在执行' : '启动绕行脚本测试');
+}
+
+function setDriveByTestDirection(direction) {
+  state.driveByTestDirection = direction === 0 ? 0 : 2;
+  const leftSelected = state.driveByTestDirection === 0;
+  elements.driveByLeft.classList.toggle('selected', leftSelected);
+  elements.driveByRight.classList.toggle('selected', !leftSelected);
+  elements.driveByLeft.setAttribute('aria-pressed', String(leftSelected));
+  elements.driveByRight.setAttribute('aria-pressed', String(!leftSelected));
 }
 
 function updateScopeModeText() {
@@ -920,6 +946,11 @@ function bindEvents() {
   });
   document.querySelectorAll('[data-command]').forEach((button) => {
     button.addEventListener('click', () => sendCommand(button.dataset.command).catch((error) => showToast(error.message)));
+  });
+  elements.driveByLeft.addEventListener('click', () => setDriveByTestDirection(0));
+  elements.driveByRight.addEventListener('click', () => setDriveByTestDirection(2));
+  elements.driveByTestButton.addEventListener('click', () => {
+    sendCommand(`#test_driveby=${state.driveByTestDirection};`).catch((error) => showToast(error.message));
   });
 }
 

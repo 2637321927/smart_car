@@ -1,11 +1,57 @@
 #include "lq_all_demo.hpp"
 
+#include <mutex>
+
 volatile float P = 454.0f;
 //volatile float I = 80.0f;old static premeter
 volatile float I = 14.0f;
 volatile float D = 0.0f;
 volatile int current_pwm1 = 0;
 volatile int current_pwm2 = 0;
+
+namespace {
+
+constexpr int kMaxForwardPwm = 8000;
+constexpr int kMaxReversePwm = 4000;
+
+// 增量式PID不仅依赖当前PWM，还依赖前两次误差。主动制动结束或停车时，
+// 两类状态必须一起清零，否则下一次闭环会把制动前后的误差突变再次叠加到PWM。
+float g_error_last1 = 0.0f;
+float g_error_last2 = 0.0f;
+float g_error_prev1 = 0.0f;
+float g_error_prev2 = 0.0f;
+std::mutex g_motor_speed_mutex;
+
+int clamp_pwm(int pwm)
+{
+    if (pwm > kMaxForwardPwm) return kMaxForwardPwm;
+    if (pwm < -kMaxReversePwm) return -kMaxReversePwm;
+    return pwm;
+}
+
+void apply_motor_pwm(int motor1_pwm, int motor2_pwm)
+{
+    current_pwm1 = clamp_pwm(motor1_pwm);
+    current_pwm2 = clamp_pwm(motor2_pwm);
+
+    if (current_pwm1 >= 0) {
+        polar_pwm1.gpio_level_set(GPIO_HIGH);
+        pwm1.atim_pwm_set_duty(current_pwm1);
+    } else {
+        polar_pwm1.gpio_level_set(GPIO_LOW);
+        pwm1.atim_pwm_set_duty(-current_pwm1);
+    }
+
+    if (current_pwm2 >= 0) {
+        polar_pwm2.gpio_level_set(GPIO_HIGH);
+        pwm2.atim_pwm_set_duty(current_pwm2);
+    } else {
+        polar_pwm2.gpio_level_set(GPIO_LOW);
+        pwm2.atim_pwm_set_duty(-current_pwm2);
+    }
+}
+
+} // namespace
 
 /************a********************************************************************
  * @brief   电机转速PD闭环控制S
@@ -18,19 +64,13 @@ void calculate_differential_for_motor(
     const float target_speed_of_motor1_RPS, const float target_speed_of_motor2_RPS,
     int& pwm1_plusduty, int& pwm2_plusduty)
 {
-    // 历史误差
-    static float error_last1 = 0.0f;
-    static float error_last2 = 0.0f;
-    static float error_prev1 = 0.0f;
-    static float error_prev2 = 0.0f;
-
     // 当前误差
     float error_current1 = target_speed_of_motor1_RPS - speed_of_motor1;
     float error_current2 = target_speed_of_motor2_RPS - speed_of_motor2;
 
     // 真正的增量式 PID
-    float p_term1 = P * (error_current1 - error_last1);
-    float p_term2 = P * (error_current2 - error_last2);
+    float p_term1 = P * (error_current1 - g_error_last1);
+    float p_term2 = P * (error_current2 - g_error_last2);
     const int max_P=2400;
   if(p_term1>max_P)  p_term1=max_P;
 if(p_term1<-max_P) p_term1=-max_P;
@@ -40,8 +80,8 @@ if(p_term2<-max_P) p_term2=-max_P;
     float i_term1 = I * error_current1;
     float i_term2 = I * error_current2;
 
-    float d_term1 = D * (error_current1 - 2.0f * error_last1 + error_prev1);
-    float d_term2 = D * (error_current2 - 2.0f * error_last2 + error_prev2);
+    float d_term1 = D * (error_current1 - 2.0f * g_error_last1 + g_error_prev1);
+    float d_term2 = D * (error_current2 - 2.0f * g_error_last2 + g_error_prev2);
 
     const int max_D=200;
 
@@ -65,10 +105,33 @@ if(d_term2<-max_D) d_term2=-max_D;
     I2_motor = i_term2;
 
     // 更新历史误差
-    error_prev1 = error_last1;
-    error_prev2 = error_last2;
-    error_last1 = error_current1;
-    error_last2 = error_current2;
+    g_error_prev1 = g_error_last1;
+    g_error_prev2 = g_error_last2;
+    g_error_last1 = error_current1;
+    g_error_last2 = error_current2;
+}
+
+void motor_speed_pid_reset()
+{
+    std::lock_guard<std::mutex> lock(g_motor_speed_mutex);
+    g_error_last1 = 0.0f;
+    g_error_last2 = 0.0f;
+    g_error_prev1 = 0.0f;
+    g_error_prev2 = 0.0f;
+    current_pwm1 = 0;
+    current_pwm2 = 0;
+    P1_motor = 0.0f;
+    P2_motor = 0.0f;
+    I1_motor = 0.0f;
+    I2_motor = 0.0f;
+}
+
+void motor_speed_force_pwm(int motor1_pwm, int motor2_pwm)
+{
+    // 该接口只供3ms速度线程使用。统一在速度环模块内写方向和占空比，
+    // 可避免绕行脚本绕过软件的正反向PWM限幅。
+    std::lock_guard<std::mutex> lock(g_motor_speed_mutex);
+    apply_motor_pwm(motor1_pwm, motor2_pwm);
 }
 
 /********************************************************************************
@@ -84,6 +147,7 @@ void close_circle_control(
     float target_speed_of_motor1_RPS,
     float target_speed_of_motor2_RPS)
 {
+    std::lock_guard<std::mutex> lock(g_motor_speed_mutex);
     int pwm1_plusduty = 0;
     int pwm2_plusduty = 0;
 
@@ -97,45 +161,6 @@ void close_circle_control(
     current_pwm1 += pwm1_plusduty;
     current_pwm2 += pwm2_plusduty;
 
-    const int MAX_PWM = 8000;
-        const int MIN_PWM = -4000;
     // 内部状态双向限幅，防止 windup
-    if (current_pwm1 > MAX_PWM) current_pwm1 = MAX_PWM;
-    if (current_pwm1 < MIN_PWM) current_pwm1 = MIN_PWM;
-    if (current_pwm2 > MAX_PWM) current_pwm2 = MAX_PWM;
-    if (current_pwm2 < MIN_PWM) current_pwm2 = MIN_PWM;
-    //polar_pwm2.gpio_level_set(GPIO_HIGH);    // 正转
-    //polar_pwm1.gpio_level_set(GPIO_HIGH);   // 正转
-     //pwm1.atim_pwm_set_duty(set_speed_of_motor1_rps);
-     //pwm2.atim_pwm_set_duty(set_speed_of_motor1_rps);
-    // otor1 输出
-    
-    if (current_pwm1 >= 0)
-    {
-        polar_pwm1.gpio_level_set(GPIO_HIGH);   // 正转
-        pwm1.atim_pwm_set_duty(current_pwm1);
-        //std::cout<<"toward"<<std::endl;
-    }
-    else
-    {
-        polar_pwm1.gpio_level_set(GPIO_LOW);    // 反转
-        pwm1.atim_pwm_set_duty(-current_pwm1);
-       // std::cout<<"back"<<std::endl;
-    }
-
-    // motor2 输出
-    if (current_pwm2 >= 0)
-    {
-        polar_pwm2.gpio_level_set(GPIO_HIGH);    // 正转
-        pwm2.atim_pwm_set_duty(current_pwm2);
-    }
-    else
-    {
-        polar_pwm2.gpio_level_set(GPIO_LOW);   // 反转
-        pwm2.atim_pwm_set_duty(-current_pwm2);
-    }
-    
-      
- 
-      
+    apply_motor_pwm(current_pwm1, current_pwm2);
 }

@@ -159,6 +159,13 @@
             <button type="button" data-command="#udp=0;">UDP关闭</button>
             <button type="button" data-command="#udp=1;">仅波形</button>
             <button type="button" data-command="#udp=2;">波形+道路</button>
+            <div class="drive-by-test-controls">
+              <div class="drive-by-direction" role="group" aria-label="测试绕行方向">
+                <button id="driveByLeft" class="direction-option" type="button" aria-pressed="false">左绕</button>
+                <button id="driveByRight" class="direction-option selected" type="button" aria-pressed="true">右绕</button>
+              </div>
+              <button id="driveByTestButton" class="drive-by-test-button" type="button" disabled>TEST绕行</button>
+            </div>
           </div>
           <p id="commandStatus" class="muted">指令发送到小车UDP 8082端口</p>
         </article>

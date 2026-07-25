@@ -118,8 +118,7 @@ void stop_car()
     set_speed_of_motor2_rps = 0;
     pwm1_duty_rps = 0;
     pwm2_duty_rps = 0;
-    current_pwm1 = 0;
-    current_pwm2 = 0;
+    motor_speed_pid_reset();
     pwm1.atim_pwm_set_duty(0);
     pwm2.atim_pwm_set_duty(0);
     if (recognition_test_aborted) {

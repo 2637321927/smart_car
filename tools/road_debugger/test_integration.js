@@ -116,6 +116,9 @@ async function main() {
     assert(pageResponse.text.includes('roadCanvas'));
     assert(pageResponse.text.includes('scopeChannelSelect'));
     assert(pageResponse.text.includes('roadColumnReset'));
+    assert(pageResponse.text.includes('driveByLeft'));
+    assert(pageResponse.text.includes('driveByRight'));
+    assert(pageResponse.text.includes('driveByTestButton'));
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
     assert.strictEqual(stopResponse.status, 200);
