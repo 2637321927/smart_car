@@ -194,8 +194,9 @@ const TUNING_GROUPS = [
   },
   {
     title: '绕行几何',
-    subtitle: '识别速度、距离与航向外环',
+    subtitle: '方案选择、识别速度、距离与航向外环',
     controls: [
+      { key: 'dbMode', label: '绕行方案', kind: 'segment', options: [[0, '角度三阶段'], [1, '边线500ms']], defaultValue: 0 },
       { key: 'dbNormalSpd', label: '正常巡线速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
       { key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 10 },
       { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 25 },

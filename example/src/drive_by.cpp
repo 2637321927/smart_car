@@ -22,6 +22,7 @@ using DriveByClock = std::chrono::steady_clock;
 volatile float drive_by_normal_speed_rps = 35.0f;
 volatile float drive_by_recognition_speed_rps = 10.0f;
 volatile float drive_by_rps_to_mps = 0.047f;
+volatile int drive_by_mode = 0;
 
 // 这些整数变量保留原名称，避免之前的调参经验失效。闭环版本中
 // drive_by_turn_speed_rps 表示转向阶段的前进基准速度，不再表示外侧轮速度。
@@ -74,6 +75,8 @@ constexpr int kFarDetectMinWidth = 8;
 constexpr int kFarDetectConfirmCount = 2;
 constexpr int kApproachTimeoutMs = 300;
 constexpr int kCandidateRetryCooldownMs = 300;
+constexpr int kVisualSideFollowMs = 500;
+constexpr float kVisualRecoveryError = 100.0f;
 constexpr int kTurnPhaseTimeoutMs = 1500;
 constexpr int kPassPhaseTimeoutMs = 2500;
 constexpr float kTurnPhaseMaxDistanceM = 0.80f;
@@ -93,6 +96,8 @@ enum DriveByState {
     DB_TURN_OUT,
     DB_PASS_SHORT,
     DB_TURN_TO_TRACK,
+    DB_FOLLOW_SIDE_LINE,
+    DB_RECOVER_CENTER_LINE,
     DB_FINISH_PENDING,
 };
 
@@ -174,6 +179,10 @@ volatile bool g_inference_complete = false;
 volatile bool g_test_mode = false;
 volatile bool g_stop_requested = false;
 volatile bool g_report_pending = false;
+volatile bool g_visual_aim_line_valid = false;
+// 每次开始运动时锁存drive_by_mode。在线调参即使恰好发生在绕行中途，
+// 当前脚本也不会从一套状态机跳到另一套，新的模式从下一次绕行生效。
+int g_active_mode = 0;
 DriveByState g_state = DB_IDLE;
 DriveByAbortReason g_abort_reason = DB_ABORT_NONE;
 DriveByClock::time_point g_state_start = DriveByClock::now();
@@ -238,6 +247,8 @@ const char *state_name(DriveByState state)
     case DB_TURN_OUT: return "TURN_OUT";
     case DB_PASS_SHORT: return "PASS_SHORT";
     case DB_TURN_TO_TRACK: return "TURN_TO_TRACK";
+    case DB_FOLLOW_SIDE_LINE: return "FOLLOW_SIDE_LINE";
+    case DB_RECOVER_CENTER_LINE: return "RECOVER_CENTER_LINE";
     case DB_FINISH_PENDING: return "FINISH_PENDING";
     default: return "UNKNOWN";
     }
@@ -254,6 +265,8 @@ int detection_stage(DriveByState state)
     case DB_TURN_OUT:
     case DB_PASS_SHORT:
     case DB_TURN_TO_TRACK:
+    case DB_FOLLOW_SIDE_LINE:
+    case DB_RECOVER_CENTER_LINE:
     case DB_FINISH_PENDING:
         return 4;
     default:
@@ -788,6 +801,8 @@ void reset_runtime(bool restore_outputs)
     g_test_mode = false;
     g_stop_requested = false;
     g_report_pending = false;
+    g_visual_aim_line_valid = false;
+    g_active_mode = 0;
     g_state = DB_IDLE;
     g_abort_reason = DB_ABORT_NONE;
     g_candidate_retry_after = DriveByClock::now();
@@ -830,6 +845,8 @@ void finish_session(DriveByAbortReason reason)
     g_test_mode = false;
     g_stop_requested = false;
     g_report_pending = false;
+    g_visual_aim_line_valid = false;
+    g_active_mode = 0;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
     g_far_candidate_count = 0;
@@ -853,6 +870,8 @@ void start_approach_session(const FarRedCandidate& candidate)
     g_test_mode = false;
     g_stop_requested = false;
     g_report_pending = false;
+    g_visual_aim_line_valid = false;
+    g_active_mode = 0;
     g_debug.test_mode = 0;
     g_abort_reason = DB_ABORT_NONE;
     item_flag = 1;
@@ -911,6 +930,8 @@ void cancel_false_candidate()
     g_inference_complete = false;
     g_test_mode = false;
     g_stop_requested = false;
+    g_visual_aim_line_valid = false;
+    g_active_mode = 0;
     g_debug.test_mode = 0;
     g_debug.red_candidate = 0;
     g_debug.red_candidate_count = 0;
@@ -923,6 +944,22 @@ void cancel_false_candidate()
 
 void begin_motion_script(int result)
 {
+    // 识别结果0为左绕、2为右绕。g_turn_side只描述绕行侧，不直接等同于
+    // 方向环误差符号；具体符号在视觉方案和角度方案中分别转换。
+    g_turn_side = result == 0 ? 1 : -1;
+    g_active_mode = drive_by_mode == 1 ? 1 : 0;
+
+    if (g_active_mode == 1) {
+        // 边线方案只依赖相机方向误差，不要求目标切线或陀螺仪有效。
+        // 普通方向环仍可按#gyro设置使用角速度反馈，但脚本自身不积分角度。
+        clear_active_brake(false);
+        g_visual_aim_line_valid = false;
+        gyro_yaw_rate_control_reset_controller();
+        command_motion_wheels((float)drive_by_forward_speed_rps, 0.0f);
+        enter_state(DB_FOLLOW_SIDE_LINE);
+        return;
+    }
+
     if (!g_target_geometry_captured) {
         item_flag = 1;
         g_abort_reason = DB_ABORT_NO_TARGET_GEOMETRY;
@@ -945,9 +982,8 @@ void begin_motion_script(int result)
         return;
     }
 
-    // 左绕和右绕只改变相对赛道切线的偏角符号。
+    // 旧方案中，左绕和右绕只改变相对赛道切线的偏角符号。
     clear_active_brake(false);
-    g_turn_side = result == 0 ? 1 : -1;
     g_track_heading_reference_deg = g_target_track_heading_global_deg;
     g_track_reference_valid = true;
     gyro_yaw_rate_control_reset_controller();
@@ -999,6 +1035,16 @@ bool motion_phase_guard_exceeded()
         g_phase_distance_m > kTurnPhaseMaxDistanceM;
 }
 
+float visual_forced_error(bool recovering_center)
+{
+    if (recovering_center) {
+        // 左绕结束后向右找中线，右绕结束后向左找中线。
+        return g_turn_side > 0 ? kVisualRecoveryError : -kVisualRecoveryError;
+    }
+    // 500ms边线阶段若所选边线短暂消失，继续向原绕行侧转，避免立刻回头。
+    return g_turn_side > 0 ? -kVisualRecoveryError : kVisualRecoveryError;
+}
+
 void request_motion_stop(DriveByAbortReason reason)
 {
     // 8ms方向线程不直接操作PWM。这里只清目标并提交停车请求，3ms速度线程
@@ -1029,6 +1075,8 @@ void complete_motion_handoff()
     g_inference_complete = false;
     g_test_mode = false;
     g_stop_requested = false;
+    g_visual_aim_line_valid = false;
+    g_active_mode = 0;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
     g_far_candidate_count = 0;
@@ -1103,6 +1151,34 @@ void update_motion_state()
 
     default:
         break;
+    }
+}
+
+void update_visual_motion_state()
+{
+    if (motion_phase_guard_exceeded()) {
+        item_flag = 1;
+        request_motion_stop(DB_ABORT_PHASE_TIMEOUT);
+        return;
+    }
+
+    // 新方案全程使用dbForwardRps作为基准速度，差速仍由随后执行的
+    // PID_control_test(latest_error)计算。这里只设基准，不在两个线程间抢PWM。
+    set_speed_of_motor1_rps = (float)drive_by_forward_speed_rps;
+    set_speed_of_motor2_rps = (float)drive_by_forward_speed_rps;
+
+    if (g_state == DB_FOLLOW_SIDE_LINE &&
+        elapsed_ms(g_state_start) >= kVisualSideFollowMs) {
+        // 先清掉边线帧的有效标志，再切回中线。切换当周期直接给反方向100，
+        // 后续只有相机线程明确提交一帧有效中线后才允许交还普通巡线。
+        g_visual_aim_line_valid = false;
+        enter_state(DB_RECOVER_CENTER_LINE);
+        latest_error = visual_forced_error(true);
+        return;
+    }
+
+    if (g_state == DB_RECOVER_CENTER_LINE && g_visual_aim_line_valid) {
+        complete_motion_handoff();
     }
 }
 
@@ -1198,7 +1274,12 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
     case DB_TURN_OUT:
     case DB_PASS_SHORT:
     case DB_TURN_TO_TRACK:
-        // 绕行运动闭环在8ms dir_timer中运行，相机线程只更新道路几何缓存。
+        // 旧绕行运动闭环在8ms dir_timer中运行，相机线程只更新道路几何缓存。
+        break;
+
+    case DB_FOLLOW_SIDE_LINE:
+    case DB_RECOVER_CENTER_LINE:
+        // 新方案的相机工作仍在main.cpp中完成；这里不能重复运行寻线或方向环。
         break;
 
     case DB_FINISH_PENDING:
@@ -1301,7 +1382,11 @@ void drive_by_control_update()
         begin_motion_script(g_pending_result);
     }
     if (drive_by_is_motion_phase() && !g_stop_requested) {
-        update_motion_state();
+        if (g_active_mode == 1) {
+            update_visual_motion_state();
+        } else {
+            update_motion_state();
+        }
     }
 }
 
@@ -1390,6 +1475,8 @@ bool drive_by_start_test(int simulated_item_flag,
     g_abort_reason = DB_ABORT_NONE;
     g_stop_requested = false;
     g_report_pending = false;
+    g_visual_aim_line_valid = false;
+    g_active_mode = 0;
     g_inference_complete = true;
     g_pending_result = simulated_item_flag;
     item_flag = simulated_item_flag;
@@ -1496,7 +1583,53 @@ bool drive_by_is_motion_phase()
     return g_drive_by_busy &&
         (g_state == DB_TURN_OUT ||
          g_state == DB_PASS_SHORT ||
-         g_state == DB_TURN_TO_TRACK);
+         g_state == DB_TURN_TO_TRACK ||
+         g_state == DB_FOLLOW_SIDE_LINE ||
+         g_state == DB_RECOVER_CENTER_LINE);
+}
+
+bool drive_by_uses_visual_direction_control()
+{
+    return g_drive_by_busy &&
+        (g_state == DB_FOLLOW_SIDE_LINE ||
+         g_state == DB_RECOVER_CENTER_LINE);
+}
+
+int drive_by_visual_aim_line()
+{
+    if (!g_drive_by_busy) {
+        return 0;
+    }
+    if (g_state == DB_FOLLOW_SIDE_LINE) {
+        return g_turn_side > 0 ? -1 : 1;
+    }
+    return 0;
+}
+
+float drive_by_adjust_visual_error(float computed_error,
+                                   int selected_aim_line,
+                                   bool aim_line_valid)
+{
+    if (!g_drive_by_busy) {
+        return computed_error;
+    }
+
+    if (g_state == DB_FOLLOW_SIDE_LINE) {
+        const int expected_line = g_turn_side > 0 ? -1 : 1;
+        // selected_aim_line来自本帧开始时的状态快照。只有本帧确实使用了
+        // 期望边线，才允许它更新有效标志，避免状态并发切换造成误判。
+        const bool valid = selected_aim_line == expected_line && aim_line_valid;
+        g_visual_aim_line_valid = valid;
+        return valid ? computed_error : visual_forced_error(false);
+    }
+
+    if (g_state == DB_RECOVER_CENTER_LINE) {
+        const bool valid = selected_aim_line == 0 && aim_line_valid;
+        g_visual_aim_line_valid = valid;
+        return valid ? computed_error : visual_forced_error(true);
+    }
+
+    return computed_error;
 }
 
 bool drive_by_should_suspend_track_features()

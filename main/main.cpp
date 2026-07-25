@@ -179,6 +179,9 @@ int rptsc0_num, rptsc1_num,rptsc2_num;
 // 中线
 float (*rpts)[2];
  int rpts_num;
+// 边线瞄准方案不能直接把rpts指向rpts0s/rpts1s，因为后面的起点归一化
+// 会改写rpts[begin_id]。复制到临时数组可避免污染下一步仍要使用的原始边线。
+float drive_by_aim_line_points[POINTS_MAX_LEN][2];
 // 归一化中线
  float rptsn[POINTS_MAX_LEN][2];
  int rptsn_num;
@@ -428,6 +431,14 @@ if (sscanf(buf, "#vofa=%d;", &itmp) == 1)
 
 // ==================== 目标板高速绕行在线调参 ====================
 // 识别阶段的 dbRecSpd 只改变基准速度，普通方向环仍会继续产生左右差速。
+if (sscanf(buf, "#dbMode=%d;", &itmp) == 1)
+{
+    drive_by_mode = itmp == 1 ? 1 : 0;
+    printf("[VOFA] dbMode = %d（%s）\n",
+           drive_by_mode,
+           drive_by_mode == 1 ? "边线瞄准500ms" : "三阶段角度闭环");
+}
+
 if (sscanf(buf, "#dbNormalSpd=%f;", &ftmp) == 1)
 {
     drive_by_normal_speed_rps = ftmp < 0.0f ? 0.0f : ftmp;
@@ -913,7 +924,7 @@ void tuning_telemetry_send()
         "\"gyro\":%d,\"gDbg\":%d,\"gTar\":%.2f,"
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
-        "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
+        "\"dbMode\":%d,\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
@@ -934,6 +945,7 @@ void tuning_telemetry_send()
         safe_float(gyro_inner_kp), safe_float(gyro_inner_ki),
         safe_float(gyro_target_max_dps), safe_float(gyro_turn_max_rps),
         safe_float(gyro_z_sign), safe_float(gyro_turn_sign),
+        drive_by_mode,
         safe_float(drive_by_normal_speed_rps),
         safe_float(drive_by_recognition_speed_rps),
         safe_float(drive_by_turn_angle_deg),
@@ -1318,14 +1330,14 @@ gyro_yaw_rate_control_init();
         // 普通状态只经过一次快速状态判断；仅绕行会执行缓存积分和航向闭环。
         drive_by_control_update();
       }
-      // K0 只是目标板功能开关，不应该在没有目标时关闭正常方向环。
-      // 远距离红块候选后的接近/推理阶段也继续巡线，只把基准速度降为10RPS。
+      // K0只是目标板功能开关，不应该在没有目标时关闭正常方向环。
+      // 识别阶段和新边线方案都复用普通方向环；旧三阶段角度方案仍独占输出。
       if (front_ui_is_running() &&
-          (!drive_by_is_busy() || drive_by_is_recognizing())) {
+          (!drive_by_is_busy() || drive_by_is_recognizing() ||
+           drive_by_uses_visual_direction_control())) {
         PID_control_test(latest_error);
       } else if (front_ui_is_running() && drive_by_is_motion_phase()) {
-        // 三阶段绕行运动由 drive_by 航向闭环独占左右轮目标。
-        // drive_by_control_update()已在本周期完成控制，这里不再运行普通方向环。
+        // 只有旧三阶段绕行会到这里，由drive_by航向闭环独占左右轮目标。
       } else if (!front_ui_is_running()) {
         gyro_yaw_rate_control_reset();
         front_ui_hold_stop();
@@ -1467,7 +1479,22 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
         // 中线跟踪
         ///*
 
-        if (cross_type != CROSS_IN) {
+        // 新视觉方案在前500ms直接把原始左/右边线当作瞄准线。必须先复制，
+        // 否则后面的起点归一化会改写原始边线，影响下一帧判断和UDP显示。
+        const int drive_by_aim_line = drive_by_visual_aim_line();
+        if (drive_by_aim_line != 0) {
+            const float (*source_line)[2] =
+                drive_by_aim_line < 0 ? rpts0s : rpts1s;
+            const int source_count =
+                drive_by_aim_line < 0 ? rpts0s_num : rpts1s_num;
+            rpts_num = clip(source_count, 0, POINTS_MAX_LEN);
+            for (int i = 0; i < rpts_num; ++i) {
+                drive_by_aim_line_points[i][0] = source_line[i][0];
+                drive_by_aim_line_points[i][1] = source_line[i][1];
+            }
+            rpts = drive_by_aim_line_points;
+        }
+        else if (cross_type != CROSS_IN) {
             if (track_type == TRACK_LEFT) {
                 rpts = rptsc0;
                 rpts_num = rptsc0_num;
@@ -1525,6 +1552,12 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
             aim_distance=AIM;
         }
         // 中线有点，同时最近点不是最后几个点
+        const int aim_line_remaining_points =
+            begin_id >= 0 ? rpts_num - begin_id : 0;
+        // 边线阶段只需满足现有几何运算的3点下限；切回中线时要求至少15点，
+        // 防止刚出现一小截噪声就误判为“中线恢复”并提前交还巡线。
+        const bool drive_by_aim_line_valid = begin_id >= 0 &&
+            aim_line_remaining_points >= (drive_by_aim_line == 0 ? 15 : 3);
         if (begin_id >= 0 && rpts_num - begin_id >= 3) {
             // 归一化中线，如果是根据左右track寻仙则需要这么干
             rpts[begin_id][0] = cx;
@@ -1601,6 +1634,11 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
 
             else latest_error = filter_error(-error); 
         }
+
+        // 新视觉绕行只在这里覆盖最终误差：边线阶段丢线时继续向绕行侧，
+        // 切回中线后丢线时按反方向给满100，直到收到一帧可靠中线。
+        latest_error = drive_by_adjust_visual_error(
+            latest_error, drive_by_aim_line, drive_by_aim_line_valid);
         
  // 道路处理完成后更新目标位置、赛道切线和弯道参考方向。
  // drive_by 在下一帧使用该缓存，避免为目标板逻辑复制整套寻线代码。

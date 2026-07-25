@@ -9,6 +9,8 @@
 extern volatile float drive_by_normal_speed_rps;
 extern volatile float drive_by_recognition_speed_rps;
 extern volatile float drive_by_rps_to_mps;
+// 0：现有三阶段角度闭环；1：实验性的边线瞄准绕行。
+extern volatile int drive_by_mode;
 
 // 目标板脚本的速度参数。整数参数保留，方便兼容之前的 VOFA/源码调参习惯。
 extern int drive_by_turn_speed_rps;
@@ -85,6 +87,16 @@ bool drive_by_start_test(int simulated_item_flag,
 bool drive_by_is_busy();
 bool drive_by_is_recognizing();
 bool drive_by_is_motion_phase();
+// 新边线方案运动阶段仍由普通方向环执行，旧角度方案则由drive_by独占方向控制。
+bool drive_by_uses_visual_direction_control();
+// 返回当前相机帧应使用的瞄准线：-1左线、0正常中线、1右线。
+int drive_by_visual_aim_line();
+// 相机线程提交本帧实际使用的线和寻线结果；新方案丢线时返回强制误差。
+// selected_aim_line与drive_by_visual_aim_line()使用相同约定。把它一并传入，
+// 可以避免500ms切换恰好发生在一帧处理中间时，把旧边线误认为新中线。
+float drive_by_adjust_visual_error(float computed_error,
+                                   int selected_aim_line,
+                                   bool aim_line_valid);
 // 远距离候选出现后，目标板脚本需要暂时独占道路类型，避免环岛/十字改写中线。
 bool drive_by_should_suspend_track_features();
 bool drive_by_is_enabled();

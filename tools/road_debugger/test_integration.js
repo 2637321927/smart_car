@@ -107,6 +107,7 @@ async function main() {
       P: 454,
       I: 14,
       gyro: 1,
+      dbMode: 0,
       dbTurnAngle: 25,
       dbReturnBias: 5,
       dbHMax: 200,
@@ -138,7 +139,7 @@ async function main() {
     [
       'P', 'I', 'D', 'spd', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
       'gyro', 'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax',
-      'gSign', 'tSign', 'dbNormalSpd', 'dbRecSpd', 'dbTurnAngle', 'dbPassDist',
+      'gSign', 'tSign', 'dbMode', 'dbNormalSpd', 'dbRecSpd', 'dbTurnAngle', 'dbPassDist',
       'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
       'dbHKd', 'dbHMax', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
       'dbBrakeRelease', 'dbBrakeTimeout', 'dbTestDist', 'circle_exit', 'udp', 'vofa',
