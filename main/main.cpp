@@ -448,6 +448,14 @@ if (sscanf(buf, "#dbMode=%d;", &itmp) == 1)
            drive_by_mode, mode_name);
 }
 
+if (sscanf(buf, "#dbUseTangent=%d;", &itmp) == 1)
+{
+    drive_by_use_track_tangent = itmp != 0 ? 1 : 0;
+    printf("[VOFA] dbUseTangent = %d（%s）\n",
+           drive_by_use_track_tangent,
+           drive_by_use_track_tangent ? "目标处赛道切线" : "脚本启动时车头");
+}
+
 if (sscanf(buf, "#dbNormalSpd=%f;", &ftmp) == 1)
 {
     drive_by_normal_speed_rps = ftmp < 0.0f ? 0.0f : ftmp;
@@ -1015,7 +1023,8 @@ void tuning_telemetry_send()
         "\"gyro\":%d,\"gDbg\":%d,\"gTar\":%.2f,"
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
-        "\"dbMode\":%d,\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
+        "\"dbMode\":%d,\"dbUseTangent\":%d,"
+        "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
         "\"dbLearnRps\":%.2f,\"dbLearnDist\":%.3f,\"dbLearnScale\":%.2f,"
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
@@ -1040,7 +1049,7 @@ void tuning_telemetry_send()
         safe_float(gyro_inner_kp), safe_float(gyro_inner_ki),
         safe_float(gyro_target_max_dps), safe_float(gyro_turn_max_rps),
         safe_float(gyro_z_sign), safe_float(gyro_turn_sign),
-        drive_by_mode,
+        drive_by_mode, drive_by_use_track_tangent,
         safe_float(drive_by_normal_speed_rps),
         safe_float(drive_by_recognition_speed_rps),
         safe_float(drive_by_learned_speed_rps),

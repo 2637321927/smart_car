@@ -207,6 +207,7 @@ const TUNING_GROUPS = [
     subtitle: '方案选择、识别速度、距离与航向外环',
     controls: [
       { key: 'dbMode', label: '绕行方案', kind: 'segment', options: [[0, '角度三阶段'], [1, '边线500ms'], [2, '六次示教']], defaultValue: 0 },
+      { key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0 },
       { key: 'dbNormalSpd', label: '正常巡线速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
       { key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 12.5 },
       { key: 'dbLearnDist', label: '示教轨迹总路程', min: 0.1, max: 3, step: 0.01, unit: 'm', defaultValue: 0.96 },

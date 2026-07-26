@@ -11,6 +11,8 @@ extern volatile float drive_by_recognition_speed_rps;
 extern volatile float drive_by_rps_to_mps;
 // 0：三阶段角度闭环；1：边线瞄准；2：六次手推示教得到的距离索引轨迹。
 extern volatile int drive_by_mode;
+// 是否把目标位置处赛道切线作为绕行航向参考；默认关闭时以脚本启动时车头为0度。
+extern volatile int drive_by_use_track_tangent;
 
 // 目标板脚本的速度参数。整数参数保留，方便兼容之前的 VOFA/源码调参习惯。
 extern int drive_by_turn_speed_rps;

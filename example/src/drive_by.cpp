@@ -23,6 +23,7 @@ volatile float drive_by_normal_speed_rps = 35.0f;
 volatile float drive_by_recognition_speed_rps = 12.5f;
 volatile float drive_by_rps_to_mps = 0.047f;
 volatile int drive_by_mode = 0;
+volatile int drive_by_use_track_tangent = 0;
 
 // 这些整数变量保留原名称，避免之前的调参经验失效。闭环版本中
 // drive_by_turn_speed_rps 表示转向阶段的前进基准速度，不再表示外侧轮速度。
@@ -1144,9 +1145,13 @@ void begin_motion_script(int result)
         return;
     }
 
-    // 两套航向方案都以目标位置处的赛道切线为零度基准。
+    // 切线参考默认关闭：实车发现目标处切线容易受弯道拟合和短线段扰动。
+    // 开启时恢复原来的目标处切线；关闭时以脚本真正开始这一刻的车头为0度。
+    // 参考值在这里锁存，绕行中途修改VOFA开关不会造成目标航向突变。
     clear_active_brake(false);
-    g_track_heading_reference_deg = g_target_track_heading_global_deg;
+    g_track_heading_reference_deg = drive_by_use_track_tangent != 0
+        ? g_target_track_heading_global_deg
+        : g_yaw_deg;
     g_track_reference_valid = true;
     gyro_yaw_rate_control_reset_controller();
 
