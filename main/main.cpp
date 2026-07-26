@@ -531,6 +531,16 @@ if (sscanf(buf, "#dbHMax=%f;", &ftmp) == 1)
     printf("[VOFA] dbHMax = %.2f dps\n", drive_by_heading_max_dps);
 }
 
+if (sscanf(buf, "#dbHTol=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = 0.0f;
+    if (ftmp > 10.0f) ftmp = 10.0f;
+    drive_by_heading_tolerance_deg = ftmp;
+    printf("[VOFA] dbHTol = %.2f deg（静默退出阈值=%.2f deg）\n",
+           drive_by_heading_tolerance_deg,
+           drive_by_heading_tolerance_deg + 1.0f);
+}
+
 if (sscanf(buf, "#dbLearnRps=%f;", &ftmp) == 1)
 {
     if (ftmp < 0.0f) ftmp = 0.0f;
@@ -1011,6 +1021,7 @@ void tuning_telemetry_send()
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
         "\"dbHKp\":%.3f,\"dbHKd\":%.3f,\"dbHMax\":%.2f,"
+        "\"dbHTol\":%.2f,"
         "\"dbRecoverDps\":%.2f,\"dbYawSign\":%.1f,"
         "\"yawHoldRMax\":%.2f,"
         "\"dbTurnRps\":%d,\"dbForwardRps\":%d,\"dbExitRps\":%d,"
@@ -1044,6 +1055,7 @@ void tuning_telemetry_send()
         drive_by_view_wait_timeout_ms,
         safe_float(drive_by_heading_kp), safe_float(drive_by_heading_kd),
         safe_float(drive_by_heading_max_dps),
+        safe_float(drive_by_heading_tolerance_deg),
         safe_float(drive_by_recovery_yaw_rate_dps),
         safe_float(drive_by_yaw_sign),
         safe_float(drive_by_heading_hold_max_turn_rps),
@@ -1422,8 +1434,14 @@ gyro_yaw_rate_control_init();
          test_enc_and_motor_rps();
        }
      } else if (drive_by_heading_hold_is_enabled()) {
-       // 航向保持用对称正负轮速原地回正，仍需3ms速度闭环跟踪差速目标。
-       test_enc_and_motor_rps();
+       if (drive_by_heading_hold_is_quiet()) {
+         // 静默死区内不再运行增量式速度PID，直接保持零PWM，避免历史PWM
+         // 为了追踪极小轮速而反复克服电机静摩擦。
+         motor_speed_force_pwm(0, 0);
+       } else {
+         // 航向保持用对称正负轮速原地回正，仍需3ms速度闭环跟踪差速目标。
+         test_enc_and_motor_rps();
+       }
      } else if (front_ui_remote_is_active()) {
        test_enc_and_motor_rps();
      } else {

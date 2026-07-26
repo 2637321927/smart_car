@@ -73,6 +73,8 @@ constexpr int kBrakePwmMax = 7000;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
 constexpr int kHeadingSettleCycles = 3;
+constexpr float kHeadingDeadzoneHysteresisDeg = 1.0f;
+constexpr float kHeadingQuietRateDps = 5.0f;
 constexpr int kFarDetectTop = 60;
 constexpr int kFarDetectBottom = 40;
 constexpr int kFarDetectLeft = 60;
@@ -150,6 +152,12 @@ enum RecognitionFrameStatus {
     RECOG_FRAME_NO_RED,
     RECOG_FRAME_INVALID_ROI,
     RECOG_FRAME_UNKNOWN_LABEL,
+};
+
+enum HeadingControlZone {
+    HEADING_CONTROL_FULL,
+    HEADING_CONTROL_BRAKE,
+    HEADING_CONTROL_QUIET,
 };
 
 struct SavedControl {
@@ -244,6 +252,8 @@ RecognitionReport g_report;
 DriveByDebug g_debug = {};
 volatile bool g_heading_hold_enabled = false;
 volatile bool g_tangent_debug_enabled = false;
+volatile bool g_heading_hold_quiet = false;
+bool g_motion_heading_quiet = false;
 float g_heading_hold_yaw_deg = 0.0f;
 DriveByClock::time_point g_heading_hold_last_update = DriveByClock::now();
 DriveByHeadingHoldDebug g_heading_hold_debug = {};
@@ -294,6 +304,43 @@ float normalize_angle_deg(float angle_deg)
     while (angle_deg > 180.0f) angle_deg -= 360.0f;
     while (angle_deg < -180.0f) angle_deg += 360.0f;
     return angle_deg;
+}
+
+HeadingControlZone update_heading_control_zone(float heading_error_deg,
+                                               float gyro_dps,
+                                               volatile bool *quiet_latched)
+{
+    if (quiet_latched == nullptr) {
+        return HEADING_CONTROL_FULL;
+    }
+
+    const float enter_deadzone_deg = std::max(
+        0.0f, (float)drive_by_heading_tolerance_deg);
+    const float leave_deadzone_deg =
+        enter_deadzone_deg + kHeadingDeadzoneHysteresisDeg;
+    const float abs_error_deg = std::fabs(heading_error_deg);
+
+    if (*quiet_latched) {
+        // 进入静默区后允许额外1度漂移。只有真正超过退出阈值才恢复完整KP，
+        // 避免车头在允许误差边缘反复启停方向控制。
+        if (abs_error_deg <= leave_deadzone_deg) {
+            return HEADING_CONTROL_QUIET;
+        }
+        *quiet_latched = false;
+        return HEADING_CONTROL_FULL;
+    }
+
+    if (abs_error_deg <= enter_deadzone_deg) {
+        // 已经进入允许角度，但车身仍在旋转时不能立刻撤掉控制；先把目标角速度
+        // 设为0，利用角速度内环刹住惯性，降到5dps以内后才彻底清差速。
+        if (std::fabs(gyro_dps) <= kHeadingQuietRateDps) {
+            *quiet_latched = true;
+            return HEADING_CONTROL_QUIET;
+        }
+        return HEADING_CONTROL_BRAKE;
+    }
+
+    return HEADING_CONTROL_FULL;
 }
 
 long long elapsed_ms(DriveByClock::time_point start)
@@ -911,6 +958,7 @@ void reset_runtime(bool restore_outputs)
     g_stop_requested = false;
     g_report_pending = false;
     g_visual_aim_line_valid = false;
+    g_motion_heading_quiet = false;
     g_active_mode = 0;
     g_state = DB_IDLE;
     g_abort_reason = DB_ABORT_NONE;
@@ -956,6 +1004,7 @@ void finish_session(DriveByAbortReason reason)
     g_stop_requested = false;
     g_report_pending = false;
     g_visual_aim_line_valid = false;
+    g_motion_heading_quiet = false;
     g_active_mode = 0;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
@@ -1058,6 +1107,8 @@ void begin_motion_script(int result)
     // 方向环误差符号；具体符号在视觉方案和角度方案中分别转换。
     g_turn_side = result == 0 ? 1 : -1;
     g_active_mode = std::max(0, std::min(2, (int)drive_by_mode));
+
+    g_motion_heading_quiet = false;
 
     if (g_active_mode == 1) {
         // 边线方案只依赖相机方向误差，不要求目标切线或陀螺仪有效。
@@ -1215,6 +1266,7 @@ void complete_motion_handoff()
     g_test_mode = false;
     g_stop_requested = false;
     g_visual_aim_line_valid = false;
+    g_motion_heading_quiet = false;
     g_active_mode = 0;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
@@ -1253,12 +1305,37 @@ void update_motion_state()
     const float target_yaw_deg = normalize_angle_deg(
         g_track_heading_reference_deg + target_offset_deg);
     const float heading_error_deg = normalize_angle_deg(target_yaw_deg - g_yaw_deg);
-    float target_yaw_rate_dps =
-        drive_by_heading_kp * heading_error_deg - drive_by_heading_kd * gyro_dps;
-    const float rate_limit = std::fabs((float)drive_by_heading_max_dps);
-    target_yaw_rate_dps = clampf(target_yaw_rate_dps, -rate_limit, rate_limit);
-    const float turn_rps =
-        gyro_yaw_rate_control_update_target_yaw_rate(target_yaw_rate_dps);
+    const bool use_heading_deadzone = g_state != DB_LEARNED_PATH;
+    const bool quiet_before_update = g_motion_heading_quiet;
+    const HeadingControlZone control_zone = use_heading_deadzone
+        ? update_heading_control_zone(
+            heading_error_deg, gyro_dps, &g_motion_heading_quiet)
+        : HEADING_CONTROL_FULL;
+    if (!use_heading_deadzone) {
+        g_motion_heading_quiet = false;
+    }
+    if (quiet_before_update != g_motion_heading_quiet) {
+        // 切入或退出静默区时清角速度内环历史，防止上一次差速残留到新状态。
+        // 绕行仍保留基准轮速，因此这里绝不能复位整套电机速度PID。
+        gyro_yaw_rate_control_reset_controller();
+    }
+
+    float target_yaw_rate_dps = 0.0f;
+    float turn_rps = 0.0f;
+    if (control_zone != HEADING_CONTROL_QUIET) {
+        if (control_zone == HEADING_CONTROL_FULL) {
+            target_yaw_rate_dps =
+                drive_by_heading_kp * heading_error_deg -
+                drive_by_heading_kd * gyro_dps;
+            const float rate_limit = std::fabs(
+                (float)drive_by_heading_max_dps);
+            target_yaw_rate_dps = clampf(
+                target_yaw_rate_dps, -rate_limit, rate_limit);
+        }
+        // BRAKE区故意给0dps：内环会根据实际gyro产生反向差速，主动消除惯性。
+        turn_rps = gyro_yaw_rate_control_update_target_yaw_rate(
+            target_yaw_rate_dps);
+    }
     command_motion_wheels(phase_base_speed_rps(), turn_rps);
 
     g_debug.yaw_deg = g_yaw_deg;
@@ -1282,8 +1359,11 @@ void update_motion_state()
         break;
 
     case DB_TURN_OUT:
-        if (heading_is_settled(heading_error_deg, gyro_dps)) {
+        if (g_motion_heading_quiet &&
+            heading_is_settled(heading_error_deg, gyro_dps)) {
             enter_state(DB_PASS_SHORT);
+        } else if (!g_motion_heading_quiet) {
+            g_heading_settle_count = 0;
         }
         break;
 
@@ -1301,7 +1381,8 @@ void update_motion_state()
     }
 
     case DB_TURN_TO_TRACK:
-        if (heading_is_settled(heading_error_deg, gyro_dps)) {
+        if (g_motion_heading_quiet &&
+            heading_is_settled(heading_error_deg, gyro_dps)) {
             if (g_visual_aim_line_valid) {
                 complete_motion_handoff();
             } else {
@@ -1310,6 +1391,8 @@ void update_motion_state()
                 enter_state(DB_RECOVER_CENTER_LINE);
                 latest_error = visual_forced_error(true);
             }
+        } else if (!g_motion_heading_quiet) {
+            g_heading_settle_count = 0;
         }
         break;
 
@@ -1526,6 +1609,7 @@ void drive_by_init()
 {
     g_drive_by_enable = false;
     g_heading_hold_enabled = false;
+    g_heading_hold_quiet = false;
     g_tangent_debug_enabled = false;
     g_heading_hold_debug = DriveByHeadingHoldDebug{};
     g_tangent_debug = DriveByTangentDebug{};
@@ -1906,6 +1990,7 @@ bool drive_by_heading_hold_set_enable(bool enable)
         }
 
         g_heading_hold_enabled = false;
+        g_heading_hold_quiet = false;
         g_heading_hold_debug.enabled = 0;
         g_heading_hold_debug.target_yaw_rate_dps = 0.0f;
         g_heading_hold_debug.turn_rps = 0.0f;
@@ -1933,6 +2018,7 @@ bool drive_by_heading_hold_set_enable(bool enable)
     // 开启瞬间把当前车头定义为0度。之后只积分相对转角，不依赖长期绝对航向，
     // 所以适合原地拨动车头观察KP/KD，而不会把绕行前后的积分误差带进来。
     g_heading_hold_yaw_deg = 0.0f;
+    g_heading_hold_quiet = false;
     g_heading_hold_last_update = DriveByClock::now();
     g_heading_hold_debug = DriveByHeadingHoldDebug{};
     g_heading_hold_debug.enabled = 1;
@@ -1950,6 +2036,11 @@ bool drive_by_heading_hold_set_enable(bool enable)
 bool drive_by_heading_hold_is_enabled()
 {
     return g_heading_hold_enabled;
+}
+
+bool drive_by_heading_hold_is_quiet()
+{
+    return g_heading_hold_enabled && g_heading_hold_quiet;
 }
 
 void drive_by_heading_hold_control_update()
@@ -1984,20 +2075,33 @@ void drive_by_heading_hold_control_update()
         g_heading_hold_yaw_deg + gyro_dps * dt_s);
     const float heading_error_deg = normalize_angle_deg(
         -g_heading_hold_yaw_deg);
-    float target_yaw_rate_dps =
-        drive_by_heading_kp * heading_error_deg -
-        drive_by_heading_kd * gyro_dps;
-    const float yaw_rate_limit = std::fabs(
-        (float)drive_by_heading_max_dps);
-    target_yaw_rate_dps = clampf(
-        target_yaw_rate_dps, -yaw_rate_limit, yaw_rate_limit);
+    const bool quiet_before_update = g_heading_hold_quiet;
+    const HeadingControlZone control_zone = update_heading_control_zone(
+        heading_error_deg, gyro_dps, &g_heading_hold_quiet);
+    if (quiet_before_update != g_heading_hold_quiet) {
+        gyro_yaw_rate_control_reset_controller();
+        motor_speed_pid_reset();
+    }
 
-    // 角速度内环仍使用现有gIP/gII，但额外套用yawHoldRMax，确保本测试
-    // 不会把正常巡线所需的较大差速上限带到原地调参场景。
-    const float turn_rps =
-        gyro_yaw_rate_control_update_target_yaw_rate_limited(
+    float target_yaw_rate_dps = 0.0f;
+    float turn_rps = 0.0f;
+    if (control_zone != HEADING_CONTROL_QUIET) {
+        if (control_zone == HEADING_CONTROL_FULL) {
+            target_yaw_rate_dps =
+                drive_by_heading_kp * heading_error_deg -
+                drive_by_heading_kd * gyro_dps;
+            const float yaw_rate_limit = std::fabs(
+                (float)drive_by_heading_max_dps);
+            target_yaw_rate_dps = clampf(
+                target_yaw_rate_dps, -yaw_rate_limit, yaw_rate_limit);
+        }
+
+        // 角速度内环仍使用现有gIP/gII，但额外套用yawHoldRMax，确保本测试
+        // 不会把正常巡线所需的较大差速上限带到原地调参场景。
+        turn_rps = gyro_yaw_rate_control_update_target_yaw_rate_limited(
             target_yaw_rate_dps,
             drive_by_heading_hold_max_turn_rps);
+    }
     // 绕行轮速函数带有“倒车最多-10RPS”的前进安全限幅，不适合原地对称转向。
     // 航向保持直接写+turn/-turn，实际幅度仍受yawHoldRMax和gRMax双重限制。
     set_speed_of_motor1_rps = 0.0f;

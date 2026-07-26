@@ -221,6 +221,7 @@ const TUNING_GROUPS = [
       { key: 'dbHKp', label: '航向外环P', min: 0, max: 20, step: 0.1, defaultValue: 8 },
       { key: 'dbHKd', label: '航向外环D', min: 0, max: 5, step: 0.05, defaultValue: 0.2 },
       { key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 200 },
+      { key: 'dbHTol', label: '航向允许误差（退出+1°）', min: 0, max: 10, step: 0.1, unit: 'deg', defaultValue: 2 },
       { key: 'dbRecoverDps', label: '丢线保护角速度', min: 0, max: 360, step: 1, unit: 'dps', defaultValue: 55 },
       { key: 'dbYawSign', label: '绕行航向符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: -1 },
     ],

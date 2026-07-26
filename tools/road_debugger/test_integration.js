@@ -117,6 +117,7 @@ async function main() {
       dbReturnBias: 46,
       dbPassDist: 0.14,
       dbHMax: 200,
+      dbHTol: 2,
       dbRecoverDps: 55,
       yawHoldRMax: 10,
       udp: 2,
@@ -164,7 +165,7 @@ async function main() {
       'gSign', 'tSign', 'dbMode', 'dbNormalSpd', 'dbRecSpd', 'dbLearnRps', 'dbLearnDist',
       'dbLearnScale', 'dbTurnAngle', 'dbPassDist',
       'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
-      'dbHKd', 'dbHMax', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
+      'dbHKd', 'dbHMax', 'dbHTol', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
       'yawHoldRMax',
       'dbBrakeRelease', 'dbBrakeTimeout', 'dbTestDist', 'circle_exit', 'udp', 'vofa',
       'is_udp_img',
@@ -210,6 +211,7 @@ async function main() {
     assert(recordingText.includes('"dbLearnRps":16.5'));
     assert(recordingText.includes('"dbLearnDist":1.08'));
     assert(recordingText.includes('"dbLearnScale":1.15'));
+    assert(recordingText.includes('"dbHTol":2'));
     assert(recordingText.includes('"yawHoldRMax":10'));
     console.log('Road debugger integration test passed');
   } finally {

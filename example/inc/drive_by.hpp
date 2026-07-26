@@ -140,6 +140,7 @@ const DriveByDebug &drive_by_get_debug();
 // 仅run=0、无绕行且无停车遥控时允许开启。
 bool drive_by_heading_hold_set_enable(bool enable);
 bool drive_by_heading_hold_is_enabled();
+bool drive_by_heading_hold_is_quiet();
 void drive_by_heading_hold_control_update();
 const DriveByHeadingHoldDebug &drive_by_heading_hold_get_debug();
 
