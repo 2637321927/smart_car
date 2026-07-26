@@ -75,6 +75,7 @@ constexpr int kDetectFrameInterval = 2;
 constexpr int kHeadingSettleCycles = 3;
 constexpr float kHeadingDeadzoneHysteresisDeg = 1.0f;
 constexpr float kHeadingQuietRateDps = 5.0f;
+constexpr float kReturnHandoffYawDeg = 10.0f;
 constexpr int kFarDetectTop = 60;
 constexpr int kFarDetectBottom = 40;
 constexpr int kFarDetectLeft = 60;
@@ -87,10 +88,10 @@ constexpr int kCandidateRetryCooldownMs = 300;
 constexpr int kVisualSideFollowMs = 500;
 constexpr float kVisualRecoveryError = 100.0f;
 constexpr int kTurnPhaseTimeoutMs = 1500;
-constexpr int kPassPhaseTimeoutMs = 2500;
+constexpr int kPassPhaseTimeoutMs = 5000;
 constexpr int kLearnedPathTimeoutMs = 4000;
 constexpr float kTurnPhaseMaxDistanceM = 0.80f;
-constexpr float kPassPhaseMaxDistanceM = 1.50f;
+constexpr float kPassPhaseMaxDistanceM = 3.00f;
 constexpr float kLearnedPathMaxExtraDistanceM = 0.50f;
 constexpr float kTrackTangentWindowM = 0.10f;
 constexpr float kMaxIntegrationDtS = 0.10f;
@@ -1178,6 +1179,19 @@ bool heading_is_settled(float heading_error_deg, float gyro_dps)
     return g_heading_settle_count >= kHeadingSettleCycles;
 }
 
+bool return_yaw_has_crossed_zero()
+{
+    // g_yaw_deg以进入绕行时的车头为0度。左右绕的返回方向相反，因此先按
+    // 返回方向归一化：左绕回正后为正，右绕回正后也转换为正。
+    const float return_direction_sign =
+        -g_turn_side * drive_by_yaw_sign;
+    const float normalized_return_yaw_deg =
+        g_yaw_deg * return_direction_sign;
+    // 不在刚越过0度时立即交还，而是再多转10度，让车头微微朝向道路，
+    // 降低视觉方向环接管后重新把车拉向赛道外侧的概率。
+    return normalized_return_yaw_deg > kReturnHandoffYawDeg;
+}
+
 float phase_offset_deg()
 {
     const float side_offset = g_turn_side * drive_by_yaw_sign * drive_by_turn_angle_deg;
@@ -1381,16 +1395,20 @@ void update_motion_state()
     }
 
     case DB_TURN_TO_TRACK:
+        // 相机可能先看到前方弯道或邻近道路，因此不能只凭check_line_lost()
+        // 就提前交还。必须等陀螺仪积分沿回正方向越过本次绕行起点10度，确认
+        // 车头已经微微朝向道路后，才允许恢复巡线并避免继续转向过度。
+        if (return_yaw_has_crossed_zero() && g_visual_aim_line_valid) {
+            complete_motion_handoff();
+            break;
+        }
+
         if (g_motion_heading_quiet &&
             heading_is_settled(heading_error_deg, gyro_dps)) {
-            if (g_visual_aim_line_valid) {
-                complete_motion_handoff();
-            } else {
-                // 左绕回程找不到中线时向右转，右绕则向左转。
-                // 后续由相机线程持续检查中线，不能只依赖一次检测结果。
-                enter_state(DB_RECOVER_CENTER_LINE);
-                latest_error = visual_forced_error(true);
-            }
+            // 固定回转角已经完成但仍看不到中线时，才进入反方向找线保护。
+            // 左绕回程向右找中线，右绕则向左找。
+            enter_state(DB_RECOVER_CENTER_LINE);
+            latest_error = visual_forced_error(true);
         } else if (!g_motion_heading_quiet) {
             g_heading_settle_count = 0;
         }
@@ -1918,7 +1936,15 @@ float drive_by_adjust_visual_error(float computed_error,
         return valid ? computed_error : visual_forced_error(false);
     }
 
-    if (g_state == DB_TURN_TO_TRACK || g_state == DB_LEARNED_PATH) {
+    if (g_state == DB_TURN_TO_TRACK) {
+        // check_line_lost()读取左右边线点数并更新lost枚举，必须留在相机线程调用。
+        // 返回阶段只要它判断道路未丢失，就允许8ms方向线程立即交还普通巡线。
+        g_visual_aim_line_valid =
+            selected_aim_line == 0 && !check_line_lost();
+        return computed_error;
+    }
+
+    if (g_state == DB_LEARNED_PATH) {
         // 航向闭环仍由drive_by控制，这里只旁路记录中线是否可靠，
         // 不覆盖computed_error，也不让普通方向环提前参与。
         g_visual_aim_line_valid = selected_aim_line == 0 && aim_line_valid;
@@ -1926,7 +1952,7 @@ float drive_by_adjust_visual_error(float computed_error,
     }
 
     if (g_state == DB_RECOVER_CENTER_LINE) {
-        const bool valid = selected_aim_line == 0 && aim_line_valid;
+        const bool valid = selected_aim_line == 0 && !check_line_lost();
         g_visual_aim_line_valid = valid;
         return valid ? computed_error : visual_forced_error(true);
     }
