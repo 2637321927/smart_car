@@ -119,6 +119,7 @@ async function main() {
       dbHMax: 200,
       dbHTol: 2,
       dbRecoverDps: 55,
+      dbBrakePwm: 5000,
       yawHoldRMax: 10,
       udp: 2,
     })));
@@ -179,6 +180,7 @@ async function main() {
     assert(appResponse.text.includes("label: '示教航向倍率'"));
     assert(appResponse.text.includes("key: 'dbHKp', label: '航向外环P', min: 0, max: 20, step: 0.1, defaultValue: 12"));
     assert(appResponse.text.includes("key: 'dbHTol', label: '航向允许误差（退出+1°）', min: 0, max: 10, step: 0.1, unit: 'deg', defaultValue: 4.5"));
+    assert(appResponse.text.includes("key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 5000, step: 50, defaultValue: 5000"));
     assert(appResponse.text.includes("#remote=0;"));
     assert(appResponse.text.includes("#yawHold="));
     assert(appResponse.text.includes("#tangentDbg="));

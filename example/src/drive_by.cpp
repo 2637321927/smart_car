@@ -60,7 +60,7 @@ volatile float drive_by_heading_tolerance_deg = 4.5f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
 volatile float drive_by_yaw_sign = -1.0f;
-volatile int drive_by_brake_pwm = 7000;
+volatile int drive_by_brake_pwm = 5000;
 volatile float drive_by_brake_release_rps = 15.0f;
 volatile int drive_by_brake_confirm_count = 2;
 volatile int drive_by_brake_timeout_ms = 300;
@@ -69,7 +69,7 @@ volatile float drive_by_test_target_distance_m = 0.50f;
 namespace {
 
 constexpr int kInferFrames = 3;
-constexpr int kBrakePwmMax = 7000;
+constexpr int kBrakePwmMax = 5000;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
 constexpr int kHeadingSettleCycles = 3;
@@ -1691,9 +1691,12 @@ bool drive_by_speed_control_update()
     g_debug.brake_elapsed_ms = brake_elapsed_ms;
 
     const float release_rps = std::fabs((float)drive_by_brake_release_rps);
+    // 主动制动只用于车辆原本向前行驶的场景。这里按“正向速度已经降到阈值”
+    // 判断，不再取绝对值；若大制动力让轮速轻微穿过零点，负速度仍会满足释放条件，
+    // 避免继续反向加速直到300ms超时。连续确认次数仍保留，用于过滤单次编码器毛刺。
     const bool both_wheels_slow =
-        std::fabs((float)encoder1_speed_avg) <= release_rps &&
-        std::fabs((float)encoder2_speed_avg) <= release_rps;
+        encoder1_speed_avg <= release_rps &&
+        encoder2_speed_avg <= release_rps;
     g_brake_confirm_count = both_wheels_slow ? g_brake_confirm_count + 1 : 0;
 
     const int required_count = std::max(1, (int)drive_by_brake_confirm_count);

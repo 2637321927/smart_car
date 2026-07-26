@@ -13,7 +13,7 @@ namespace {
 
 constexpr int kMaxForwardPwm = 8000;
 constexpr int kMaxReversePwm = 4000;
-constexpr int kMaxBrakeReversePwm = 7000;
+constexpr int kMaxBrakeReversePwm = 5000;
 
 // 增量式PID不仅依赖当前PWM，还依赖前两次误差。主动制动结束或停车时，
 // 两类状态必须一起清零，否则下一次闭环会把制动前后的误差突变再次叠加到PWM。

@@ -234,7 +234,7 @@ const TUNING_GROUPS = [
       { key: 'dbForwardRps', label: '斜行阶段速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 20 },
       { key: 'dbExitRps', label: '回赛道转向速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 15 },
       { key: 'dbLearnRps', label: '示教轨迹速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 15 },
-      { key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 7000, step: 50, defaultValue: 7000 },
+      { key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 5000, step: 50, defaultValue: 5000 },
       { key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 15 },
       { key: 'dbBrakeTimeout', label: '制动超时', min: 1, max: 2000, step: 10, unit: 'ms', defaultValue: 300 },
       { key: 'dbTestDist', label: 'TEST目标距离', min: 0, max: 5, step: 0.01, unit: 'm', defaultValue: 0.5 },
