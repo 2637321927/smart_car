@@ -2,6 +2,7 @@
 #include "lq_all_demo.hpp"
 #include "lq_timer.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -272,7 +273,8 @@ float calc_target_yaw_rate(float vision_error)
     return target_yaw_rate;
 }
 
-float update_rate_target_yaw_rate(float target_yaw_rate)
+float update_rate_target_yaw_rate(float target_yaw_rate,
+                                  float requested_turn_limit)
 {
     if (!g_gyro_ready) {
         return 0.0f;
@@ -296,7 +298,9 @@ float update_rate_target_yaw_rate(float target_yaw_rate)
         g_debug.integral_frozen = 1;
     }
 
-    const float turn_limit = std::fabs((float)gyro_turn_max_rps);
+    const float turn_limit = std::min(
+        std::fabs((float)gyro_turn_max_rps),
+        std::fabs(requested_turn_limit));
     const float inner_ki = gyro_inner_ki;
     if (std::fabs(inner_ki) > 1e-6f) {
         const float integral_limit = turn_limit / std::fabs(inner_ki);
@@ -470,12 +474,23 @@ float gyro_yaw_rate_control_update(float vision_error)
     // Outer loop: vision error -> target yaw rate.
     const float target_yaw_rate = calc_target_yaw_rate(vision_error);
 
-    return update_rate_target_yaw_rate(target_yaw_rate);
+    return update_rate_target_yaw_rate(
+        target_yaw_rate,
+        std::fabs((float)gyro_turn_max_rps));
 }
 
 float gyro_yaw_rate_control_update_target_yaw_rate(float target_yaw_rate_dps)
 {
-    return update_rate_target_yaw_rate(target_yaw_rate_dps);
+    return update_rate_target_yaw_rate(
+        target_yaw_rate_dps,
+        std::fabs((float)gyro_turn_max_rps));
+}
+
+float gyro_yaw_rate_control_update_target_yaw_rate_limited(
+    float target_yaw_rate_dps,
+    float max_turn_rps)
+{
+    return update_rate_target_yaw_rate(target_yaw_rate_dps, max_turn_rps);
 }
 
 const GyroYawRateDebug &gyro_yaw_rate_control_get_debug(void)

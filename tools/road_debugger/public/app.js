@@ -59,6 +59,8 @@ const elements = {
   driveByTestButton: $('driveByTestButton'),
   driveEnableCommand: $('driveEnableCommand'),
   driveDisableCommand: $('driveDisableCommand'),
+  headingHoldCommand: $('headingHoldCommand'),
+  tangentDebugCommand: $('tangentDebugCommand'),
   remoteButtons: [...document.querySelectorAll('[data-remote]')],
   tuningControls: $('tuningControls'),
   tuningSnapshotTime: $('tuningSnapshotTime'),
@@ -92,6 +94,10 @@ const PARAMETER_LABELS = {
   to_target: '任务目标周期',
   to_total: '累计超时数',
   run: '运行状态',
+  yaw_hold_enabled: '航向保持测试',
+  tangent_debug_enabled: '中线切线显示',
+  track_tangent_valid: '中线切线有效',
+  track_tangent_deg: '中线切线角度',
   selected_speed: '速度档位',
   drive_enabled: '识别模式开关',
   drive_busy: '识别流程忙',
@@ -191,6 +197,7 @@ const TUNING_GROUPS = [
       { key: 'gII', label: '内环I', min: 0, max: 0.2, step: 0.001, defaultValue: 0 },
       { key: 'gTMax', label: '目标角速度上限', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 360 },
       { key: 'gRMax', label: '差速上限', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 20 },
+      { key: 'yawHoldRMax', label: '航向保持差速上限', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 10 },
       { key: 'gSign', label: '陀螺仪符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: -1 },
       { key: 'tSign', label: '差速输出符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: 1 },
     ],
@@ -333,7 +340,8 @@ function formatValue(key, value) {
   if (key === 'run' || key === 'drive_enabled' || key === 'drive_busy' || key === 'have_target' ||
       key === 'drive_recognizing' || key === 'drive_motion' || key === 'drive_geometry_valid' ||
       key === 'drive_view_ready' || key === 'red_candidate' || key === 'drive_test_mode' ||
-      key === 'drive_brake_active') {
+      key === 'drive_brake_active' || key === 'yaw_hold_enabled' ||
+      key === 'tangent_debug_enabled' || key === 'track_tangent_valid') {
     return Number(value) ? '是' : '否';
   }
   if (key === 'drive_detection_stage') {
@@ -788,6 +796,51 @@ function drawRoad() {
   drawLine(road.lines.right, '#ff9c5a', 5, 8);
   drawLine(road.lines.center, '#ecf6f3', 4, 7);
 
+  if (road.tangent?.valid && road.tangent.anchor?.length === 2) {
+    const [anchorX, anchorY] = road.tangent.anchor;
+    const angleRad = Number(road.tangent.angleDeg) * Math.PI / 180;
+    const directionX = Math.sin(angleRad);
+    const directionY = -Math.cos(angleRad);
+    const halfLength = 58;
+    const startX = (anchorX - directionX * halfLength) * scaleX;
+    const startY = (anchorY - directionY * halfLength) * scaleY;
+    const endX = (anchorX + directionX * halfLength) * scaleX;
+    const endY = (anchorY + directionY * halfLength) * scaleY;
+
+    context.save();
+    context.strokeStyle = '#f5df74';
+    context.fillStyle = '#f5df74';
+    context.lineWidth = 4;
+    context.setLineDash([13, 8]);
+    context.shadowColor = '#f5df74';
+    context.shadowBlur = 9;
+    context.beginPath();
+    context.moveTo(startX, startY);
+    context.lineTo(endX, endY);
+    context.stroke();
+    context.setLineDash([]);
+
+    // 箭头指向赛道前方，便于区分+角和-角，而不只是看到一条无方向直线。
+    const arrowAngle = Math.atan2(endY - startY, endX - startX);
+    context.beginPath();
+    context.moveTo(endX, endY);
+    context.lineTo(
+      endX - 15 * Math.cos(arrowAngle - Math.PI / 6),
+      endY - 15 * Math.sin(arrowAngle - Math.PI / 6));
+    context.lineTo(
+      endX - 15 * Math.cos(arrowAngle + Math.PI / 6),
+      endY - 15 * Math.sin(arrowAngle + Math.PI / 6));
+    context.closePath();
+    context.fill();
+    context.shadowBlur = 0;
+    context.font = '700 20px Bahnschrift, Microsoft YaHei';
+    context.fillText(
+      `切线 ${Number(road.tangent.angleDeg).toFixed(1)}°`,
+      anchorX * scaleX + 12,
+      anchorY * scaleY - 12);
+    context.restore();
+  }
+
   if (road.aim && road.aim[0] >= 0 && road.aim[1] >= 0) {
     const x = road.aim[0] * scaleX;
     const y = road.aim[1] * scaleY;
@@ -973,8 +1026,10 @@ function updateSummary() {
   const params = state.displayParams || {};
   const road = state.displayRoad;
   const running = Boolean(Number(params.run ?? road?.flags.running ?? 0));
-  elements.runIndicator.textContent = running ? 'RUN' : 'STOP';
+  const displayYawHold = Boolean(Number(params.yaw_hold_enabled ?? 0));
+  elements.runIndicator.textContent = running ? 'RUN' : (displayYawHold ? 'HOLD' : 'STOP');
   elements.runIndicator.classList.toggle('running', running);
+  elements.runIndicator.classList.toggle('holding', !running && displayYawHold);
   elements.driveState.textContent = params.drive_state || (road?.flags.driveBusy ? 'BUSY' : '--');
   elements.leftCount.textContent = road?.sourceCounts.left ?? params.left_n ?? 0;
   elements.centerCount.textContent = road?.sourceCounts.center ?? params.mid_n ?? 0;
@@ -984,14 +1039,28 @@ function updateSummary() {
   const liveRunning = Boolean(Number(liveParams.run ?? 0));
   const driveBusy = Boolean(Number(liveParams.drive_busy ?? 0));
   const driveEnabled = Boolean(Number(liveParams.drive_enabled ?? 0));
-  elements.driveByTestButton.disabled = !liveRunning || driveBusy;
+  const yawHoldEnabled = Boolean(Number(liveParams.yaw_hold_enabled ?? 0));
+  const tangentDebugEnabled = Boolean(Number(liveParams.tangent_debug_enabled ?? 0));
+  elements.driveByTestButton.disabled = !liveRunning || driveBusy || yawHoldEnabled;
   elements.driveByTestButton.title = !liveRunning
     ? '车辆停车时不可启动绕行测试'
     : (driveBusy ? '绕行脚本正在执行' : '启动绕行脚本测试');
   elements.driveEnableCommand.classList.toggle('selected-command', driveEnabled);
   elements.driveDisableCommand.classList.toggle('selected-command', !driveEnabled);
+  elements.headingHoldCommand.classList.toggle('selected-command', yawHoldEnabled);
+  elements.headingHoldCommand.textContent = yawHoldEnabled ? '关闭航向保持' : '航向保持测试';
+  elements.headingHoldCommand.disabled = state.mode !== 'live' ||
+    (!yawHoldEnabled && (liveRunning || driveBusy));
+  elements.headingHoldCommand.title = yawHoldEnabled
+    ? '关闭停车态航向保持测试'
+    : '仅run=0、绕行空闲且陀螺仪正常时可开启';
+  elements.tangentDebugCommand.classList.toggle('selected-command', tangentDebugEnabled);
+  elements.tangentDebugCommand.textContent = tangentDebugEnabled ? '关闭切线显示' : '中线切线显示';
+  elements.tangentDebugCommand.disabled = state.mode !== 'live';
+  elements.tangentDebugCommand.title = '开启时自动切到UDP+道路三线';
 
-  const remoteEnabled = state.mode === 'live' && Boolean(state.liveParams) && !liveRunning;
+  const remoteEnabled = state.mode === 'live' && Boolean(state.liveParams) &&
+    !liveRunning && !yawHoldEnabled;
   elements.remoteButtons.forEach((button) => {
     button.disabled = !remoteEnabled;
     button.title = remoteEnabled ? '按住移动，松开立即停止' : '仅实时模式且run=0时可用';
@@ -999,6 +1068,22 @@ function updateSummary() {
   if (!remoteEnabled && remoteHoldDirection !== 0) {
     stopRemoteHold();
   }
+}
+
+async function toggleHeadingHold() {
+  const enabled = Boolean(Number(state.liveParams?.yaw_hold_enabled ?? 0));
+  if (!enabled && Number(state.liveParams?.udp_mode ?? 0) === 0) {
+    await sendCommand('#udp=1;', { quiet: true });
+  }
+  await sendCommand(`#yawHold=${enabled ? 0 : 1};`);
+}
+
+async function toggleTangentDebug() {
+  const enabled = Boolean(Number(state.liveParams?.tangent_debug_enabled ?? 0));
+  if (!enabled && Number(state.liveParams?.udp_mode ?? 0) < 2) {
+    await sendCommand('#udp=2;', { quiet: true });
+  }
+  await sendCommand(`#tangentDbg=${enabled ? 0 : 1};`);
 }
 
 async function sendRemoteHeartbeat(token) {
@@ -1372,6 +1457,12 @@ function bindEvents() {
   elements.driveByRight.addEventListener('click', () => setDriveByTestDirection(2));
   elements.driveByTestButton.addEventListener('click', () => {
     sendCommand(`#test_driveby=${state.driveByTestDirection};`).catch((error) => showToast(error.message));
+  });
+  elements.headingHoldCommand.addEventListener('click', () => {
+    toggleHeadingHold().catch((error) => showToast(error.message));
+  });
+  elements.tangentDebugCommand.addEventListener('click', () => {
+    toggleTangentDebug().catch((error) => showToast(error.message));
   });
   elements.remoteButtons.forEach((button) => {
     button.addEventListener('contextmenu', (event) => event.preventDefault());

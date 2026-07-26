@@ -92,6 +92,7 @@ function parseRoadPacket(buffer) {
       plateValid: Boolean(flags & (1 << 2)),
       running: Boolean(flags & (1 << 3)),
       driveBusy: Boolean(flags & (1 << 4)),
+      tangentValid: headerSize >= 56 && Boolean(flags & (1 << 5)),
     },
     redRect: {
       x: buffer.readInt16LE(24),
@@ -110,6 +111,16 @@ function parseRoadPacket(buffer) {
       left: buffer.readUInt16LE(44),
       center: buffer.readUInt16LE(46),
       right: buffer.readUInt16LE(48),
+    },
+    // 56字节新头部追加切线角度和锚点；旧52字节录像继续解析为无切线。
+    tangent: headerSize >= 56 ? {
+      valid: Boolean(flags & (1 << 5)),
+      angleDeg: buffer.readInt16LE(50) / 100,
+      anchor: [buffer.readInt16LE(52), buffer.readInt16LE(54)],
+    } : {
+      valid: false,
+      angleDeg: 0,
+      anchor: [-1, -1],
     },
     lines: {
       left: readPoints(leftCount),

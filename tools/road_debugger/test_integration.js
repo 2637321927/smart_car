@@ -46,11 +46,11 @@ function request(method, requestPath, body) {
 }
 
 function makeRoadPacket() {
-  const packet = Buffer.alloc(64);
+  const packet = Buffer.alloc(68);
   packet.write('RDL1', 0, 'ascii');
   packet.writeUInt8(1, 4);
-  packet.writeUInt8(0b01111, 5);
-  packet.writeUInt16LE(52, 6);
+  packet.writeUInt8(0b101111, 5);
+  packet.writeUInt16LE(56, 6);
   packet.writeUInt32LE(7, 8);
   packet.writeUInt32LE(250, 12);
   packet.writeUInt16LE(320, 16);
@@ -59,12 +59,14 @@ function makeRoadPacket() {
   packet.writeUInt8(1, 21);
   packet.writeUInt8(1, 22);
   packet.writeInt8(1, 23);
-  [60, 120, 20, 12, 58, 96, 24, 24, 160, 140, 80, 90, 75, 0].forEach((value, index) => {
+  [60, 120, 20, 12, 58, 96, 24, 24, 160, 140, 80, 90, 75, -725].forEach((value, index) => {
     packet.writeInt16LE(value, 24 + index * 2);
   });
+  packet.writeInt16LE(158, 52);
+  packet.writeInt16LE(130, 54);
   [[70, 180], [160, 160], [250, 180]].forEach(([x, y], index) => {
-    packet.writeInt16LE(x, 52 + index * 4);
-    packet.writeInt16LE(y, 54 + index * 4);
+    packet.writeInt16LE(x, 56 + index * 4);
+    packet.writeInt16LE(y, 58 + index * 4);
   });
   return packet;
 }
@@ -107,15 +109,16 @@ async function main() {
       P: 454,
       I: 14,
       gyro: 1,
-      dbMode: 0,
-      dbLearnRps: 15,
-      dbLearnDist: 0.96,
-      dbLearnScale: 1,
+      dbMode: 2,
+      dbLearnRps: 16.5,
+      dbLearnDist: 1.08,
+      dbLearnScale: 1.15,
       dbTurnAngle: 25,
       dbReturnBias: 46,
       dbPassDist: 0.14,
       dbHMax: 200,
       dbRecoverDps: 55,
+      yawHoldRMax: 10,
       udp: 2,
     })));
     await sendUdp(makeRoadPacket());
@@ -136,6 +139,8 @@ async function main() {
     assert(pageResponse.text.includes('driveByLeft'));
     assert(pageResponse.text.includes('driveByRight'));
     assert(pageResponse.text.includes('driveByTestButton'));
+    assert(pageResponse.text.includes('headingHoldCommand'));
+    assert(pageResponse.text.includes('tangentDebugCommand'));
     assert(pageResponse.text.includes('#spd=35;'));
     assert(pageResponse.text.includes('#spd=0;'));
     assert(pageResponse.text.includes('#drive=1;'));
@@ -160,10 +165,17 @@ async function main() {
       'dbLearnScale', 'dbTurnAngle', 'dbPassDist',
       'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
       'dbHKd', 'dbHMax', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
+      'yawHoldRMax',
       'dbBrakeRelease', 'dbBrakeTimeout', 'dbTestDist', 'circle_exit', 'udp', 'vofa',
       'is_udp_img',
     ].forEach((key) => assert(appResponse.text.includes(`key: '${key}'`), key));
+    assert(appResponse.text.includes("[2, '六次示教']"));
+    assert(appResponse.text.includes("label: '示教轨迹速度'"));
+    assert(appResponse.text.includes("label: '示教轨迹总路程'"));
+    assert(appResponse.text.includes("label: '示教航向倍率'"));
     assert(appResponse.text.includes("#remote=0;"));
+    assert(appResponse.text.includes("#yawHold="));
+    assert(appResponse.text.includes("#tangentDbg="));
     assert(appResponse.text.includes('sendRemoteHeartbeat'));
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
@@ -178,6 +190,7 @@ async function main() {
       `/api/recording/file?name=${encodeURIComponent(listResponse.json.recordings[0].name)}`);
     assert.strictEqual(fileResponse.status, 200);
     assert(fileResponse.text.includes('"type":"road"'));
+    assert(fileResponse.text.includes('"angleDeg":-7.25'));
 
     const commandResponse = await request('POST', '/api/command', {
       ip: '127.0.0.1',
@@ -193,6 +206,11 @@ async function main() {
     assert(recordingText.includes('"type":"params"'));
     assert(recordingText.includes('"type":"road"'));
     assert(recordingText.includes('"type":"tuning"'));
+    assert(recordingText.includes('"dbMode":2'));
+    assert(recordingText.includes('"dbLearnRps":16.5'));
+    assert(recordingText.includes('"dbLearnDist":1.08'));
+    assert(recordingText.includes('"dbLearnScale":1.15'));
+    assert(recordingText.includes('"yawHoldRMax":10'));
     console.log('Road debugger integration test passed');
   } finally {
     services.udpReceiver.close();

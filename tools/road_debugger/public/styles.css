@@ -283,6 +283,7 @@ h2 { font-size: 1.05rem; }
 }
 
 .run-indicator.running { color: var(--green); border-color: rgba(114, 224, 152, 0.4); }
+.run-indicator.holding { color: var(--yellow); border-color: rgba(245, 223, 116, 0.48); }
 
 .detection-panel canvas {
   width: calc(100% - 36px);
@@ -365,6 +366,11 @@ h2 { font-size: 1.05rem; }
   color: #071012;
   border-color: rgba(81, 216, 208, 0.85);
   background: var(--cyan);
+}
+.quick-commands .debug-command.selected-command {
+  color: #161203;
+  border-color: rgba(245, 223, 116, 0.88);
+  background: var(--yellow);
 }
 .drive-by-test-controls {
   display: grid;

@@ -53,6 +53,8 @@ volatile float drive_by_heading_kp = 8.0f;
 volatile float drive_by_heading_kd = 0.2f;
 // 这是航向外环允许给出的目标角速度上限；接近目标角度时，KP/KD仍会主动降速。
 volatile float drive_by_heading_max_dps = 200.0f;
+// 航向保持测试只允许较小差速，避免调试KP时误用正常巡线的较大gRMax。
+volatile float drive_by_heading_hold_max_turn_rps = 10.0f;
 volatile float drive_by_recovery_yaw_rate_dps = 55.0f;
 volatile float drive_by_heading_tolerance_deg = 2.0f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
@@ -240,6 +242,12 @@ float g_learned_path_total_m = 0.96f;
 SavedControl g_saved;
 RecognitionReport g_report;
 DriveByDebug g_debug = {};
+volatile bool g_heading_hold_enabled = false;
+volatile bool g_tangent_debug_enabled = false;
+float g_heading_hold_yaw_deg = 0.0f;
+DriveByClock::time_point g_heading_hold_last_update = DriveByClock::now();
+DriveByHeadingHoldDebug g_heading_hold_debug = {};
+DriveByTangentDebug g_tangent_debug = {};
 
 float clampf(float value, float min_value, float max_value)
 {
@@ -251,17 +259,25 @@ float clampf(float value, float min_value, float max_value)
 float learned_path_template_yaw_deg(float progress)
 {
     const float clamped_progress = clampf(progress, 0.0f, 1.0f);
-    const float table_position =
-        clamped_progress * static_cast<float>(kLearnedPathPointCount - 1);
-    const int lower_index = static_cast<int>(table_position);
-    if (lower_index >= kLearnedPathPointCount - 1) {
-        return kLearnedPath[kLearnedPathPointCount - 1].yaw_deg;
+    for (int upper_index = 1;
+         upper_index < kLearnedPathPointCount;
+         ++upper_index) {
+        const LearnedPathPoint& upper = kLearnedPath[upper_index];
+        if (clamped_progress > upper.progress) {
+            continue;
+        }
+
+        const LearnedPathPoint& lower = kLearnedPath[upper_index - 1];
+        const float segment_length = upper.progress - lower.progress;
+        if (segment_length <= 0.0f) {
+            return upper.yaw_deg;
+        }
+        const float local_ratio =
+            (clamped_progress - lower.progress) / segment_length;
+        return lower.yaw_deg + (upper.yaw_deg - lower.yaw_deg) * local_ratio;
     }
 
-    const float local_ratio = table_position - static_cast<float>(lower_index);
-    const float lower_yaw = kLearnedPath[lower_index].yaw_deg;
-    const float upper_yaw = kLearnedPath[lower_index + 1].yaw_deg;
-    return lower_yaw + (upper_yaw - lower_yaw) * local_ratio;
+    return kLearnedPath[kLearnedPathPointCount - 1].yaw_deg;
 }
 
 float learned_path_offset_deg()
@@ -748,6 +764,39 @@ bool compute_heading_from_line(int center_index, float *heading_deg)
 bool compute_current_track_heading(float *heading_deg)
 {
     return compute_heading_from_line(0, heading_deg);
+}
+
+void update_tangent_debug_cache()
+{
+    g_tangent_debug.enabled = g_tangent_debug_enabled ? 1 : 0;
+    if (!g_tangent_debug_enabled) {
+        g_tangent_debug.valid = 0;
+        return;
+    }
+
+    g_tangent_debug.sample_distance_m = std::max(0.0f, (float)AIM);
+    g_tangent_debug.valid = 0;
+    g_tangent_debug.anchor_x = -1;
+    g_tangent_debug.anchor_y = -1;
+    if (rptsn_num < 3 || sample_dist <= 0.0f) {
+        return;
+    }
+
+    // 调试切线使用和方向控制相同的AIM前瞻位置。前后各取约0.10m中线点，
+    // 因此画出的方向代表控制正在观察的位置，而不是车头附近的瞬时方向。
+    const int center_index = clip(
+        cvRound(g_tangent_debug.sample_distance_m / sample_dist),
+        0,
+        rptsn_num - 1);
+    float heading_deg = 0.0f;
+    if (!compute_heading_from_line(center_index, &heading_deg)) {
+        return;
+    }
+
+    g_tangent_debug.valid = 1;
+    g_tangent_debug.angle_deg = heading_deg;
+    g_tangent_debug.anchor_x = cvRound(rptsn[center_index][0]);
+    g_tangent_debug.anchor_y = cvRound(rptsn[center_index][1]);
 }
 
 bool compute_target_geometry(float *track_heading_deg,
@@ -1476,6 +1525,10 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
 void drive_by_init()
 {
     g_drive_by_enable = false;
+    g_heading_hold_enabled = false;
+    g_tangent_debug_enabled = false;
+    g_heading_hold_debug = DriveByHeadingHoldDebug{};
+    g_tangent_debug = DriveByTangentDebug{};
     reset_runtime(false);
 }
 
@@ -1661,6 +1714,10 @@ bool drive_by_start_test(int simulated_item_flag,
 
 void drive_by_update_track_geometry()
 {
+    // 中线切线调试与绕行状态完全独立。关闭时这里只多一次布尔判断；开启后
+    // 只复用本帧已经生成的rptsn，不执行额外图像处理，也不写任何控制量。
+    update_tangent_debug_cache();
+
     if (!g_drive_by_busy) {
         return;
     }
@@ -1839,4 +1896,145 @@ const char *drive_by_abort_reason()
 const DriveByDebug &drive_by_get_debug()
 {
     return g_debug;
+}
+
+bool drive_by_heading_hold_set_enable(bool enable)
+{
+    if (!enable) {
+        if (!g_heading_hold_enabled) {
+            return true;
+        }
+
+        g_heading_hold_enabled = false;
+        g_heading_hold_debug.enabled = 0;
+        g_heading_hold_debug.target_yaw_rate_dps = 0.0f;
+        g_heading_hold_debug.turn_rps = 0.0f;
+        set_speed_of_motor1_rps = 0.0f;
+        set_speed_of_motor2_rps = 0.0f;
+        pwm1_duty_rps = 0.0f;
+        pwm2_duty_rps = 0.0f;
+        gyro_yaw_rate_control_reset_controller();
+        motor_speed_pid_reset();
+        pwm1.atim_pwm_set_duty(0);
+        pwm2.atim_pwm_set_duty(0);
+        return true;
+    }
+
+    if (g_heading_hold_enabled) {
+        return true;
+    }
+    if (front_ui_is_running() || g_drive_by_busy ||
+        front_ui_remote_is_active() ||
+        !gyro_yaw_rate_control_is_ready() ||
+        !gyro_yaw_rate_control_gyro_is_fresh()) {
+        return false;
+    }
+
+    // 开启瞬间把当前车头定义为0度。之后只积分相对转角，不依赖长期绝对航向，
+    // 所以适合原地拨动车头观察KP/KD，而不会把绕行前后的积分误差带进来。
+    g_heading_hold_yaw_deg = 0.0f;
+    g_heading_hold_last_update = DriveByClock::now();
+    g_heading_hold_debug = DriveByHeadingHoldDebug{};
+    g_heading_hold_debug.enabled = 1;
+    g_heading_hold_debug.target_yaw_deg = 0.0f;
+    set_speed_of_motor1_rps = 0.0f;
+    set_speed_of_motor2_rps = 0.0f;
+    pwm1_duty_rps = 0.0f;
+    pwm2_duty_rps = 0.0f;
+    gyro_yaw_rate_control_reset_controller();
+    motor_speed_pid_reset();
+    g_heading_hold_enabled = true;
+    return true;
+}
+
+bool drive_by_heading_hold_is_enabled()
+{
+    return g_heading_hold_enabled;
+}
+
+void drive_by_heading_hold_control_update()
+{
+    if (!g_heading_hold_enabled) {
+        return;
+    }
+
+    // 发车、绕行、遥控或陀螺仪失效都必须立即退出，防止停车态调试控制
+    // 混入正常巡线，也避免使用旧陀螺仪数据继续驱动车轮。
+    if (front_ui_is_running() || g_drive_by_busy ||
+        front_ui_remote_is_active() ||
+        !gyro_yaw_rate_control_is_ready() ||
+        !gyro_yaw_rate_control_gyro_is_fresh()) {
+        drive_by_heading_hold_set_enable(false);
+        return;
+    }
+
+    const DriveByClock::time_point now = DriveByClock::now();
+    float dt_s = std::chrono::duration<float>(
+        now - g_heading_hold_last_update).count();
+    g_heading_hold_last_update = now;
+    if (dt_s <= 0.0f) {
+        return;
+    }
+    if (dt_s > kMaxIntegrationDtS) {
+        dt_s = kMaxIntegrationDtS;
+    }
+
+    const float gyro_dps = gyro_yaw_rate_control_get_gyro_z_dps();
+    g_heading_hold_yaw_deg = normalize_angle_deg(
+        g_heading_hold_yaw_deg + gyro_dps * dt_s);
+    const float heading_error_deg = normalize_angle_deg(
+        -g_heading_hold_yaw_deg);
+    float target_yaw_rate_dps =
+        drive_by_heading_kp * heading_error_deg -
+        drive_by_heading_kd * gyro_dps;
+    const float yaw_rate_limit = std::fabs(
+        (float)drive_by_heading_max_dps);
+    target_yaw_rate_dps = clampf(
+        target_yaw_rate_dps, -yaw_rate_limit, yaw_rate_limit);
+
+    // 角速度内环仍使用现有gIP/gII，但额外套用yawHoldRMax，确保本测试
+    // 不会把正常巡线所需的较大差速上限带到原地调参场景。
+    const float turn_rps =
+        gyro_yaw_rate_control_update_target_yaw_rate_limited(
+            target_yaw_rate_dps,
+            drive_by_heading_hold_max_turn_rps);
+    // 绕行轮速函数带有“倒车最多-10RPS”的前进安全限幅，不适合原地对称转向。
+    // 航向保持直接写+turn/-turn，实际幅度仍受yawHoldRMax和gRMax双重限制。
+    set_speed_of_motor1_rps = 0.0f;
+    set_speed_of_motor2_rps = 0.0f;
+    pwm1_duty_rps = turn_rps;
+    pwm2_duty_rps = -turn_rps;
+
+    g_heading_hold_debug.enabled = 1;
+    g_heading_hold_debug.yaw_deg = g_heading_hold_yaw_deg;
+    g_heading_hold_debug.target_yaw_deg = 0.0f;
+    g_heading_hold_debug.heading_error_deg = heading_error_deg;
+    g_heading_hold_debug.target_yaw_rate_dps = target_yaw_rate_dps;
+    g_heading_hold_debug.turn_rps = turn_rps;
+}
+
+const DriveByHeadingHoldDebug &drive_by_heading_hold_get_debug()
+{
+    return g_heading_hold_debug;
+}
+
+void drive_by_tangent_debug_set_enable(bool enable)
+{
+    g_tangent_debug_enabled = enable;
+    g_tangent_debug.enabled = enable ? 1 : 0;
+    if (!enable) {
+        g_tangent_debug.valid = 0;
+        g_tangent_debug.anchor_x = -1;
+        g_tangent_debug.anchor_y = -1;
+    }
+}
+
+bool drive_by_tangent_debug_is_enabled()
+{
+    return g_tangent_debug_enabled;
+}
+
+const DriveByTangentDebug &drive_by_tangent_debug_get()
+{
+    return g_tangent_debug;
 }

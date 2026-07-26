@@ -131,6 +131,7 @@ void select_speed_strategy(int speed_rps)
 void stop_car()
 {
     // K2 停车是最高优先级：如果目标板脚本正在接管，先取消脚本，再清零电机。
+    drive_by_heading_hold_set_enable(false);
     const bool recognition_test_aborted = drive_by_cancel();
     reset_special_track_state();
     // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
@@ -153,6 +154,8 @@ void start_car()
 {
     // 发车时不直接写死速度，而是使用当前屏幕上选中的速度策略。
     // 遥控松开包即使稍晚到达，也不能覆盖已经开始的正常行驶。
+    // 航向保持属于停车态专用测试，发车前必须先清掉它的对称轮速目标。
+    drive_by_heading_hold_set_enable(false);
     remote_command = FRONT_UI_REMOTE_STOP;
     car_running = true;
     gyro_yaw_rate_control_reset();
@@ -337,6 +340,10 @@ bool front_ui_remote_set(int command)
         remote_command = FRONT_UI_REMOTE_STOP;
         return false;
     }
+
+    // 航向保持和停车遥控都会在run=0时驱动车轮，二者不能同时写控制目标。
+    // 用户开始按遥控方向键时，优先退出航向保持再接管。
+    drive_by_heading_hold_set_enable(false);
 
     const auto now = std::chrono::steady_clock::now();
     if (remote_command != command) {

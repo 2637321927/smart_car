@@ -38,6 +38,8 @@ extern volatile int drive_by_view_wait_timeout_ms;
 extern volatile float drive_by_heading_kp;
 extern volatile float drive_by_heading_kd;
 extern volatile float drive_by_heading_max_dps;
+// 停车态航向保持调试的专用差速上限，不改变正常巡线的gRMax。
+extern volatile float drive_by_heading_hold_max_turn_rps;
 // 回程丢失中线时使用的固定目标角速度，单位deg/s。
 extern volatile float drive_by_recovery_yaw_rate_dps;
 extern volatile float drive_by_heading_tolerance_deg;
@@ -80,6 +82,26 @@ typedef struct
     float test_target_distance_m;
 } DriveByDebug;
 
+typedef struct
+{
+    int enabled;
+    float yaw_deg;
+    float target_yaw_deg;
+    float heading_error_deg;
+    float target_yaw_rate_dps;
+    float turn_rps;
+} DriveByHeadingHoldDebug;
+
+typedef struct
+{
+    int enabled;
+    int valid;
+    float angle_deg;
+    float sample_distance_m;
+    int anchor_x;
+    int anchor_y;
+} DriveByTangentDebug;
+
 void drive_by_init();
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn);
 // 由8ms方向定时器调用：只读取缓存并更新绕行闭环，不做图像、推理、打印或硬件I/O。
@@ -92,8 +114,8 @@ bool drive_by_start_test(int simulated_item_flag,
 bool drive_by_is_busy();
 bool drive_by_is_recognizing();
 bool drive_by_is_motion_phase();
-// 边线方案和两套方案共用的中线找回阶段由普通方向环执行；
-// 旧角度方案的三个航向阶段仍由drive_by独占方向控制。
+// 三套方案共用的中线找回阶段由普通方向环执行；三阶段方案和示教轨迹方案
+// 的航向闭环阶段仍由drive_by独占方向控制。
 bool drive_by_uses_visual_direction_control();
 // 返回当前相机帧应使用的瞄准线：-1左线、0正常中线、1右线。
 int drive_by_visual_aim_line();
@@ -113,6 +135,18 @@ bool drive_by_cancel();
 const char *drive_by_state_name();
 const char *drive_by_abort_reason();
 const DriveByDebug &drive_by_get_debug();
+
+// 停车态航向保持测试：开启瞬间定义为0度，随后始终控制车头回到该方向。
+// 仅run=0、无绕行且无停车遥控时允许开启。
+bool drive_by_heading_hold_set_enable(bool enable);
+bool drive_by_heading_hold_is_enabled();
+void drive_by_heading_hold_control_update();
+const DriveByHeadingHoldDebug &drive_by_heading_hold_get_debug();
+
+// 中线切线显示只更新调试缓存，不参与方向控制。
+void drive_by_tangent_debug_set_enable(bool enable);
+bool drive_by_tangent_debug_is_enabled();
+const DriveByTangentDebug &drive_by_tangent_debug_get();
 
 // 在道路处理完成后调用，刷新目标地面位置、赛道切线和观察夹角缓存。
 void drive_by_update_track_geometry();

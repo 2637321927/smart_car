@@ -116,6 +116,12 @@ float gyro_yaw_rate_control_update(float vision_error);
 // 该接口只绕过“视觉误差 -> 目标角速度”外环，仍复用现有角速度内环。
 float gyro_yaw_rate_control_update_target_yaw_rate(float target_yaw_rate_dps);
 
+// 调试模式可传入更小的差速上限，避免改变正常巡线使用的gyro_turn_max_rps。
+// 实际上限取max_turn_rps和gyro_turn_max_rps的较小值。
+float gyro_yaw_rate_control_update_target_yaw_rate_limited(
+    float target_yaw_rate_dps,
+    float max_turn_rps);
+
 const GyroYawRateDebug &gyro_yaw_rate_control_get_debug(void);
 void gyro_yaw_rate_control_print_debug(int interval_count);
 

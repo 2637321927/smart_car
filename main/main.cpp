@@ -629,6 +629,28 @@ if (sscanf(buf, "#test_driveby=%d;", &itmp) == 1)
            started ? "已启动" : "已拒绝（需先发车、方向为0/2且脚本空闲）");
 }
 
+if (sscanf(buf, "#yawHold=%d;", &itmp) == 1)
+{
+    const bool enabled = drive_by_heading_hold_set_enable(itmp != 0);
+    printf("[VOFA] 航向保持测试：请求=%s 结果=%s\n",
+           itmp != 0 ? "开启" : "关闭",
+           enabled ? "成功" : "已拒绝（需run=0、脚本/遥控空闲且陀螺仪数据新鲜）");
+}
+
+if (sscanf(buf, "#yawHoldRMax=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    drive_by_heading_hold_max_turn_rps = ftmp > 40.0f ? 40.0f : ftmp;
+    printf("[VOFA] yawHoldRMax = %.2f RPS\n",
+           drive_by_heading_hold_max_turn_rps);
+}
+
+if (sscanf(buf, "#tangentDbg=%d;", &itmp) == 1)
+{
+    drive_by_tangent_debug_set_enable(itmp != 0);
+    printf("[VOFA] 中线切线显示 = %s\n", itmp != 0 ? "开启" : "关闭");
+}
+
 // 环岛出环里程阈值，单位米。进入 RUNNING 态后累计行驶超过该距离则触发出环。
 if (sscanf(buf, "#circle_exit=%f;", &ftmp) == 1)
 {
@@ -817,7 +839,8 @@ void encoder_sample_1ms_thread()
 namespace {
 
 constexpr int kRoadTelemetryMaxPoints = 64;
-constexpr uint16_t kRoadTelemetryHeaderSize = 52;
+// RDL1 v1原头部为52字节。新增的4字节切线锚点位于尾部，服务端仍接受旧52字节包。
+constexpr uint16_t kRoadTelemetryHeaderSize = 56;
 constexpr int kRoadTelemetryMinIntervalMs = 12;
 // 可调参数变化远慢于控制波形。单独低频发送参数快照，既能让前端和录像
 // 精确还原调参状态，也不会继续膨胀已经较大的 12ms 动态 JSON 数据包。
@@ -889,6 +912,7 @@ void road_telemetry_send()
     const int left_count = telemetry_point_count(rpts0s_num);
     const int center_count = telemetry_point_count(rptsn_num);
     const int right_count = telemetry_point_count(rpts1s_num);
+    const DriveByTangentDebug &tangent_debug = drive_by_tangent_debug_get();
 
     uint8_t flags = 0;
     if (have_target) flags |= 1u << 0;
@@ -896,6 +920,7 @@ void road_telemetry_send()
     if (plate_rect.width > 0 && plate_rect.height > 0) flags |= 1u << 2;
     if (front_ui_is_running()) flags |= 1u << 3;
     if (drive_by_is_busy()) flags |= 1u << 4;
+    if (tangent_debug.enabled && tangent_debug.valid) flags |= 1u << 5;
 
     int aim_x = -1;
     int aim_y = -1;
@@ -936,7 +961,15 @@ void road_telemetry_send()
     telemetry_write_u16(cursor, static_cast<uint16_t>(rpts0s_num));
     telemetry_write_u16(cursor, static_cast<uint16_t>(rptsn_num));
     telemetry_write_u16(cursor, static_cast<uint16_t>(rpts1s_num));
-    telemetry_write_u16(cursor, 0);
+    telemetry_write_i16(cursor, tangent_debug.valid
+        ? cvRound(tangent_debug.angle_deg * 100.0f)
+        : 0);
+    telemetry_write_i16(cursor, tangent_debug.valid
+        ? tangent_debug.anchor_x
+        : -1);
+    telemetry_write_i16(cursor, tangent_debug.valid
+        ? tangent_debug.anchor_y
+        : -1);
 
     telemetry_write_line(cursor, rpts0s, rpts0s_num, left_count);
     telemetry_write_line(cursor, rptsn, rptsn_num, center_count);
@@ -979,6 +1012,7 @@ void tuning_telemetry_send()
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
         "\"dbHKp\":%.3f,\"dbHKd\":%.3f,\"dbHMax\":%.2f,"
         "\"dbRecoverDps\":%.2f,\"dbYawSign\":%.1f,"
+        "\"yawHoldRMax\":%.2f,"
         "\"dbTurnRps\":%d,\"dbForwardRps\":%d,\"dbExitRps\":%d,"
         "\"dbBrakePwm\":%d,\"dbBrakeRelease\":%.2f,"
         "\"dbBrakeTimeout\":%d,\"dbTestDist\":%.3f,"
@@ -1012,6 +1046,7 @@ void tuning_telemetry_send()
         safe_float(drive_by_heading_max_dps),
         safe_float(drive_by_recovery_yaw_rate_dps),
         safe_float(drive_by_yaw_sign),
+        safe_float(drive_by_heading_hold_max_turn_rps),
         drive_by_turn_speed_rps, drive_by_forward_speed_rps,
         drive_by_exit_speed_rps, drive_by_brake_pwm,
         safe_float(drive_by_brake_release_rps),
@@ -1035,6 +1070,11 @@ void udp_send(void){
     static const steady_clock::time_point udp_started_at = steady_clock::now();
     const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
     const DriveByDebug &drive_debug = drive_by_get_debug();
+    const DriveByHeadingHoldDebug &heading_hold_debug =
+        drive_by_heading_hold_get_debug();
+    const DriveByTangentDebug &tangent_debug = drive_by_tangent_debug_get();
+    const bool heading_hold_enabled =
+        drive_by_heading_hold_is_enabled();
     lq_timer_timeout_snapshot timeout_debug = {};
     lq_timer_timeout_get_snapshot(&timeout_debug);
     const cv::Rect red_rect = red_block_rect;
@@ -1069,6 +1109,10 @@ void udp_send(void){
              "\"to_target\":%.2f,"
              "\"to_total\":%llu,"
              "\"run\":%d,"
+             "\"yaw_hold_enabled\":%d,"
+             "\"tangent_debug_enabled\":%d,"
+             "\"track_tangent_valid\":%d,"
+             "\"track_tangent_deg\":%.2f,"
              "\"selected_speed\":%d,"
              "\"drive_enabled\":%d,"
              "\"drive_busy\":%d,"
@@ -1133,10 +1177,14 @@ void udp_send(void){
              safe_float(timeout_debug.target_ms),
              (unsigned long long)timeout_debug.total,
              front_ui_is_running() ? 1 : 0,
+             heading_hold_enabled ? 1 : 0,
+             drive_by_tangent_debug_is_enabled() ? 1 : 0,
+             tangent_debug.valid,
+             safe_float(tangent_debug.angle_deg),
              front_ui_selected_speed(),
              drive_by_is_enabled() ? 1 : 0,
              drive_by_is_busy() ? 1 : 0,
-             drive_by_state_name(),
+             heading_hold_enabled ? "HEADING_HOLD" : drive_by_state_name(),
              drive_by_abort_reason(),
              drive_by_is_recognizing() ? 1 : 0,
              drive_by_is_motion_phase() ? 1 : 0,
@@ -1145,17 +1193,23 @@ void udp_send(void){
              drive_debug.brake_pwm,
              drive_debug.brake_elapsed_ms,
              safe_float(drive_by_test_target_distance_m),
-             safe_float(drive_debug.yaw_deg),
-             safe_float(drive_debug.target_yaw_deg),
-             safe_float(drive_debug.heading_error_deg),
+             safe_float(heading_hold_enabled
+                 ? heading_hold_debug.yaw_deg : drive_debug.yaw_deg),
+             safe_float(heading_hold_enabled
+                 ? heading_hold_debug.target_yaw_deg : drive_debug.target_yaw_deg),
+             safe_float(heading_hold_enabled
+                 ? heading_hold_debug.heading_error_deg : drive_debug.heading_error_deg),
              safe_float(drive_debug.track_heading_deg),
              safe_float(drive_debug.target_track_heading_deg),
              safe_float(drive_debug.view_angle_deg),
              safe_float(drive_debug.target_distance_m),
              safe_float(drive_debug.distance_since_trigger_m),
              safe_float(drive_debug.phase_distance_m),
-             safe_float(drive_debug.target_yaw_rate_dps),
-             safe_float(drive_debug.turn_rps),
+             safe_float(heading_hold_enabled
+                 ? heading_hold_debug.target_yaw_rate_dps
+                 : drive_debug.target_yaw_rate_dps),
+             safe_float(heading_hold_enabled
+                 ? heading_hold_debug.turn_rps : drive_debug.turn_rps),
              drive_debug.target_geometry_valid,
              drive_debug.view_ready,
              drive_debug.infer_valid_count,
@@ -1360,13 +1414,16 @@ gyro_yaw_rate_control_init();
     });
 
    speed_timer.set_seconds_ms(3, []() {
-     // 正常发车优先级最高；run=0时只有按住遥控按钮才允许速度环工作。
+     // 正常发车优先级最高；run=0时航向保持和按住遥控按钮可单独使用速度环。
      if (front_ui_is_running()) {
        // 主动制动期间由drive_by直接输出受限反向PWM；返回false时，普通速度PID
        // 在同一周期从已复位状态接管10RPS目标。
        if (!drive_by_speed_control_update()) {
          test_enc_and_motor_rps();
        }
+     } else if (drive_by_heading_hold_is_enabled()) {
+       // 航向保持用对称正负轮速原地回正，仍需3ms速度闭环跟踪差速目标。
+       test_enc_and_motor_rps();
      } else if (front_ui_remote_is_active()) {
        test_enc_and_motor_rps();
      } else {
@@ -1387,13 +1444,16 @@ gyro_yaw_rate_control_init();
         drive_by_control_update();
       }
       // K0只是目标板功能开关，不应该在没有目标时关闭正常方向环。
-      // 识别阶段和新边线方案都复用普通方向环；旧三阶段角度方案仍独占输出。
+      // 识别阶段和边线方案复用普通方向环；两套航向闭环方案独占左右轮目标。
       if (front_ui_is_running() &&
           (!drive_by_is_busy() || drive_by_is_recognizing() ||
            drive_by_uses_visual_direction_control())) {
         PID_control_test(latest_error);
       } else if (front_ui_is_running() && drive_by_is_motion_phase()) {
-        // 只有旧三阶段绕行会到这里，由drive_by航向闭环独占左右轮目标。
+        // 三阶段和示教轨迹会到这里，由drive_by航向闭环独占左右轮目标。
+      } else if (drive_by_heading_hold_is_enabled()) {
+        // 停车态航向保持只在这里运行，不执行视觉方向环。
+        drive_by_heading_hold_control_update();
       } else if (front_ui_remote_is_active()) {
         // 停车遥控完全绕过视觉方向环：前后给固定RPS，左右给固定60dps。
         front_ui_remote_control_update();
