@@ -18,9 +18,9 @@ using DriveByClock = std::chrono::steady_clock;
 
 // ===================== 高速识别和三阶段绕行调参区 =====================
 // K0 开启但没有目标时按 35RPS 正常巡线；红色触发后只把“基准速度”降到
-// 10RPS，普通方向环仍会在该基准上叠加左右差速。
+// 12.5RPS，普通方向环仍会在该基准上叠加左右差速。
 volatile float drive_by_normal_speed_rps = 35.0f;
-volatile float drive_by_recognition_speed_rps = 10.0f;
+volatile float drive_by_recognition_speed_rps = 12.5f;
 volatile float drive_by_rps_to_mps = 0.047f;
 volatile int drive_by_mode = 0;
 
@@ -42,8 +42,8 @@ int drive_by_infer_timeout_ms = 500;
 int drive_by_cooldown_ms = 1000;
 
 volatile float drive_by_turn_angle_deg = 25.0f;
-volatile float drive_by_return_bias_deg = 46.0f;
-volatile float drive_by_pass_distance_m = 0.14f;
+volatile float drive_by_return_bias_deg = 53.0f;
+volatile float drive_by_pass_distance_m = 0.0f;
 volatile float drive_by_target_after_margin_m = 0.30f;
 volatile float drive_by_view_angle_max_deg = 45.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
@@ -1720,7 +1720,7 @@ bool drive_by_speed_control_update()
     const int required_count = std::max(1, (int)drive_by_brake_confirm_count);
     if (g_brake_confirm_count >= required_count) {
         // 先撤销PWM独占并完整复位增量式PID，再让main.cpp在同一个3ms周期
-        // 调用普通速度环，从零状态接管10RPS目标。
+        // 调用普通速度环，从零状态接管当前识别基准速度目标。
         clear_active_brake(false);
         g_brake_completed = true;
         motor_speed_pid_reset();
@@ -1799,8 +1799,10 @@ bool drive_by_start_test(int simulated_item_flag,
     g_current_track_heading_relative_deg = g_current_track_heading_valid
         ? track_heading_relative_deg
         : 0.0f;
-    g_target_track_heading_global_deg = normalize_angle_deg(
-        g_yaw_deg + g_current_track_heading_relative_deg);
+    // TEST只验证左右绕行脚本本身，因此把按键瞬间的车头方向固定为0度基准。
+    // 若把当前中线切线叠加进来，切线角可能抵消某一侧的25度目标，造成
+    // 左绕明显而右绕几乎不转的假性不对称。真实识别仍使用目标位置处切线。
+    g_target_track_heading_global_deg = g_yaw_deg;
     g_target_distance_at_trigger_m = std::max(0.0f, simulated_target_distance_m);
 
     g_debug = DriveByDebug{};

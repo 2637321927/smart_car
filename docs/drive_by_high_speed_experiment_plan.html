@@ -287,7 +287,7 @@
       <pre><code>35RPS 正常巡线
 → 只执行低负担红色检测
 → 检测到红色后才启动 NCNN
-→ 远距候选成立后主动制动，释放后以 10RPS 识别
+→ 远距候选成立后主动制动，释放后以 12.5RPS 识别
 → 三帧投票完成且制动完成后按dbMode进入所选绕行方案
 → dbMode=0：三阶段角度闭环，第二转完成后恢复巡线
 → dbMode=1：边线瞄准500ms，切回中线并在中线恢复后恢复巡线
@@ -324,7 +324,7 @@ K0 开启、没有红色
 
 确认检测到红色
 → 提取目标 ROI
-→ 主动制动释放后把基准速度设置为 10RPS
+→ 主动制动释放后把基准速度设置为 12.5RPS
 → 判断目标板观察角度
 → 观察角度合适时才提交 NCNN</code></pre>
       <p>红色检测只处理有效裁剪区域，不对整幅 <code>320×240</code> 图像执行完整 HSV、形态学和轮廓搜索。</p>
@@ -337,7 +337,7 @@ K0 开启、没有红色
         <li><code>1:1:1</code>、超时或不足 3 帧时按直行处理。</li>
         <li>worker 无任务时通过条件变量休眠。</li>
       </ul>
-      <div class="notice">当前代码采用同步三帧投票；若前两帧有效结果一致，会直接形成多数票并提前结束。识别期间保持10RPS基准和普通方向环。</div>
+      <div class="notice">当前代码采用同步三帧投票；若前两帧有效结果一致，会直接形成多数票并提前结束。识别期间保持12.5RPS基准和普通方向环。</div>
     </section>
 
     <section id="geometry">
@@ -432,14 +432,14 @@ abs(gyro_dps) &lt;= 20dps
 PASS_SHORT必须同时满足：
 phase_distance &gt;= dbPassDist
 distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
-      <p><code>dbPassDist</code>默认0.14m，<code>dbSafeDist</code>默认0.30m。第二转稳定后先检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
+      <p><code>dbPassDist</code>默认0m，<code>dbSafeDist</code>默认0.30m。第二转稳定后先检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
       <h4>三阶段调参接口</h4>
       <table>
         <thead><tr><th>VOFA参数</th><th>作用</th><th>默认值</th></tr></thead>
         <tbody>
           <tr><td><code>dbTurnAngle</code></td><td>第一次向绕行侧偏转的角度</td><td>25deg</td></tr>
-          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>46deg</td></tr>
-          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0.14m</td></tr>
+          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>53deg</td></tr>
+          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0m</td></tr>
           <tr><td><code>dbSafeDist</code></td><td>越过目标位置后的安全余量</td><td>0.30m</td></tr>
           <tr><td><code>dbTurnRps</code></td><td>TURN_OUT基准速度</td><td>15RPS</td></tr>
           <tr><td><code>dbForwardRps</code></td><td>PASS_SHORT基准速度</td><td>20RPS</td></tr>
@@ -476,7 +476,7 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
       <table>
         <thead><tr><th>阶段</th><th>示例持续时间</th><th>基准速度</th><th>航向变化</th><th>距离说明</th></tr></thead>
         <tbody>
-          <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后10RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
+          <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后12.5RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
           <tr><td>TURN_OUT</td><td>180ms</td><td>15RPS</td><td>0°→左25°</td><td>总里程继续累计</td></tr>
           <tr><td>PASS_SHORT</td><td>400ms</td><td>20RPS</td><td>保持左25°</td><td>本阶段约0.38m，超过0.14m最短距离</td></tr>
           <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左25°</td><td>总里程达到0.50+0.30=0.80m后才允许第二转</td></tr>

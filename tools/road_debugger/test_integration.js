@@ -179,6 +179,9 @@ async function main() {
     assert(appResponse.text.includes("label: '示教轨迹总路程'"));
     assert(appResponse.text.includes("label: '示教航向倍率'"));
     assert(appResponse.text.includes("key: 'dbHKp', label: '航向外环P', min: 0, max: 20, step: 0.1, defaultValue: 12"));
+    assert(appResponse.text.includes("key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 12.5"));
+    assert(appResponse.text.includes("key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 53"));
+    assert(appResponse.text.includes("key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbHTol', label: '航向允许误差（退出+1°）', min: 0, max: 10, step: 0.1, unit: 'deg', defaultValue: 4.5"));
     assert(appResponse.text.includes("key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 5000, step: 50, defaultValue: 5000"));
     assert(appResponse.text.includes("#remote=0;"));
