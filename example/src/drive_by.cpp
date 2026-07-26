@@ -81,7 +81,9 @@ constexpr int kFarDetectTop = 60;
 constexpr int kFarDetectBottom = 40;
 constexpr int kFarDetectLeft = 60;
 constexpr int kFarDetectRight = 60;
-constexpr int kFarDetectMinArea = 40;
+// 远距离候选只用于提前减速。面积门槛过低时，赛道上的小块红色噪声也可能连续触发；
+// 从40提高到60，在保留远距离预警作用的同时，降低误触发概率。
+constexpr int kFarDetectMinArea = 60;
 constexpr int kFarDetectMinWidth = 8;
 constexpr int kFarDetectConfirmCount = 2;
 constexpr int kApproachTimeoutMs = 300;
@@ -409,6 +411,20 @@ const char *abort_reason_name(DriveByAbortReason reason)
     case DB_ABORT_PHASE_TIMEOUT: return "phase_timeout";
     case DB_ABORT_BRAKE_TIMEOUT: return "brake_timeout";
     default: return "unknown";
+    }
+}
+
+const char *abort_reason_chinese_name(DriveByAbortReason reason)
+{
+    switch (reason) {
+    case DB_ABORT_NONE: return "用户主动停车";
+    case DB_ABORT_VIEW_TIMEOUT: return "目标板观察或识别等待超时";
+    case DB_ABORT_NO_TARGET_GEOMETRY: return "目标板位置或赛道几何无效";
+    case DB_ABORT_GYRO_NOT_READY: return "陀螺仪尚未准备好";
+    case DB_ABORT_GYRO_STALE: return "陀螺仪数据长时间未刷新";
+    case DB_ABORT_PHASE_TIMEOUT: return "绕行运动阶段超时";
+    case DB_ABORT_BRAKE_TIMEOUT: return "主动制动超时";
+    default: return "未知停车原因";
     }
 }
 
@@ -2011,6 +2027,11 @@ const char *drive_by_state_name()
 const char *drive_by_abort_reason()
 {
     return abort_reason_name(g_abort_reason);
+}
+
+const char *drive_by_abort_reason_chinese()
+{
+    return abort_reason_chinese_name(g_abort_reason);
 }
 
 const DriveByDebug &drive_by_get_debug()

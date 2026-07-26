@@ -136,6 +136,9 @@ void drive_by_toggle_enable();
 bool drive_by_cancel();
 const char *drive_by_state_name();
 const char *drive_by_abort_reason();
+// 返回适合直接显示给队友看的中文退出原因；调用方应在drive_by_cancel()前读取，
+// 因为取消脚本会清空本次运行状态。
+const char *drive_by_abort_reason_chinese();
 const DriveByDebug &drive_by_get_debug();
 
 // 停车态航向保持测试：开启瞬间定义为0度，随后始终控制车头回到该方向。

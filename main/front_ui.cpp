@@ -132,6 +132,10 @@ void stop_car()
 {
     // K2 停车是最高优先级：如果目标板脚本正在接管，先取消脚本，再清零电机。
     drive_by_heading_hold_set_enable(false);
+    // drive_by_cancel()会清空本次脚本状态，因此必须先保存原因字符串。
+    // 这些字符串来自静态常量，取消脚本后仍然可以安全打印。
+    const char *abort_reason = drive_by_abort_reason();
+    const char *abort_reason_chinese = drive_by_abort_reason_chinese();
     const bool recognition_test_aborted = drive_by_cancel();
     reset_special_track_state();
     // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
@@ -146,7 +150,9 @@ void stop_car()
     pwm1.atim_pwm_set_duty(0);
     pwm2.atim_pwm_set_duty(0);
     if (recognition_test_aborted) {
-        printf("[识别测试] 测试已中止，车辆已停车\n");
+        printf("[识别测试] 测试已中止，车辆已停车：原因=%s（%s）\n",
+               abort_reason_chinese,
+               abort_reason);
     }
 }
 
