@@ -49,14 +49,14 @@ volatile float drive_by_view_angle_max_deg = 45.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
 // 25度标准绕行转角下，KP=8可在起步时直接请求约200dps。
 // KD只保留少量角速度阻尼，避免原来的0.8在刚起转后过早压低目标角速度。
-volatile float drive_by_heading_kp = 8.0f;
+volatile float drive_by_heading_kp = 12.0f;
 volatile float drive_by_heading_kd = 0.2f;
 // 这是航向外环允许给出的目标角速度上限；接近目标角度时，KP/KD仍会主动降速。
 volatile float drive_by_heading_max_dps = 200.0f;
 // 航向保持测试只允许较小差速，避免调试KP时误用正常巡线的较大gRMax。
 volatile float drive_by_heading_hold_max_turn_rps = 10.0f;
 volatile float drive_by_recovery_yaw_rate_dps = 55.0f;
-volatile float drive_by_heading_tolerance_deg = 2.0f;
+volatile float drive_by_heading_tolerance_deg = 4.5f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
 volatile float drive_by_yaw_sign = -1.0f;
