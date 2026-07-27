@@ -461,12 +461,20 @@ if (sscanf(buf, "#dbMode=%d;", &itmp) == 1)
     if (itmp == 0 || itmp == 1) {
         drive_by_mode = itmp;
         const char *mode_name = drive_by_mode == 0
-            ? "三阶段角度闭环" : "边线瞄准500ms";
+            ? "三阶段角度闭环" : "边线定时瞄准";
         printf("[VOFA] dbMode = %d（%s）\n",
                drive_by_mode, mode_name);
     } else {
         printf("[VOFA] dbMode=%d已删除，仅支持0（三阶段）或1（边线）\n", itmp);
     }
+}
+
+if (sscanf(buf, "#dbSideMs=%d;", &itmp) == 1)
+{
+    if (itmp < 500) itmp = 500;
+    if (itmp > 2000) itmp = 2000;
+    drive_by_side_follow_ms = itmp;
+    printf("[VOFA] dbSideMs = %d ms\n", drive_by_side_follow_ms);
 }
 
 if (sscanf(buf, "#dbUseTangent=%d;", &itmp) == 1)
@@ -1021,7 +1029,7 @@ void tuning_telemetry_send()
         "\"gyro\":%d,\"gDbg\":%d,\"gTar\":%.2f,"
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
-        "\"dbMode\":%d,\"dbUseTangent\":%d,"
+        "\"dbMode\":%d,\"dbUseTangent\":%d,\"dbSideMs\":%d,"
         "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
@@ -1047,7 +1055,7 @@ void tuning_telemetry_send()
         safe_float(gyro_inner_kp), safe_float(gyro_inner_ki),
         safe_float(gyro_target_max_dps), safe_float(gyro_turn_max_rps),
         safe_float(gyro_z_sign), safe_float(gyro_turn_sign),
-        drive_by_mode, drive_by_use_track_tangent,
+        drive_by_mode, drive_by_use_track_tangent, drive_by_side_follow_ms,
         safe_float(drive_by_normal_speed_rps),
         safe_float(drive_by_recognition_speed_rps),
         safe_float(drive_by_turn_angle_deg),

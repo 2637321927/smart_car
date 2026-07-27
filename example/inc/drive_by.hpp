@@ -11,6 +11,8 @@ extern volatile float drive_by_recognition_speed_rps;
 extern volatile float drive_by_rps_to_mps;
 // 0：三阶段角度闭环；1：边线瞄准。
 extern volatile int drive_by_mode;
+// 边线瞄准方案保持左线/右线的时间，单位ms，在线调参范围500~2000。
+extern volatile int drive_by_side_follow_ms;
 // 是否把目标位置处赛道切线作为绕行航向参考；默认关闭时以脚本启动时车头为0度。
 extern volatile int drive_by_use_track_tangent;
 

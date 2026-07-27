@@ -23,6 +23,7 @@ volatile float drive_by_normal_speed_rps = 35.0f;
 volatile float drive_by_recognition_speed_rps = 11.0f;
 volatile float drive_by_rps_to_mps = 0.047f;
 volatile int drive_by_mode = 0;
+volatile int drive_by_side_follow_ms = 500;
 volatile int drive_by_use_track_tangent = 0;
 
 // 三阶段分别保留独立基准速度：转出使用drive_by_turn_speed_rps，斜行使用
@@ -86,12 +87,12 @@ constexpr int kFarDetectMinWidth = 8;
 constexpr int kFarDetectConfirmCount = 2;
 constexpr int kApproachTimeoutMs = 300;
 constexpr int kCandidateRetryCooldownMs = 300;
-constexpr int kVisualSideFollowMs = 500;
 constexpr float kVisualRecoveryError = 100.0f;
 constexpr int kTurnPhaseTimeoutMs = 1500;
 constexpr int kPassPhaseTimeoutMs = 5000;
 constexpr float kTurnPhaseMaxDistanceM = 0.80f;
 constexpr float kPassPhaseMaxDistanceM = 3.00f;
+constexpr int kVisualSideFollowTimeoutMarginMs = 500;
 constexpr float kTrackTangentWindowM = 0.10f;
 constexpr float kMaxIntegrationDtS = 0.10f;
 constexpr float kMinWheelTargetRps = -10.0f;
@@ -1162,6 +1163,13 @@ float phase_base_speed_rps()
 
 bool motion_phase_guard_exceeded()
 {
+    if (g_state == DB_FOLLOW_SIDE_LINE) {
+        // 边线方案允许在线调到2000ms，不能继续套用旧的1.5s/0.8m转向保护，
+        // 否则合法参数会在计时结束前被误判为阶段超时。额外500ms只作为调度余量，
+        // 这里不能再加固定距离上限，否则高dbForwardRps会让合法的2000ms提前结束。
+        return elapsed_ms(g_state_start) >
+            drive_by_side_follow_ms + kVisualSideFollowTimeoutMarginMs;
+    }
     if (g_state == DB_PASS_SHORT) {
         return elapsed_ms(g_state_start) > kPassPhaseTimeoutMs ||
             g_phase_distance_m > kPassPhaseMaxDistanceM;
@@ -1353,7 +1361,7 @@ void update_visual_motion_state()
     set_speed_of_motor2_rps = visual_base_rps;
 
     if (g_state == DB_FOLLOW_SIDE_LINE &&
-        elapsed_ms(g_state_start) >= kVisualSideFollowMs) {
+        elapsed_ms(g_state_start) >= drive_by_side_follow_ms) {
         // 先清掉边线帧的有效标志，再切回中线。切换当周期先标记为丢线，
         // 后续只有相机线程明确提交一帧有效中线后才允许交还普通巡线。
         g_visual_aim_line_valid = false;

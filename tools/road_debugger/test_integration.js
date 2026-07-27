@@ -110,6 +110,7 @@ async function main() {
       I: 14,
       gyro: 1,
       dbMode: 1,
+      dbSideMs: 850,
       dbUseTangent: 1,
       dbTurnAngle: 25,
       dbReturnBias: 46,
@@ -166,7 +167,7 @@ async function main() {
     const tuningKeys = [
       'P', 'I', 'D', 'spd', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
       'gyro', 'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax',
-      'gSign', 'tSign', 'dbMode', 'dbUseTangent', 'dbNormalSpd', 'dbRecSpd',
+      'gSign', 'tSign', 'dbMode', 'dbSideMs', 'dbUseTangent', 'dbNormalSpd', 'dbRecSpd',
       'dbTurnAngle', 'dbPassDist',
       'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
       'dbHKd', 'dbHMax', 'dbHTol', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
@@ -185,6 +186,7 @@ async function main() {
     assert(!appResponse.text.includes("key: 'dbLearnRps'"));
     assert(!appResponse.text.includes("key: 'dbLearnDist'"));
     assert(!appResponse.text.includes("key: 'dbLearnScale'"));
+    assert(appResponse.text.includes("key: 'dbSideMs', label: '边线瞄准持续时间', min: 500, max: 2000, step: 50, unit: 'ms', defaultValue: 500, hardMax: true"));
     assert(appResponse.text.includes("key: 'dbHKp', label: '航向外环P', min: 0, max: 60, step: 0.1, defaultValue: 31"));
     assert(appResponse.text.includes("key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 505"));
     assert(appResponse.text.includes("const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes'"));
@@ -238,6 +240,7 @@ async function main() {
     assert(recordingText.includes('"type":"road"'));
     assert(recordingText.includes('"type":"tuning"'));
     assert(recordingText.includes('"dbMode":1'));
+    assert(recordingText.includes('"dbSideMs":850'));
     assert(recordingText.includes('"dbUseTangent":1'));
     assert(recordingText.includes('"dbHTol":2'));
     assert(recordingText.includes('"yawHoldRMax":10'));
