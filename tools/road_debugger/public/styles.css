@@ -485,6 +485,19 @@ h2 { font-size: 1.05rem; }
   padding: 4px 20px 20px;
 }
 
+.tuning-unit-guide {
+  grid-column: 1 / -1;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border: 1px solid rgba(245, 223, 116, 0.28);
+  border-left: 3px solid var(--yellow);
+  border-radius: 5px;
+  color: #e9e1ba;
+  background: rgba(245, 223, 116, 0.06);
+  font-size: 0.72rem;
+  line-height: 1.65;
+}
+
 .tuning-group {
   min-width: 0;
   padding: 16px 0 4px;
@@ -540,6 +553,14 @@ h2 { font-size: 1.05rem; }
   color: var(--cyan);
   font-family: Consolas, monospace;
   font-size: 0.63rem;
+}
+
+.tuning-description {
+  min-height: 3.25em;
+  margin: -1px 0 8px;
+  color: #9eb7b7;
+  font-size: 0.65rem;
+  line-height: 1.55;
 }
 
 .tuning-input-row {

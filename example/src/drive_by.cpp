@@ -25,15 +25,13 @@ volatile float drive_by_rps_to_mps = 0.047f;
 volatile int drive_by_mode = 0;
 volatile int drive_by_use_track_tangent = 0;
 
-// 这些整数变量保留原名称，避免之前的调参经验失效。闭环版本中
-// drive_by_turn_speed_rps 表示转向阶段的前进基准速度，不再表示外侧轮速度。
+// 三阶段分别保留独立基准速度：转出使用drive_by_turn_speed_rps，斜行使用
+// drive_by_forward_speed_rps，转入使用drive_by_exit_speed_rps。它们都是左右
+// 差速叠加前的基准速度，不表示某一侧车轮的最终目标速度。
 int drive_by_turn_speed_rps = 15;
 int drive_by_turn_inner_speed_rps = 0; // 兼容旧脚本，新的角度闭环不直接使用。
 int drive_by_forward_speed_rps = 20;
 int drive_by_exit_speed_rps = 15;
-volatile float drive_by_learned_speed_rps = 15.0f;
-volatile float drive_by_learned_distance_m = 0.96f;
-volatile float drive_by_learned_yaw_scale = 1.0f;
 int drive_by_turn_out_ms = 600;        // 兼容旧参数，新的状态切换主要看角度。
 int drive_by_forward_ms = 400;         // 兼容旧参数，新的状态切换主要看距离。
 int drive_by_turn_back_ms = 800;       // 兼容旧参数，新的状态切换主要看角度。
@@ -44,7 +42,7 @@ int drive_by_cooldown_ms = 1000;
 
 volatile float drive_by_turn_angle_deg = 51.0f;
 volatile float drive_by_return_bias_deg = 52.0f;
-volatile float drive_by_pass_distance_m = 0.03f;
+volatile float drive_by_pass_distance_m = 0.0f;
 volatile float drive_by_target_after_margin_m = 0.30f;
 volatile float drive_by_view_angle_max_deg = 46.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
@@ -92,37 +90,12 @@ constexpr int kVisualSideFollowMs = 500;
 constexpr float kVisualRecoveryError = 100.0f;
 constexpr int kTurnPhaseTimeoutMs = 1500;
 constexpr int kPassPhaseTimeoutMs = 5000;
-constexpr int kLearnedPathTimeoutMs = 4000;
 constexpr float kTurnPhaseMaxDistanceM = 0.80f;
 constexpr float kPassPhaseMaxDistanceM = 3.00f;
-constexpr float kLearnedPathMaxExtraDistanceM = 0.50f;
 constexpr float kTrackTangentWindowM = 0.10f;
 constexpr float kMaxIntegrationDtS = 0.10f;
 constexpr float kMinWheelTargetRps = -10.0f;
 constexpr float kMaxWheelTargetRps = 200.0f;
-
-struct LearnedPathPoint {
-    float progress;
-    float yaw_deg;
-};
-
-// 最近六次手推录像按行驶距离归一化后的镜像平均值。正值表示先向绕行侧
-// 偏出，负值表示越过赛道切线并把车头轻微指向赛道内侧。
-constexpr LearnedPathPoint kLearnedPath[] = {
-    {0.0f, 0.00f},
-    {0.1f, 7.26f},
-    {0.2f, 9.38f},
-    {0.3f, 8.14f},
-    {0.4f, 5.18f},
-    {0.5f, 1.85f},
-    {0.6f, -1.11f},
-    {0.7f, -4.98f},
-    {0.8f, -6.41f},
-    {0.9f, -5.34f},
-    {1.0f, -3.55f},
-};
-constexpr int kLearnedPathPointCount =
-    static_cast<int>(sizeof(kLearnedPath) / sizeof(kLearnedPath[0]));
 
 enum DriveByState {
     DB_IDLE,
@@ -134,7 +107,6 @@ enum DriveByState {
     DB_TURN_OUT,
     DB_PASS_SHORT,
     DB_TURN_TO_TRACK,
-    DB_LEARNED_PATH,
     DB_FOLLOW_SIDE_LINE,
     DB_RECOVER_CENTER_LINE,
     DB_FINISH_PENDING,
@@ -250,7 +222,6 @@ float g_current_track_heading_relative_deg = 0.0f;
 float g_track_heading_reference_deg = 0.0f;
 float g_target_track_heading_global_deg = 0.0f;
 float g_target_distance_at_trigger_m = 0.0f;
-float g_learned_path_total_m = 0.96f;
 SavedControl g_saved;
 RecognitionReport g_report;
 DriveByDebug g_debug = {};
@@ -268,39 +239,6 @@ float clampf(float value, float min_value, float max_value)
     if (value < min_value) return min_value;
     if (value > max_value) return max_value;
     return value;
-}
-
-float learned_path_template_yaw_deg(float progress)
-{
-    const float clamped_progress = clampf(progress, 0.0f, 1.0f);
-    for (int upper_index = 1;
-         upper_index < kLearnedPathPointCount;
-         ++upper_index) {
-        const LearnedPathPoint& upper = kLearnedPath[upper_index];
-        if (clamped_progress > upper.progress) {
-            continue;
-        }
-
-        const LearnedPathPoint& lower = kLearnedPath[upper_index - 1];
-        const float segment_length = upper.progress - lower.progress;
-        if (segment_length <= 0.0f) {
-            return upper.yaw_deg;
-        }
-        const float local_ratio =
-            (clamped_progress - lower.progress) / segment_length;
-        return lower.yaw_deg + (upper.yaw_deg - lower.yaw_deg) * local_ratio;
-    }
-
-    return kLearnedPath[kLearnedPathPointCount - 1].yaw_deg;
-}
-
-float learned_path_offset_deg()
-{
-    const float total_m = std::max(0.10f, g_learned_path_total_m);
-    const float progress = g_phase_distance_m / total_m;
-    const float outward_sign = g_turn_side * drive_by_yaw_sign;
-    return outward_sign * learned_path_template_yaw_deg(progress) *
-        std::fabs((float)drive_by_learned_yaw_scale);
 }
 
 float normalize_angle_deg(float angle_deg)
@@ -371,7 +309,6 @@ const char *state_name(DriveByState state)
     case DB_TURN_OUT: return "TURN_OUT";
     case DB_PASS_SHORT: return "PASS_SHORT";
     case DB_TURN_TO_TRACK: return "TURN_TO_TRACK";
-    case DB_LEARNED_PATH: return "LEARNED_PATH";
     case DB_FOLLOW_SIDE_LINE: return "FOLLOW_SIDE_LINE";
     case DB_RECOVER_CENTER_LINE: return "RECOVER_CENTER_LINE";
     case DB_FINISH_PENDING: return "FINISH_PENDING";
@@ -390,7 +327,6 @@ int detection_stage(DriveByState state)
     case DB_TURN_OUT:
     case DB_PASS_SHORT:
     case DB_TURN_TO_TRACK:
-    case DB_LEARNED_PATH:
     case DB_FOLLOW_SIDE_LINE:
     case DB_RECOVER_CENTER_LINE:
     case DB_FINISH_PENDING:
@@ -989,7 +925,6 @@ void reset_runtime(bool restore_outputs)
     g_yaw_deg = 0.0f;
     g_distance_since_trigger_m = 0.0f;
     g_phase_distance_m = 0.0f;
-    g_learned_path_total_m = drive_by_learned_distance_m;
     g_report = RecognitionReport{};
     g_debug = DriveByDebug{};
     g_debug.test_target_distance_m = drive_by_test_target_distance_m;
@@ -1124,7 +1059,9 @@ void begin_motion_script(int result)
     // 识别结果0为左绕、2为右绕。g_turn_side只描述绕行侧，不直接等同于
     // 方向环误差符号；具体符号在视觉方案和角度方案中分别转换。
     g_turn_side = result == 0 ? 1 : -1;
-    g_active_mode = std::max(0, std::min(2, (int)drive_by_mode));
+    // 只保留0三阶段和1边线方案。即使旧配置残留值2，也安全回退到
+    // 三阶段，不会被误映射成另一条仍在使用的路线。
+    g_active_mode = drive_by_mode == 1 ? 1 : 0;
 
     g_motion_heading_quiet = false;
 
@@ -1170,20 +1107,6 @@ void begin_motion_script(int result)
         : g_yaw_deg;
     g_track_reference_valid = true;
     gyro_yaw_rate_control_reset_controller();
-
-    if (g_active_mode == 2) {
-        // 示教曲线默认按录像中位路程0.96m复现。如果目标板实际更远，则只拉伸
-        // 距离轴，确保轨迹末端不会早于“目标距离+安全余量”。
-        const float remaining_safe_distance_m = std::max(
-            0.0f,
-            g_target_distance_at_trigger_m + drive_by_target_after_margin_m -
-                g_distance_since_trigger_m);
-        g_learned_path_total_m = std::max(
-            std::max(0.10f, (float)drive_by_learned_distance_m),
-            remaining_safe_distance_m);
-        enter_state(DB_LEARNED_PATH);
-        return;
-    }
 
     // 方案一中，左绕和右绕只改变相对赛道切线的偏角符号。
     enter_state(DB_TURN_OUT);
@@ -1231,7 +1154,6 @@ float phase_offset_deg()
 float phase_base_speed_rps()
 {
     switch (g_state) {
-    case DB_LEARNED_PATH: return drive_by_learned_speed_rps;
     case DB_PASS_SHORT: return (float)drive_by_forward_speed_rps;
     case DB_TURN_TO_TRACK: return (float)drive_by_exit_speed_rps;
     default: return (float)drive_by_turn_speed_rps;
@@ -1240,12 +1162,6 @@ float phase_base_speed_rps()
 
 bool motion_phase_guard_exceeded()
 {
-    if (g_state == DB_LEARNED_PATH) {
-        return elapsed_ms(g_state_start) > kLearnedPathTimeoutMs ||
-            g_phase_distance_m >
-                std::max(0.10f, g_learned_path_total_m) +
-                    kLearnedPathMaxExtraDistanceM;
-    }
     if (g_state == DB_PASS_SHORT) {
         return elapsed_ms(g_state_start) > kPassPhaseTimeoutMs ||
             g_phase_distance_m > kPassPhaseMaxDistanceM;
@@ -1334,21 +1250,13 @@ void update_motion_state()
     }
 
     const float gyro_dps = gyro_yaw_rate_control_get_gyro_z_dps();
-    const float target_offset_deg = g_state == DB_LEARNED_PATH
-        ? learned_path_offset_deg()
-        : phase_offset_deg();
+    const float target_offset_deg = phase_offset_deg();
     const float target_yaw_deg = normalize_angle_deg(
         g_track_heading_reference_deg + target_offset_deg);
     const float heading_error_deg = normalize_angle_deg(target_yaw_deg - g_yaw_deg);
-    const bool use_heading_deadzone = g_state != DB_LEARNED_PATH;
     const bool quiet_before_update = g_motion_heading_quiet;
-    const HeadingControlZone control_zone = use_heading_deadzone
-        ? update_heading_control_zone(
-            heading_error_deg, gyro_dps, &g_motion_heading_quiet)
-        : HEADING_CONTROL_FULL;
-    if (!use_heading_deadzone) {
-        g_motion_heading_quiet = false;
-    }
+    const HeadingControlZone control_zone = update_heading_control_zone(
+        heading_error_deg, gyro_dps, &g_motion_heading_quiet);
     if (quiet_before_update != g_motion_heading_quiet) {
         // 切入或退出静默区时清角速度内环历史，防止上一次差速残留到新状态。
         // 绕行仍保留基准轮速，因此这里绝不能复位整套电机速度PID。
@@ -1381,18 +1289,6 @@ void update_motion_state()
     g_debug.turn_rps = turn_rps;
 
     switch (g_state) {
-    case DB_LEARNED_PATH:
-        if (g_phase_distance_m >= g_learned_path_total_m &&
-            heading_is_settled(heading_error_deg, gyro_dps)) {
-            if (g_visual_aim_line_valid) {
-                complete_motion_handoff();
-            } else {
-                enter_state(DB_RECOVER_CENTER_LINE);
-                latest_error = visual_forced_error(true);
-            }
-        }
-        break;
-
     case DB_TURN_OUT:
         if (g_motion_heading_quiet &&
             heading_is_settled(heading_error_deg, gyro_dps)) {
@@ -1452,9 +1348,7 @@ void update_visual_motion_state()
     // 避免刚结束角度闭环就突然提速。差速仍由随后执行的普通方向环计算。
     const float visual_base_rps = g_active_mode == 1
         ? (float)drive_by_forward_speed_rps
-        : (g_active_mode == 2
-            ? (float)drive_by_learned_speed_rps
-            : (float)drive_by_exit_speed_rps);
+        : (float)drive_by_exit_speed_rps;
     set_speed_of_motor1_rps = visual_base_rps;
     set_speed_of_motor2_rps = visual_base_rps;
 
@@ -1583,8 +1477,7 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
     case DB_TURN_OUT:
     case DB_PASS_SHORT:
     case DB_TURN_TO_TRACK:
-    case DB_LEARNED_PATH:
-        // 航向闭环方案在8ms dir_timer中运行，相机线程只更新道路几何缓存。
+        // 三阶段航向闭环在8ms dir_timer中运行，相机线程只更新道路几何缓存。
         break;
 
     case DB_FOLLOW_SIDE_LINE:
@@ -1912,7 +1805,6 @@ bool drive_by_is_motion_phase()
         (g_state == DB_TURN_OUT ||
          g_state == DB_PASS_SHORT ||
          g_state == DB_TURN_TO_TRACK ||
-         g_state == DB_LEARNED_PATH ||
          g_state == DB_FOLLOW_SIDE_LINE ||
          g_state == DB_RECOVER_CENTER_LINE);
 }
@@ -1964,13 +1856,6 @@ float drive_by_adjust_visual_error(float computed_error,
         // 返回阶段只要它判断道路未丢失，就允许8ms方向线程立即交还普通巡线。
         g_visual_aim_line_valid =
             selected_aim_line == 0 && !check_line_lost();
-        return computed_error;
-    }
-
-    if (g_state == DB_LEARNED_PATH) {
-        // 航向闭环仍由drive_by控制，这里只旁路记录中线是否可靠，
-        // 不覆盖computed_error，也不让普通方向环提前参与。
-        g_visual_aim_line_valid = selected_aim_line == 0 && aim_line_valid;
         return computed_error;
     }
 

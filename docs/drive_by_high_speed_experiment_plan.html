@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>高速滚动识别与三方案绕行设计及实验方案</title>
+  <title>高速滚动识别与双方案绕行设计及实验方案</title>
   <style>
     :root {
       --ink: #17211b;
@@ -246,7 +246,7 @@
   <header class="hero">
     <div class="hero-inner">
       <p class="eyebrow">SMART CAR · DRIVE-BY EXPERIMENT</p>
-      <h1>高速滚动识别与三方案绕行设计及实验方案</h1>
+      <h1>高速滚动识别与双方案绕行设计及实验方案</h1>
       <p class="subtitle">当前实现保留三阶段航向闭环，并增加可切换的边线瞄准实验方案；本文用于记录原理、默认参数和实车调试方法。</p>
       <div class="badges">
         <span class="badge">巡线目标 35RPS</span>
@@ -265,7 +265,7 @@
       <li><a href="#recognition">识别与性能策略</a></li>
       <li><a href="#geometry">目标位置、切线与车板连线</a></li>
       <li><a href="#integration">有限时域陀螺仪与编码器积分</a></li>
-      <li><a href="#states">三方案绕行状态机</a></li>
+      <li><a href="#states">双方案绕行状态机</a></li>
       <li><a href="#straight-example">直道完整绕行示例</a></li>
       <li><a href="#curve-example">缓弯完整绕行示例</a></li>
       <li><a href="#experiments">明日实验计划</a></li>
@@ -290,9 +290,8 @@
 → 远距候选成立后主动制动，释放后以 11RPS 识别
 → 三帧投票完成且制动完成后按dbMode进入所选绕行方案
 → dbMode=0：三阶段角度闭环，第二转完成后恢复巡线
-→ dbMode=1：边线瞄准500ms，切回中线并在中线恢复后恢复巡线
-→ dbMode=2：按编码器距离复现六次手推示教的平均航向曲线</code></pre>
-      <div class="notice">dbMode=0默认速度为15/20/15RPS；dbMode=1使用dbForwardRps=20RPS；dbMode=2使用dbLearnRps=15RPS。实测换算采用1RPS≈0.047m/s。</div>
+→ dbMode=1：边线瞄准500ms，切回中线并在中线恢复后恢复巡线</code></pre>
+      <div class="notice">dbMode=0默认速度为15/20/15RPS；dbMode=1使用dbForwardRps=20RPS。实测换算采用1RPS≈0.047m/s。</div>
     </section>
 
     <section id="overview">
@@ -405,8 +404,8 @@ heading_error = desired_vehicle_yaw - vehicle_yaw</code></pre>
     </section>
 
     <section id="states">
-      <h2>6. 三方案绕行状态机</h2>
-      <p><code>#dbMode=0;</code>选择原三阶段角度闭环，<code>#dbMode=1;</code>选择边线瞄准实验方案，<code>#dbMode=2;</code>选择六次手推示教轨迹。模式在每次绕行运动开始时锁存，中途修改只影响下一次脚本。</p>
+      <h2>6. 双方案绕行状态机</h2>
+      <p><code>#dbMode=0;</code>选择原三阶段角度闭环，<code>#dbMode=1;</code>选择边线瞄准实验方案。模式在每次绕行运动开始时锁存，中途修改只影响下一次脚本。</p>
       <h3>6.1 三阶段角度闭环（dbMode=0）</h3>
       <p>目标位置处切线仍用于观察夹角和调试显示，但默认不参与绕行航向控制。<code>#dbUseTangent=0;</code>时以脚本启动时车头为零度；发送<code>#dbUseTangent=1;</code>后恢复目标处切线参考。该开关在运动开始时锁存，中途修改只影响下一次绕行。</p>
       <table>
@@ -434,7 +433,7 @@ abs(gyro_dps) &lt;= 20dps
 PASS_SHORT必须同时满足：
 phase_distance &gt;= dbPassDist
 distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
-      <p><code>dbPassDist</code>默认0.03m，<code>dbSafeDist</code>默认0.30m。第二转稳定后先检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
+      <p><code>dbPassDist</code>默认0m，<code>dbSafeDist</code>默认0.30m。第二转稳定后先检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
       <h4>三阶段调参接口</h4>
       <table>
         <thead><tr><th>VOFA参数</th><th>作用</th><th>默认值</th></tr></thead>
@@ -442,7 +441,7 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
           <tr><td><code>dbUseTangent</code></td><td>是否使用目标位置处赛道切线作为绕行零度</td><td>0（关闭）</td></tr>
           <tr><td><code>dbTurnAngle</code></td><td>第一次向绕行侧偏转的角度</td><td>51deg</td></tr>
           <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>52deg</td></tr>
-          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0.03m</td></tr>
+          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0m</td></tr>
           <tr><td><code>dbSafeDist</code></td><td>越过目标位置后的安全余量</td><td>0.30m</td></tr>
           <tr><td><code>dbTurnRps</code></td><td>TURN_OUT基准速度</td><td>15RPS</td></tr>
           <tr><td><code>dbForwardRps</code></td><td>PASS_SHORT基准速度</td><td>20RPS</td></tr>
@@ -453,8 +452,8 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         </tbody>
       </table>
       <p>旧命令<code>#dbExitDist=...;</code>仍会被接收，但只打印“已废弃并忽略”，不参与三阶段状态切换。</p>
-      <h3>6.2 三套方案共用的回程丢线保护</h3>
-      <p>无论选择哪套方案，回到赛道时都必须先确认中线剩余有效点不少于15点。左绕后找不到中线就给+dbRecoverDps，右绕后找不到中线就给-dbRecoverDps，默认幅值55dps，直到中线恢复。陀螺仪不可用时才回退到±100视觉误差。dbMode=0找线时保持dbExitRps，dbMode=1保持dbForwardRps，dbMode=2保持dbLearnRps。</p>
+      <h3>6.2 两套方案共用的回程丢线保护</h3>
+      <p>无论选择哪套方案，回到赛道时都必须先确认中线剩余有效点不少于15点。左绕后找不到中线就给+dbRecoverDps，右绕后找不到中线就给-dbRecoverDps，默认幅值55dps，直到中线恢复。陀螺仪不可用时才回退到±100视觉误差。dbMode=0找线时保持dbExitRps，dbMode=1保持dbForwardRps。</p>
       <h3>6.3 边线瞄准实验方案（dbMode=1）</h3>
       <p>该方案保留相同的红块检测、主动制动和识别投票，只替换识别完成后的运动控制。</p>
       <div class="table-wrap"><table>
@@ -467,9 +466,6 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
       </table></div>
       <p>指定边线不足3点时，左绕暂时给-100继续向左，右绕暂时给+100继续向右。强制误差仍经过现有方向环限幅和差速保护。</p>
       <p>新方案全程采用<code>dbForwardRps</code>（默认20RPS）作为基准速度。它不在脚本内部使用角度和距离切换，但普通方向环仍遵守<code>#gyro</code>设置。两个视觉状态继续受单状态1.5s或0.80m的停车保护约束。</p>
-      <h3>6.4 六次手推示教轨迹（dbMode=2）</h3>
-      <p>方案三将最近六次手推录像中的三次左绕和三次右绕镜像对齐，按编码器路程提取平均目标航向。默认总路程0.96m；约20%路程达到绕行侧9.38°，约60%路程越过零点，约80%路程达到反方向6.41°，末端保留约3.55°赛道内侧预偏。</p>
-      <p>运行状态为<code>LEARNED_PATH</code>。相邻示教点之间线性插值，目标航向继续交给现有航向外环和角速度内环。<code>dbLearnRps</code>调整速度，<code>dbLearnDist</code>调整总路程，<code>dbLearnScale</code>整体缩放转向幅度。完整数据见<code>docs/drive_by_mode3_learned_path.md</code>。</p>
     </section>
 
     <section id="straight-example">
@@ -481,7 +477,7 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         <tbody>
           <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后11RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
           <tr><td>TURN_OUT</td><td>180ms</td><td>15RPS</td><td>0°→左51°</td><td>总里程继续累计</td></tr>
-          <tr><td>PASS_SHORT</td><td>400ms</td><td>20RPS</td><td>保持左51°</td><td>最短阶段距离为0.03m，主要由目标距离和安全余量决定</td></tr>
+          <tr><td>PASS_SHORT</td><td>400ms</td><td>20RPS</td><td>保持左51°</td><td>最短阶段距离为0m，主要由目标距离和安全余量决定</td></tr>
           <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左51°</td><td>总里程达到0.50+0.30=0.80m后才允许第二转</td></tr>
           <tr><td>TURN_TO_TRACK</td><td>180ms</td><td>15RPS</td><td>左51°→右52°</td><td>车头朝赛道内侧</td></tr>
           <tr><td>普通巡线</td><td>下一个8ms周期</td><td>35RPS</td><td>最新视觉误差接管</td><td>不再执行额外回正阶段</td></tr>
@@ -673,10 +669,10 @@ timeout_k0_on_target.txt</code></pre>
         <li>验证横向偏移后视觉中线是否仍能提供切线。</li>
         <li>根据实测数据生成最终代码实施计划和分阶段验收标准。</li>
       </ol>
-      <div class="notice danger"><strong>执行边界：</strong>dbMode=0三阶段代码保留为稳定基线，dbMode=1用于边线方案对比实验，dbMode=2用于六次手推示教轨迹测试。</div>
+      <div class="notice danger"><strong>执行边界：</strong>dbMode=0三阶段代码保留为稳定基线，dbMode=1用于边线方案对比实验。</div>
     </section>
   </main>
 
-  <footer>高速滚动识别与三方案绕行 · 设计与实验基线文档</footer>
+  <footer>高速滚动识别与双方案绕行 · 设计与实验基线文档</footer>
 </body>
 </html>

@@ -458,14 +458,15 @@ if (sscanf(buf, "#hwPwm=%d;", &itmp) == 1)
 // 识别阶段的 dbRecSpd 只改变基准速度，普通方向环仍会继续产生左右差速。
 if (sscanf(buf, "#dbMode=%d;", &itmp) == 1)
 {
-    if (itmp < 0) itmp = 0;
-    if (itmp > 2) itmp = 2;
-    drive_by_mode = itmp;
-    const char *mode_name = drive_by_mode == 0
-        ? "三阶段角度闭环"
-        : (drive_by_mode == 1 ? "边线瞄准500ms" : "六次示教轨迹");
-    printf("[VOFA] dbMode = %d（%s）\n",
-           drive_by_mode, mode_name);
+    if (itmp == 0 || itmp == 1) {
+        drive_by_mode = itmp;
+        const char *mode_name = drive_by_mode == 0
+            ? "三阶段角度闭环" : "边线瞄准500ms";
+        printf("[VOFA] dbMode = %d（%s）\n",
+               drive_by_mode, mode_name);
+    } else {
+        printf("[VOFA] dbMode=%d已删除，仅支持0（三阶段）或1（边线）\n", itmp);
+    }
 }
 
 if (sscanf(buf, "#dbUseTangent=%d;", &itmp) == 1)
@@ -567,30 +568,6 @@ if (sscanf(buf, "#dbHTol=%f;", &ftmp) == 1)
     printf("[VOFA] dbHTol = %.2f deg（静默退出阈值=%.2f deg）\n",
            drive_by_heading_tolerance_deg,
            drive_by_heading_tolerance_deg + 1.0f);
-}
-
-if (sscanf(buf, "#dbLearnRps=%f;", &ftmp) == 1)
-{
-    if (ftmp < 0.0f) ftmp = 0.0f;
-    if (ftmp > 40.0f) ftmp = 40.0f;
-    drive_by_learned_speed_rps = ftmp;
-    printf("[VOFA] dbLearnRps = %.2f RPS\n", drive_by_learned_speed_rps);
-}
-
-if (sscanf(buf, "#dbLearnDist=%f;", &ftmp) == 1)
-{
-    if (ftmp < 0.10f) ftmp = 0.10f;
-    if (ftmp > 3.00f) ftmp = 3.00f;
-    drive_by_learned_distance_m = ftmp;
-    printf("[VOFA] dbLearnDist = %.3f m\n", drive_by_learned_distance_m);
-}
-
-if (sscanf(buf, "#dbLearnScale=%f;", &ftmp) == 1)
-{
-    if (ftmp < 0.0f) ftmp = -ftmp;
-    if (ftmp > 3.0f) ftmp = 3.0f;
-    drive_by_learned_yaw_scale = ftmp;
-    printf("[VOFA] dbLearnScale = %.2f\n", drive_by_learned_yaw_scale);
 }
 
 if (sscanf(buf, "#dbRecoverDps=%f;", &ftmp) == 1)
@@ -1046,7 +1023,6 @@ void tuning_telemetry_send()
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
         "\"dbMode\":%d,\"dbUseTangent\":%d,"
         "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
-        "\"dbLearnRps\":%.2f,\"dbLearnDist\":%.3f,\"dbLearnScale\":%.2f,"
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
@@ -1074,9 +1050,6 @@ void tuning_telemetry_send()
         drive_by_mode, drive_by_use_track_tangent,
         safe_float(drive_by_normal_speed_rps),
         safe_float(drive_by_recognition_speed_rps),
-        safe_float(drive_by_learned_speed_rps),
-        safe_float(drive_by_learned_distance_m),
-        safe_float(drive_by_learned_yaw_scale),
         safe_float(drive_by_turn_angle_deg),
         safe_float(drive_by_return_bias_deg),
         safe_float(drive_by_pass_distance_m),
@@ -1509,7 +1482,7 @@ gyro_yaw_rate_control_init();
            drive_by_uses_visual_direction_control())) {
         PID_control_test(latest_error);
       } else if (front_ui_is_running() && drive_by_is_motion_phase()) {
-        // 三阶段和示教轨迹会到这里，由drive_by航向闭环独占左右轮目标。
+        // 三阶段会到这里，由drive_by航向闭环独占左右轮目标。
       } else if (drive_by_heading_hold_is_enabled()) {
         // 停车态航向保持只在这里运行，不执行视觉方向环。
         drive_by_heading_hold_control_update();

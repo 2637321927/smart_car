@@ -9,7 +9,7 @@
 extern volatile float drive_by_normal_speed_rps;
 extern volatile float drive_by_recognition_speed_rps;
 extern volatile float drive_by_rps_to_mps;
-// 0：三阶段角度闭环；1：边线瞄准；2：六次手推示教得到的距离索引轨迹。
+// 0：三阶段角度闭环；1：边线瞄准。
 extern volatile int drive_by_mode;
 // 是否把目标位置处赛道切线作为绕行航向参考；默认关闭时以脚本启动时车头为0度。
 extern volatile int drive_by_use_track_tangent;
@@ -19,9 +19,6 @@ extern int drive_by_turn_speed_rps;
 extern int drive_by_turn_inner_speed_rps;
 extern int drive_by_forward_speed_rps;
 extern int drive_by_exit_speed_rps;
-extern volatile float drive_by_learned_speed_rps;
-extern volatile float drive_by_learned_distance_m;
-extern volatile float drive_by_learned_yaw_scale;
 extern int drive_by_turn_out_ms;
 extern int drive_by_forward_ms;
 extern int drive_by_turn_back_ms;
@@ -116,8 +113,8 @@ bool drive_by_start_test(int simulated_item_flag,
 bool drive_by_is_busy();
 bool drive_by_is_recognizing();
 bool drive_by_is_motion_phase();
-// 三套方案共用的中线找回阶段由普通方向环执行；三阶段方案和示教轨迹方案
-// 的航向闭环阶段仍由drive_by独占方向控制。
+// 两套方案共用的中线找回阶段由普通方向环执行；三阶段方案的航向闭环
+// 阶段仍由drive_by独占方向控制。
 bool drive_by_uses_visual_direction_control();
 // 返回当前相机帧应使用的瞄准线：-1左线、0正常中线、1右线。
 int drive_by_visual_aim_line();

@@ -165,12 +165,12 @@ const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes';
 const TUNING_GROUPS = [
   {
     title: '速度环',
-    subtitle: '增量式PID与基准速度',
+    subtitle: '车轮转速增量式PID与左右轮前进基准速度',
     controls: [
       { key: 'P', label: '速度P', min: 0, max: 1000, step: 1, defaultValue: 454 },
       { key: 'I', label: '速度I', min: 0, max: 100, step: 0.1, defaultValue: 14 },
       { key: 'D', label: '速度D', min: 0, max: 200, step: 0.1, defaultValue: 0 },
-      { key: 'spd', label: '基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 0 },
+      { key: 'spd', label: '左右轮前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 0 },
     ],
   },
   {
@@ -205,19 +205,17 @@ const TUNING_GROUPS = [
   },
   {
     title: '绕行几何',
-    subtitle: '方案选择、识别速度、距离与航向外环',
+    subtitle: '方案选择、识别前进速度、距离与航向角外环',
     controls: [
-      { key: 'dbMode', label: '绕行方案', kind: 'segment', options: [[0, '角度三阶段'], [1, '边线500ms'], [2, '六次示教']], defaultValue: 0 },
+      { key: 'dbMode', label: '绕行方案', kind: 'segment', options: [[0, '角度三阶段'], [1, '边线500ms']], defaultValue: 0 },
       { key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0 },
-      { key: 'dbNormalSpd', label: '正常巡线速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
-      { key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 11 },
-      { key: 'dbLearnDist', label: '示教轨迹总路程', min: 0.1, max: 3, step: 0.01, unit: 'm', defaultValue: 0.96 },
-      { key: 'dbLearnScale', label: '示教航向倍率', min: 0, max: 3, step: 0.05, defaultValue: 1 },
+      { key: 'dbNormalSpd', label: '正常巡线前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
+      { key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 11 },
       { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 51 },
       { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 52 },
-      { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.03 },
+      { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0 },
       { key: 'dbSafeDist', label: '目标后安全余量', min: 0, max: 1, step: 0.01, unit: 'm', defaultValue: 0.3 },
-      { key: 'dbRpsMps', label: 'RPS转m/s', min: 0.01, max: 0.1, step: 0.001, defaultValue: 0.047 },
+      { key: 'dbRpsMps', label: '轮速-车速换算系数', min: 0.01, max: 0.1, step: 0.001, unit: 'm/(s·RPS)', defaultValue: 0.047 },
       { key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 46 },
       { key: 'dbViewWait', label: '观察等待上限', min: 0, max: 2000, step: 10, unit: 'ms', defaultValue: 120 },
       { key: 'dbHKp', label: '航向外环P', min: 0, max: 60, step: 0.1, defaultValue: 31 },
@@ -232,11 +230,10 @@ const TUNING_GROUPS = [
     title: '绕行速度与制动',
     subtitle: '运动阶段速度、制动与测试距离',
     controls: [
-      { key: 'dbTurnRps', label: '第一次转向速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 15 },
-      { key: 'dbForwardRps', label: '斜行阶段速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 20 },
-      { key: 'dbExitRps', label: '回赛道转向速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 15 },
-      { key: 'dbLearnRps', label: '示教轨迹速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 15 },
-      { key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 7000, step: 50, defaultValue: 6000, hardMax: true },
+      { key: 'dbTurnRps', label: '转出阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 15 },
+      { key: 'dbForwardRps', label: '斜行阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 20 },
+      { key: 'dbExitRps', label: '转入阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 15 },
+      { key: 'dbBrakePwm', label: '主动制动反向PWM', min: 0, max: 7000, step: 50, defaultValue: 6000, hardMax: true },
       { key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 15 },
       { key: 'dbBrakeTimeout', label: '制动超时', min: 1, max: 2000, step: 10, unit: 'ms', defaultValue: 300 },
       { key: 'dbTestDist', label: 'TEST目标距离', min: 0, max: 5, step: 0.01, unit: 'm', defaultValue: 0.5 },
@@ -260,6 +257,65 @@ const TUNING_GROUPS = [
     ],
   },
 ];
+
+const TUNING_UNIT_GUIDE =
+  '先看单位：RPS是车轮每秒转数，表示前进基准速度或左右轮差速，不是车身角速度；' +
+  'dps是车身每秒旋转角度。转向时通常为“左轮目标=前进基准RPS+差速RPS，' +
+  '右轮目标=前进基准RPS-差速RPS”。deg表示角度，PWM表示直接电机输出。';
+
+const TUNING_DESCRIPTIONS = Object.freeze({
+  P: '速度环系数，无直接物理单位。它按本次与上次轮速误差之差增加PWM；调大通常响应更快，过大时轮速容易过冲和振荡。普通速度闭环生效，主动制动和硬件测试时不使用。',
+  I: '速度环系数，无直接物理单位。它按当前“目标RPS-实际RPS”持续增加PWM，用来消除稳态速度差；调大能更快追上目标，过大容易过冲。',
+  D: '速度环系数，无直接物理单位。它根据连续三次轮速误差的变化修正PWM增量，用于抑制快速变化；调大可能增加阻尼，也会放大编码器噪声。',
+  spd: '普通巡线时左右轮共同的前进基准速度，单位RPS，不是角速度。方向控制会在它上面叠加正负差速；设为0只表示没有前进基准，方向环仍可能让两轮反向转动。',
+  dirP: '仅用于视觉PD模式或陀螺仪未就绪回退模式。把当前视觉横向误差直接换成轮速差；调大后转向更积极，过大容易在直道左右摇摆。',
+  dirD: '仅用于视觉PD模式或回退模式。根据本帧与上帧视觉误差之差生成轮速差；调大可提前抑制转向趋势，但图像噪声大时会产生抖动。',
+  AIM: '在鸟瞰中线上向前选取目标点的距离，单位m。调大通常看得更远、行驶更平滑但入弯更晚；调小转弯更灵敏但更容易受近处噪声影响。十字状态可能临时覆盖它。',
+  spd_slow_ratio: '视觉误差达到最大值时允许降低的前进基准速度百分比。调大后大弯减速更多、过弯更稳但更慢；0%表示不按视觉误差减速。',
+  begin_x: '左右边线搜索在图像底部从“图像中心±该像素值”开始。调大让搜索起点更靠两侧，调小更靠中心；设置不当可能从赛道外或错误边缘开始寻线。',
+  circle_exit: '进入环岛运行态后，用里程计累计的出环距离阈值，单位m。调大将在环岛逻辑中保持更久，调小会更早进入出环状态；只对环岛流程生效。',
+  gyro: '选择普通方向控制是否请求使用“视觉误差→目标角速度→陀螺仪反馈→轮速差”。关闭时使用视觉PD；开启但MPU6050未就绪时会回退视觉PD。',
+  gDbg: '手动目标角速度调试开关。开启后忽略视觉外环，直接用gTar作为目标角速度，并自动请求开启陀螺仪反馈；它不会自动发车。正常行驶应关闭。',
+  gTar: '仅在gDbg开启时生效的手动车身目标角速度，单位dps。正负号决定转向方向，绝对值越大要求车身转得越快，并受gTMax限制。',
+  gOP: '正常巡线角速度外环P：把视觉误差换成目标角速度dps。调大后同样的道路误差会要求更快转向；过大容易使目标角速度长期顶到gTMax。',
+  gOD: '正常巡线角速度外环D：根据相邻两次视觉误差变化修正目标角速度。调大可在误差回落时更早收转向，但会放大图像误差跳变；它不是绕行航向环的dbHKd。',
+  gIP: '角速度内环P：把“目标dps-实测dps”换成单侧轮速差RPS。调大后更快追随目标角速度，过大可能造成左右轮反复修正和振荡。正常巡线、绕行和航向保持共用。',
+  gII: '角速度内环I：累计目标角速度误差并补充轮速差，用于克服长期左右不一致。调大可减小稳态角速度误差，但容易积累后过冲；陀螺仪数据过旧时积分会冻结。',
+  gTMax: '正常视觉外环和手动gTar允许输出的最大车身目标角速度，单位dps。调大只放宽“想转多快”，实际能否达到还受gRMax、速度环和电机能力限制。',
+  gRMax: '角速度内环可输出的单侧轮速差上限，单位RPS，不是角速度。轮速通常为基准±差速，所以两轮目标差最多约2倍该值；普通PID_control_test还会再限制到±15RPS。',
+  yawHoldRMax: '仅用于停车态“航向保持”测试的额外单侧差速上限，单位RPS，并且仍受gRMax限制。调大回正更有力，但原地拨动车头时动作更猛；不改变正常巡线限幅。',
+  gSign: '修正MPU6050实测Z轴角速度的正负方向。若实际向左转时显示符号与控制约定相反，应切换它；设置错误会把负反馈变成错误方向。',
+  tSign: '修正角速度内环输出到左右轮差速的方向。若出现“越修越偏”或持续自激旋转，应检查它；它只翻转差速方向，不改变角速度读数。',
+  dbMode: '选择下一次绕行采用的脚本：0为陀螺仪航向角三阶段，1为先瞄准绕行侧边线500ms再恢复中线。绕行开始后会锁存模式，中途修改从下一次生效。',
+  dbUseTangent: '仅对三阶段角度方案生效。开启时用目标位置处识别到的赛道切线作为0度参考；关闭时用脚本启动瞬间车头作为0度参考。切线识别不稳时建议关闭。',
+  dbNormalSpd: 'K0绕行识别模式下，无目标以及绕行成功交回巡线后的前进基准速度，单位RPS，不是角速度。方向环仍在此基础上叠加左右差速。',
+  dbRecSpd: '红块候选触发后、推理和等待制动期间使用的前进基准速度，单位RPS。它不会强制两轮相等，普通方向环仍叠加差速；调低可减少识别期间前冲距离。',
+  dbTurnAngle: '三阶段方案第一次向绕行侧偏转的航向角，单位deg。调大横向移出更明显，但转动时间和占用宽度增加；边线500ms方案不使用它。',
+  dbReturnBias: '三阶段方案第二次转向的最终目标：相对赛道参考向另一侧预偏该角度，单位deg。第二次总转角约为dbTurnAngle+dbReturnBias；调大更容易朝回赛道，也更可能转过头。',
+  dbPassDist: '三阶段斜行阶段必须满足的最小自身行驶距离，单位m，并与“目标距离+安全余量”同时判断。设为0表示只看目标后的安全距离；边线500ms方案不使用。',
+  dbSafeDist: '三阶段中，车辆估计越过目标板后还需继续前进的安全余量，单位m。调大更晚开始转回、离目标更远，但可能占用更多赛道空间。',
+  dbRpsMps: '把编码器平均轮速换算成车速的系数，公式为速度m/s=平均RPS×该值。调大后软件累计距离更快、距离阶段更早结束；应按实测标定，不能用来直接提速。',
+  dbViewMax: '目标板允许开始推理的最大观察夹角，单位deg。调大更容易触发但斜视识别风险上升；调小图像更正但可能等待过久。只影响真实红块识别，不影响TEST绕行。',
+  dbViewWait: '红块候选成立后，等待观察夹角和ROI满足推理条件的最长时间，单位ms。超时会放弃本次左右绕行并按安全流程退出；调大等待更久也更靠近目标。',
+  dbHKp: '三阶段绕行和航向保持的航向角外环P：把航向误差deg换成目标角速度dps。调大起转和回正更积极，过大时更容易顶到dbHMax并冲过目标角。',
+  dbHKd: '三阶段绕行和航向保持的航向阻尼：按实测角速度从目标角速度中扣除。调大能更早刹住旋转、减少过冲；过大则转向发软或到角度很慢。',
+  dbHMax: '三阶段航向外环允许给出的最大目标角速度，单位dps。调大允许车身转得更快，但实际响应仍受gIP、gII、gRMax、轮速基准和电机能力限制。',
+  dbHTol: '三阶段认为航向已进入允许范围的角度阈值，单位deg；进入后角速度还要降下来并连续稳定，退出静默区阈值为该值+1deg。调大更快切阶段但角度精度降低。',
+  dbRecoverDps: '绕行回程已经到角度但仍丢中线时，直接请求的固定找线角速度，单位dps。调大找线转得更快，但可能扫过中线；仅在恢复中线保护状态生效。',
+  dbYawSign: '把左绕/右绕脚本方向映射到航向角正负号。它影响三阶段目标角的左右对称性，不修改陀螺仪原始读数；左右动作反了时先核对gSign，再核对本项。',
+  dbTurnRps: '三阶段TURN_OUT转出时的左右轮前进基准速度，单位RPS，不是角速度。最终轮速=该基准±角速度环差速；调大前进更快，但同样转角需要更强差速和更大空间。',
+  dbForwardRps: 'PASS_SHORT斜行阶段的前进基准速度，单位RPS；边线500ms方案也使用它。它决定斜行前进快慢，不直接决定车身旋转速度。',
+  dbExitRps: '三阶段TURN_TO_TRACK转入及其额外找中线阶段的前进基准速度，单位RPS，不是角速度。调大回赛道更快，但丢线时轨迹更难控制。',
+  dbBrakePwm: '红块触发后的主动制动专用反向PWM幅值。调大刹车更强、减速距离更短，但冲击和反转风险更高；最高7000只在主动制动路径允许，正常行驶仍禁止。',
+  dbBrakeRelease: '主动制动释放阈值，单位RPS。左右轮连续两次都不高于它就退出反向PWM并恢复速度闭环；调大更早释放，调小刹得更慢、更彻底。',
+  dbBrakeTimeout: '主动制动允许持续的最长时间，单位ms。超过后仍未满足释放条件会停车保护；调大不是增强制动力，只是允许反向PWM保持更久。',
+  dbTestDist: '点击TEST绕行时模拟的“触发点到目标板”距离，单位m。它参与三阶段通过目标的距离判断；真实红块识别使用视觉估计，不使用该值。',
+  udp: '控制发往Debugger（192.168.43.155）的调试数据：0关闭，1只发参数波形，2再加道路左/中/右三线。只控制发送，不影响小车在8082端口接收前端命令。',
+  vofa: '控制传统VOFA波形是否回传到192.168.43.146:8080。关闭可减少网络和序列化负担，但仍可从146向小车8082发送调参命令。',
+  is_udp_img: '控制额外JPEG调试图像：0关闭，1发送鸟瞰图，2发送原始图。图像编码和网络开销明显高于参数UDP，正常高速行驶建议关闭。',
+  hwTest: '仅run=0且绕行、遥控、航向保持都关闭时可开启。开启后只允许PWM1正向测试、PWM2固定为0，并把测试PWM从0开始；关闭状态不会改动正常行车控制。',
+  hwPwm: '硬件测试模式下PWM1的正向输出值，范围0至5000，无RPS闭环。关闭测试时修改不会驱动电机，重新开启hwTest仍会先清零，需确认架空车轮后再调。',
+});
 
 const TUNING_CONFIGS = TUNING_GROUPS.flatMap((group) => group.controls);
 const TUNING_DEFAULTS = Object.fromEntries(
@@ -606,6 +662,10 @@ async function commitTuningValue(config, rawValue) {
 }
 
 function buildTuningControls() {
+  const guide = document.createElement('aside');
+  guide.className = 'tuning-unit-guide';
+  guide.textContent = TUNING_UNIT_GUIDE;
+
   const groupElements = TUNING_GROUPS.map((group) => {
     const groupElement = document.createElement('section');
     groupElement.className = 'tuning-group';
@@ -630,6 +690,15 @@ function buildTuningControls() {
       code.textContent = config.key;
       labelRow.append(label, code);
       root.append(labelRow);
+
+      const descriptionText = TUNING_DESCRIPTIONS[config.key];
+      if (!descriptionText) {
+        throw new Error(`缺少调参说明：${config.key}`);
+      }
+      const description = document.createElement('p');
+      description.className = 'tuning-description';
+      description.textContent = descriptionText;
+      root.append(description);
 
       const control = { config, root };
       if (config.kind === 'toggle') {
@@ -758,7 +827,7 @@ function buildTuningControls() {
     return groupElement;
   });
 
-  elements.tuningControls.replaceChildren(...groupElements);
+  elements.tuningControls.replaceChildren(guide, ...groupElements);
   renderTuningControls();
 }
 
