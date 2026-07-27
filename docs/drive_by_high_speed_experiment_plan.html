@@ -250,7 +250,7 @@
       <p class="subtitle">当前实现保留三阶段航向闭环，并增加可切换的边线瞄准实验方案；本文用于记录原理、默认参数和实车调试方法。</p>
       <div class="badges">
         <span class="badge">巡线目标 35RPS</span>
-        <span class="badge">绕行速度 15/20/15RPS</span>
+        <span class="badge">绕行速度 10/10/10RPS</span>
         <span class="badge">红色出现后才推理</span>
         <span class="badge">有限时域双积分</span>
       </div>
@@ -287,11 +287,11 @@
       <pre><code>35RPS 正常巡线
 → 只执行低负担红色检测
 → 检测到红色后才启动 NCNN
-→ 远距候选成立后主动制动，释放后以 11RPS 识别
+→ 远距候选成立后主动制动，释放后以 9.5RPS 识别
 → 三帧投票完成且制动完成后按dbMode进入所选绕行方案
 → dbMode=0：三阶段角度闭环，第二转完成后恢复巡线
 → dbMode=1：按dbSideMs定时瞄准边线，切回中线并在中线恢复后恢复巡线</code></pre>
-      <div class="notice">dbMode=0默认速度为15/20/15RPS；dbMode=1使用dbForwardRps=20RPS。实测换算采用1RPS≈0.047m/s。</div>
+      <div class="notice">dbMode=0默认速度为10/10/10RPS；dbMode=1使用dbForwardRps=10RPS。实测换算采用1RPS≈0.047m/s。</div>
     </section>
 
     <section id="overview">
@@ -323,7 +323,7 @@ K0 开启、没有红色
 
 确认检测到红色
 → 提取目标 ROI
-→ 主动制动释放后把基准速度设置为 11RPS
+→ 主动制动释放后把基准速度设置为 9.5RPS
 → 判断目标板观察角度
 → 观察角度合适时才提交 NCNN</code></pre>
       <p>红色检测只处理有效裁剪区域，不对整幅 <code>320×240</code> 图像执行完整 HSV、形态学和轮廓搜索。</p>
@@ -336,7 +336,7 @@ K0 开启、没有红色
         <li><code>1:1:1</code>、超时或不足 3 帧时按直行处理。</li>
         <li>worker 无任务时通过条件变量休眠。</li>
       </ul>
-      <div class="notice">当前代码采用同步三帧投票；若前两帧有效结果一致，会直接形成多数票并提前结束。识别期间保持11RPS基准和普通方向环。</div>
+      <div class="notice">当前代码采用同步三帧投票；若前两帧有效结果一致，会直接形成多数票并提前结束。识别期间保持9.5RPS基准和普通方向环。</div>
     </section>
 
     <section id="geometry">
@@ -411,41 +411,43 @@ heading_error = desired_vehicle_yaw - vehicle_yaw</code></pre>
       <table>
         <thead><tr><th>阶段</th><th>相对所选参考航向的偏角</th><th>默认基准速度</th><th>目的</th></tr></thead>
         <tbody>
-          <tr><td><code>TURN_OUT</code></td><td>绕行侧51°</td><td>15RPS</td><td>向目标板侧方移出</td></tr>
-          <tr><td><code>PASS_SHORT</code></td><td>继续保持绕行侧51°</td><td>20RPS</td><td>沿斜向轨迹越过目标板</td></tr>
-          <tr><td><code>TURN_TO_TRACK</code></td><td>赛道内侧52°</td><td>15RPS</td><td>反向转向，让车头主动朝赛道内侧</td></tr>
-          <tr><td><code>RECOVER_CENTER_LINE</code></td><td>左绕+55dps、右绕-55dps</td><td>15RPS</td><td>仅在第二转结束仍找不到中线时启用</td></tr>
+          <tr><td><code>TURN_OUT</code></td><td>绕行侧51°</td><td>10RPS</td><td>向目标板侧方移出</td></tr>
+          <tr><td><code>PASS_SHORT</code></td><td>继续保持绕行侧51°</td><td>10RPS</td><td>沿斜向轨迹越过目标板</td></tr>
+          <tr><td><code>TURN_TO_TRACK</code></td><td>赛道内侧24°</td><td>10RPS</td><td>反向转向，让车头主动朝赛道内侧</td></tr>
+          <tr><td><code>RECOVER_CENTER_LINE</code></td><td>左绕+55dps、右绕-55dps</td><td>10RPS</td><td>仅在第二转结束仍找不到中线时启用</td></tr>
           <tr><td>完成</td><td>普通视觉方向环接管</td><td>35RPS</td><td>中线可靠后立即恢复普通巡线</td></tr>
         </tbody>
       </table>
-      <p>左右绕行完全镜像。以左绕为例，第一次目标为左偏51°，第二次目标为右偏52°，因此第二次实际反转约103°。</p>
+      <p>左右绕行完全镜像。以左绕为例，第一次目标为左偏51°，第二次目标为右偏24°，因此第二次实际反转约75°。</p>
       <pre><code>desired_yaw = locked_track_heading + phase_offset
 target_yaw_rate = clamp(
     heading_kp * heading_error - heading_kd * gyro_dps,
     -dbHMax,
     +dbHMax)</code></pre>
       <p>目标角速度继续交给现有 <code>gIP/gII/gRMax</code> 内环产生左右轮差速。</p>
-      <pre><code>两个转向阶段的完成条件：
-abs(heading_error) &lt;= 2°
-abs(gyro_dps) &lt;= 20dps
-连续满足 3 个 8ms 控制周期
+      <pre><code>两个转向阶段的主切换条件：
+沿本阶段转动方向投影后的车头积分
+&gt;= 沿同方向投影后的目标角
+
+旧的“航向误差进入容差且角速度稳定，连续满足3个8ms周期”
+只保留为尚未越线时的兜底，不再是正常切换必须满足的条件。
 
 PASS_SHORT必须同时满足：
 phase_distance &gt;= dbPassDist
 distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
-      <p><code>dbPassDist</code>默认0m，<code>dbSafeDist</code>默认0.30m。第二转稳定后先检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
+      <p><code>dbPassDist</code>和<code>dbSafeDist</code>当前均默认0m。第一次转出时，车头积分沿转出方向达到或越过<code>dbTurnAngle</code>就进入斜行，不再要求角速度先降到接近0。第二次转回沿回程方向达到或越过<code>dbReturnBias</code>后检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。旧的稳定判定只作为未越线时的兜底。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
       <h4>三阶段调参接口</h4>
       <table>
         <thead><tr><th>VOFA参数</th><th>作用</th><th>默认值</th></tr></thead>
         <tbody>
           <tr><td><code>dbUseTangent</code></td><td>是否使用目标位置处赛道切线作为绕行零度</td><td>0（关闭）</td></tr>
           <tr><td><code>dbTurnAngle</code></td><td>第一次向绕行侧偏转的角度</td><td>51deg</td></tr>
-          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>52deg</td></tr>
+          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>24deg</td></tr>
           <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0m</td></tr>
-          <tr><td><code>dbSafeDist</code></td><td>越过目标位置后的安全余量</td><td>0.30m</td></tr>
-          <tr><td><code>dbTurnRps</code></td><td>TURN_OUT基准速度</td><td>15RPS</td></tr>
-          <tr><td><code>dbForwardRps</code></td><td>PASS_SHORT基准速度</td><td>20RPS</td></tr>
-          <tr><td><code>dbExitRps</code></td><td>TURN_TO_TRACK基准速度</td><td>15RPS</td></tr>
+          <tr><td><code>dbSafeDist</code></td><td>越过目标位置后的安全余量</td><td>0m</td></tr>
+          <tr><td><code>dbTurnRps</code></td><td>TURN_OUT基准速度</td><td>10RPS</td></tr>
+          <tr><td><code>dbForwardRps</code></td><td>PASS_SHORT基准速度</td><td>10RPS</td></tr>
+          <tr><td><code>dbExitRps</code></td><td>TURN_TO_TRACK基准速度</td><td>10RPS</td></tr>
           <tr><td><code>dbHMax</code></td><td>航向外环允许输出的最大目标角速度</td><td>505dps</td></tr>
           <tr><td><code>dbRecoverDps</code></td><td>回程丢线时固定目标角速度</td><td>55dps</td></tr>
           <tr><td><code>dbNormalSpd</code></td><td>脚本成功交接后的巡线基准速度</td><td>35RPS</td></tr>
@@ -465,22 +467,22 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         </tbody>
       </table></div>
       <p>指定边线不足3点时，左绕暂时给-100继续向左，右绕暂时给+100继续向右。强制误差仍经过现有方向环限幅和差速保护。</p>
-      <p>新方案全程采用<code>dbForwardRps</code>（默认20RPS）作为基准速度。它不在脚本内部使用角度和距离切换，但普通方向环仍遵守<code>#gyro</code>设置。</p>
+      <p>新方案全程采用<code>dbForwardRps</code>（默认10RPS）作为基准速度。它不在脚本内部使用角度和距离切换，但普通方向环仍遵守<code>#gyro</code>设置。</p>
       <p><code>dbSideMs</code>控制边线瞄准持续时间，默认500ms，可调范围500至2000ms。命令示例：<code>#dbSideMs=1200;</code>表示持续瞄准边线1.2s；越界输入会由小车端限制到最近边界。增大该值通常会增加沿边线行驶时间和横向绕出距离。<code>FOLLOW_SIDE_LINE</code>的安全超时为<code>dbSideMs+500ms</code>；为保证高<code>dbForwardRps</code>时也能完整执行设定时间，该阶段不使用固定距离上限。<code>RECOVER_CENTER_LINE</code>仍使用原来的1.5s/0.80m保护。</p>
     </section>
 
     <section id="straight-example">
       <h2>7. 直道完整绕行示例</h2>
       <div class="example"><strong>虚构示例：</strong>以下数字只解释状态机，不可直接作为实车参数。</div>
-      <p>假设左绕目标在触发时位于前方0.50m，安全余量为0.30m，开始运动脚本时车辆从红色触发点累计行驶了0.30m。</p>
+      <p>假设左绕目标在触发时位于前方0.50m，安全余量为0m，开始运动脚本时车辆从红色触发点累计行驶了0.30m。</p>
       <table>
         <thead><tr><th>阶段</th><th>示例持续时间</th><th>基准速度</th><th>航向变化</th><th>距离说明</th></tr></thead>
         <tbody>
-          <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后11RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
-          <tr><td>TURN_OUT</td><td>180ms</td><td>15RPS</td><td>0°→左51°</td><td>总里程继续累计</td></tr>
-          <tr><td>PASS_SHORT</td><td>400ms</td><td>20RPS</td><td>保持左51°</td><td>最短阶段距离为0m，主要由目标距离和安全余量决定</td></tr>
-          <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左51°</td><td>总里程达到0.50+0.30=0.80m后才允许第二转</td></tr>
-          <tr><td>TURN_TO_TRACK</td><td>180ms</td><td>15RPS</td><td>左51°→右52°</td><td>车头朝赛道内侧</td></tr>
+          <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后9.5RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
+          <tr><td>TURN_OUT</td><td>180ms</td><td>10RPS</td><td>0°→左51°</td><td>总里程继续累计</td></tr>
+          <tr><td>PASS_SHORT</td><td>400ms</td><td>10RPS</td><td>保持左51°</td><td>最短阶段距离和安全余量均为0m</td></tr>
+          <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左51°</td><td>总里程达到目标距离0.50m后允许第二转</td></tr>
+          <tr><td>TURN_TO_TRACK</td><td>180ms</td><td>10RPS</td><td>左51°→右24°</td><td>车头朝赛道内侧</td></tr>
           <tr><td>普通巡线</td><td>下一个8ms周期</td><td>35RPS</td><td>最新视觉误差接管</td><td>不再执行额外回正阶段</td></tr>
         </tbody>
       </table>
@@ -496,7 +498,7 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         <tbody>
           <tr><td>TURN_OUT</td><td>+16°</td><td>左偏51°</td><td>+67°</td></tr>
           <tr><td>PASS_SHORT</td><td>+16°</td><td>左偏51°</td><td>保持+67°</td></tr>
-          <tr><td>TURN_TO_TRACK</td><td>+16°</td><td>右偏52°</td><td>-36°</td></tr>
+          <tr><td>TURN_TO_TRACK</td><td>+16°</td><td>右偏24°</td><td>-8°</td></tr>
           <tr><td>普通巡线</td><td>使用最新视觉中线</td><td>由视觉误差决定</td><td>跟随当前缓弯继续调整</td></tr>
         </tbody>
       </table>

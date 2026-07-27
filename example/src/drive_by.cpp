@@ -18,9 +18,9 @@ using DriveByClock = std::chrono::steady_clock;
 
 // ===================== 高速识别和三阶段绕行调参区 =====================
 // K0 开启但没有目标时按 35RPS 正常巡线；红色触发后只把“基准速度”降到
-// 12.5RPS，普通方向环仍会在该基准上叠加左右差速。
+// 9.5RPS，普通方向环仍会在该基准上叠加左右差速。
 volatile float drive_by_normal_speed_rps = 35.0f;
-volatile float drive_by_recognition_speed_rps = 11.0f;
+volatile float drive_by_recognition_speed_rps = 9.5f;
 volatile float drive_by_rps_to_mps = 0.047f;
 volatile int drive_by_mode = 0;
 volatile int drive_by_side_follow_ms = 500;
@@ -29,10 +29,10 @@ volatile int drive_by_use_track_tangent = 0;
 // 三阶段分别保留独立基准速度：转出使用drive_by_turn_speed_rps，斜行使用
 // drive_by_forward_speed_rps，转入使用drive_by_exit_speed_rps。它们都是左右
 // 差速叠加前的基准速度，不表示某一侧车轮的最终目标速度。
-int drive_by_turn_speed_rps = 15;
+int drive_by_turn_speed_rps = 10;
 int drive_by_turn_inner_speed_rps = 0; // 兼容旧脚本，新的角度闭环不直接使用。
-int drive_by_forward_speed_rps = 20;
-int drive_by_exit_speed_rps = 15;
+int drive_by_forward_speed_rps = 10;
+int drive_by_exit_speed_rps = 10;
 int drive_by_turn_out_ms = 600;        // 兼容旧参数，新的状态切换主要看角度。
 int drive_by_forward_ms = 400;         // 兼容旧参数，新的状态切换主要看距离。
 int drive_by_turn_back_ms = 800;       // 兼容旧参数，新的状态切换主要看角度。
@@ -42,9 +42,9 @@ int drive_by_infer_timeout_ms = 500;
 int drive_by_cooldown_ms = 1000;
 
 volatile float drive_by_turn_angle_deg = 51.0f;
-volatile float drive_by_return_bias_deg = 52.0f;
+volatile float drive_by_return_bias_deg = 24.0f;
 volatile float drive_by_pass_distance_m = 0.0f;
-volatile float drive_by_target_after_margin_m = 0.30f;
+volatile float drive_by_target_after_margin_m = 0.0f;
 volatile float drive_by_view_angle_max_deg = 46.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
 // 51度标准绕行转角下，KP=31会立即触发505dps外环限幅，保证起转阶段足够积极。
@@ -60,10 +60,10 @@ volatile float drive_by_heading_tolerance_deg = 4.5f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
 volatile float drive_by_yaw_sign = -1.0f;
-volatile int drive_by_brake_pwm = 6000;
+volatile int drive_by_brake_pwm = 7000;
 volatile float drive_by_brake_release_rps = 15.0f;
 volatile int drive_by_brake_confirm_count = 2;
-volatile int drive_by_brake_timeout_ms = 300;
+volatile int drive_by_brake_timeout_ms = 301;
 volatile float drive_by_test_target_distance_m = 0.50f;
 
 namespace {
@@ -1124,6 +1124,21 @@ bool heading_is_settled(float heading_error_deg, float gyro_dps)
     return g_heading_settle_count >= kHeadingSettleCycles;
 }
 
+bool heading_target_has_been_crossed(float target_offset_deg,
+                                     float turn_direction_sign)
+{
+    // g_track_heading_reference_deg是本次绕行锁定的0度参考。把当前积分航向和
+    // 目标航向都投影到本阶段的转动方向后，只要当前进度达到目标进度，就说明
+    // 车头已经到达或越过对应角度。该判断不要求角速度先降到接近0，碰撞、打滑
+    // 或参数偏激时也不会因为无法“稳定三拍”而永远卡在同一转向阶段。
+    const float direction_sign = turn_direction_sign >= 0.0f ? 1.0f : -1.0f;
+    const float current_offset_deg = normalize_angle_deg(
+        g_yaw_deg - g_track_heading_reference_deg);
+    const float current_progress_deg = current_offset_deg * direction_sign;
+    const float target_progress_deg = target_offset_deg * direction_sign;
+    return current_progress_deg >= target_progress_deg;
+}
+
 bool return_yaw_has_crossed_zero()
 {
     // g_yaw_deg以进入绕行时的车头为0度。左右绕的返回方向相反，因此先按
@@ -1297,14 +1312,21 @@ void update_motion_state()
     g_debug.turn_rps = turn_rps;
 
     switch (g_state) {
-    case DB_TURN_OUT:
-        if (g_motion_heading_quiet &&
-            heading_is_settled(heading_error_deg, gyro_dps)) {
+    case DB_TURN_OUT: {
+        const float turn_out_direction_sign = g_turn_side * drive_by_yaw_sign;
+        const bool target_angle_crossed = heading_target_has_been_crossed(
+            target_offset_deg, turn_out_direction_sign);
+        const bool settled_without_crossing = g_motion_heading_quiet &&
+            heading_is_settled(heading_error_deg, gyro_dps);
+        if (target_angle_crossed || settled_without_crossing) {
+            // TURN_OUT和PASS_SHORT保持同一个目标航向，过线后立即切阶段不会
+            // 产生目标角跳变，只是不再要求车头先停止旋转。
             enter_state(DB_PASS_SHORT);
         } else if (!g_motion_heading_quiet) {
             g_heading_settle_count = 0;
         }
         break;
+    }
 
     case DB_PASS_SHORT: {
         const float pass_end_distance =
@@ -1328,14 +1350,28 @@ void update_motion_state()
             break;
         }
 
-        if (g_motion_heading_quiet &&
-            heading_is_settled(heading_error_deg, gyro_dps)) {
-            // 固定回转角已经完成但仍看不到中线时，才进入反方向找线保护。
-            // 左绕回程向右找中线，右绕则向左找。
-            enter_state(DB_RECOVER_CENTER_LINE);
-            latest_error = visual_forced_error(true);
-        } else if (!g_motion_heading_quiet) {
-            g_heading_settle_count = 0;
+        {
+            const float return_direction_sign =
+                -g_turn_side * drive_by_yaw_sign;
+            const bool target_angle_crossed = heading_target_has_been_crossed(
+                target_offset_deg, return_direction_sign);
+            const bool settled_without_crossing = g_motion_heading_quiet &&
+                heading_is_settled(heading_error_deg, gyro_dps);
+            if (target_angle_crossed) {
+                if (g_visual_aim_line_valid) {
+                    complete_motion_handoff();
+                } else {
+                    enter_state(DB_RECOVER_CENTER_LINE);
+                    latest_error = visual_forced_error(true);
+                }
+            } else if (settled_without_crossing) {
+                // 尚未越线但已经稳定在容差内时仍保留旧兜底，避免控制器刚好
+                // 停在目标角前一点而无法继续。看不到中线则进入原找线保护。
+                enter_state(DB_RECOVER_CENTER_LINE);
+                latest_error = visual_forced_error(true);
+            } else if (!g_motion_heading_quiet) {
+                g_heading_settle_count = 0;
+            }
         }
         break;
 
