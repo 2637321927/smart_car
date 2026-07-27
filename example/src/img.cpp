@@ -65,15 +65,10 @@ void search_leftline()
     int x, y;
     bool found_flag = false;
 
-    // 1. 设置起点：中心 - begin_x
+    // 安全裁剪 y
     y = begin_y;
-    x = img_raw.width / 2 - begin_x;
-
-    // 安全裁剪
     if (y < 0) y = 0;
     if (y >= img_raw.height) y = img_raw.height - 1;
-    if (x < 0) x = 0;
-    if (x >= img_raw.width) x = img_raw.width - 1;
 
     auto safe_AT = [&](int px, int py) -> uint8_t {
         if (px < 0 || px >= img_raw.width) return 0;
@@ -82,39 +77,45 @@ void search_leftline()
     };
 
     // ==============================================
-    // 原来逻辑：向左找突变点
+    // 重试循环：从 center-begin_x 逐步缩到 center+begin_x
     // ==============================================
-
-    for (; x > 0; x--)
+    int step = 5;  // 每次缩进的像素步长
+    for (int offset = begin_x; offset >= -begin_x; offset -= step)
     {
-        if (safe_AT(x - 1, y) < thres)
+        x = img_raw.width / 2 - offset;
+        if (x < 0) x = 0;
+        if (x >= img_raw.width) x = img_raw.width - 1;
+
+        // 如果起点本身就在黑色区域（赛道外），跳过这次
+        if (safe_AT(x, y) < thres)
+            continue;
+
+        // 向左找白→黑突变点
+        int scan_x = x;
+        for (; scan_x > 0; scan_x--)
         {
+            if (safe_AT(scan_x - 1, y) < thres)
+            {
+                break;
+            }
+        }
+
+        // 判断是否找到有效边界点
+        if (safe_AT(scan_x, y) >= thres)
+        {
+            x = scan_x;
+            found_flag = true;
             break;
         }
     }
 
     // ==============================================
-    // 判断是否找到有效点
-    // ==============================================
-    if (safe_AT(x, y) >= thres)
-    {
-        found_flag = true;
-    }
-    else
-    {
-        found_flag = false;
-    }
-
-    // ==============================================
-    // 兜底逻辑：找不到 → 强制从【左边缘】开始巡线
+    // 兜底逻辑：全试完都没找到 → 强制从【左边缘】开始
     // ==============================================
     if (!found_flag)
     {
         x = 2;
-
-        //if (safe_AT(x, y) >= thres) {
-            found_flag = true;
-        //}
+        found_flag = true;
     }
 
     // ==============================================
@@ -148,15 +149,10 @@ void search_rightline()
     int x, y;
     bool found_flag = false;
 
-    // 1. 设置起点：中心 + begin_x
+    // 安全裁剪 y
     y = begin_y;
-    x = img_raw.width / 2 + begin_x;
-
-    // 安全裁剪
     if (y < 0) y = 0;
     if (y >= img_raw.height) y = img_raw.height - 1;
-    if (x < 0) x = 0;
-    if (x >= img_raw.width) x = img_raw.width - 1;
 
     auto safe_AT = [&](int px, int py) -> uint8_t {
         if (px < 0 || px >= img_raw.width) return 0;
@@ -165,26 +161,40 @@ void search_rightline()
     };
 
     // ==============================================
-    // 原来逻辑：向右找突变点
+    // 重试循环：从 center+begin_x 逐步缩到 center-begin_x
     // ==============================================
-    for (; x < img_raw.width - 1; x++)
+    int step = 5;  // 每次缩进的像素步长
+    for (int offset = begin_x; offset >= -begin_x; offset -= step)
     {
-        if (safe_AT(x + 1, y) < thres)
+        x = img_raw.width / 2 + offset;
+        if (x < 0) x = 0;
+        if (x >= img_raw.width) x = img_raw.width - 1;
+
+        // 如果起点本身就在黑色区域（赛道外），跳过这次
+        if (safe_AT(x, y) < thres)
+            continue;
+
+        // 向右找白→黑突变点
+        int scan_x = x;
+        for (; scan_x < img_raw.width - 1; scan_x++)
         {
+            if (safe_AT(scan_x + 1, y) < thres)
+            {
+                break;
+            }
+        }
+
+        // 判断是否找到有效边界点
+        if (safe_AT(scan_x, y) >= thres)
+        {
+            x = scan_x;
+            found_flag = true;
             break;
         }
     }
 
     // ==============================================
-    // 判断是否找到有效点
-    // ==============================================
-    if (safe_AT(x, y) >= thres)
-        found_flag = true;
-    else
-        found_flag = false;
-
-    // ==============================================
-    // 兜底逻辑：找不到 → 强制从【右边缘】开始巡线
+    // 兜底逻辑：全试完都没找到 → 强制从【右边缘】开始
     // ==============================================
     if (!found_flag)
     {
