@@ -628,7 +628,7 @@ if (sscanf(buf, "#dbExitRps=%f;", &ftmp) == 1)
 if (sscanf(buf, "#dbBrakePwm=%d;", &itmp) == 1)
 {
     if (itmp < 0) itmp = -itmp;
-    if (itmp > 5000) itmp = 5000;
+    if (itmp > 7000) itmp = 7000;
     drive_by_brake_pwm = itmp;
     printf("[VOFA] dbBrakePwm = %d\n", drive_by_brake_pwm);
 }

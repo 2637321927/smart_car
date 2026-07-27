@@ -120,7 +120,7 @@ async function main() {
       dbHMax: 200,
       dbHTol: 2,
       dbRecoverDps: 55,
-      dbBrakePwm: 5000,
+      dbBrakePwm: 6000,
       yawHoldRMax: 10,
       udp: 2,
       hwTest: 0,
@@ -193,7 +193,7 @@ async function main() {
     assert(appResponse.text.includes("key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.03"));
     assert(appResponse.text.includes("key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 46"));
     assert(appResponse.text.includes("key: 'dbHTol', label: '航向允许误差（退出+1°）', min: 0, max: 10, step: 0.1, unit: 'deg', defaultValue: 4.5"));
-    assert(appResponse.text.includes("key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 5000, step: 50, defaultValue: 5000"));
+    assert(appResponse.text.includes("key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 7000, step: 50, defaultValue: 6000, hardMax: true"));
     assert(appResponse.text.includes("key: 'hwTest', label: 'PWM1硬件测试', kind: 'toggle', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 5000, step: 50, defaultValue: 0, hardMax: true"));
     assert(appResponse.text.includes("#remote=0;"));
