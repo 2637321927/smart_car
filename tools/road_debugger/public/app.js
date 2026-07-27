@@ -158,6 +158,7 @@ const SCOPE_PRESETS = {
 };
 const SCOPE_CHANNELS_STORAGE_KEY = 'scopeChannels';
 const ROAD_COLUMN_STORAGE_KEY = 'roadColumnPercent';
+const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes';
 
 // 这里只列出小车端 main.cpp 当前真正支持的在线命令。连续量统一使用
 // “滑块 + 数值框”，离散模式使用开关或分段按钮，避免误发无效指令。
@@ -209,19 +210,19 @@ const TUNING_GROUPS = [
       { key: 'dbMode', label: '绕行方案', kind: 'segment', options: [[0, '角度三阶段'], [1, '边线500ms'], [2, '六次示教']], defaultValue: 0 },
       { key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0 },
       { key: 'dbNormalSpd', label: '正常巡线速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
-      { key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 12.5 },
+      { key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 11 },
       { key: 'dbLearnDist', label: '示教轨迹总路程', min: 0.1, max: 3, step: 0.01, unit: 'm', defaultValue: 0.96 },
       { key: 'dbLearnScale', label: '示教航向倍率', min: 0, max: 3, step: 0.05, defaultValue: 1 },
-      { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 25 },
-      { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 53 },
-      { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0 },
+      { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 51 },
+      { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 52 },
+      { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.03 },
       { key: 'dbSafeDist', label: '目标后安全余量', min: 0, max: 1, step: 0.01, unit: 'm', defaultValue: 0.3 },
       { key: 'dbRpsMps', label: 'RPS转m/s', min: 0.01, max: 0.1, step: 0.001, defaultValue: 0.047 },
-      { key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 45 },
+      { key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 46 },
       { key: 'dbViewWait', label: '观察等待上限', min: 0, max: 2000, step: 10, unit: 'ms', defaultValue: 120 },
-      { key: 'dbHKp', label: '航向外环P', min: 0, max: 20, step: 0.1, defaultValue: 12 },
+      { key: 'dbHKp', label: '航向外环P', min: 0, max: 60, step: 0.1, defaultValue: 31 },
       { key: 'dbHKd', label: '航向外环D', min: 0, max: 5, step: 0.05, defaultValue: 0.2 },
-      { key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 200 },
+      { key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 505 },
       { key: 'dbHTol', label: '航向允许误差（退出+1°）', min: 0, max: 10, step: 0.1, unit: 'deg', defaultValue: 4.5 },
       { key: 'dbRecoverDps', label: '丢线保护角速度', min: 0, max: 360, step: 1, unit: 'dps', defaultValue: 55 },
       { key: 'dbYawSign', label: '绕行航向符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: -1 },
@@ -250,11 +251,51 @@ const TUNING_GROUPS = [
       { key: 'is_udp_img', label: 'JPEG调试图像', kind: 'segment', options: [[0, '关闭'], [1, '鸟瞰'], [2, '原图']], defaultValue: 0 },
     ],
   },
+  {
+    title: '硬件测试',
+    subtitle: '仅限run=0：PWM1正向输出，PWM2固定失能',
+    controls: [
+      { key: 'hwTest', label: 'PWM1硬件测试', kind: 'toggle', defaultValue: 0 },
+      { key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 5000, step: 50, defaultValue: 0, hardMax: true },
+    ],
+  },
 ];
 
 const TUNING_CONFIGS = TUNING_GROUPS.flatMap((group) => group.controls);
 const TUNING_DEFAULTS = Object.fromEntries(
   TUNING_CONFIGS.map((config) => [config.key, config.defaultValue]));
+
+function loadStoredTuningMaxes() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(TUNING_MAXES_STORAGE_KEY) || '{}');
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    return Object.fromEntries(Object.entries(parsed)
+      .filter(([, value]) => Number.isFinite(Number(value))));
+  } catch (_error) {
+    return {};
+  }
+}
+
+const tuningSliderMaxes = loadStoredTuningMaxes();
+
+function tuningSliderMaximum(config, currentValue) {
+  const stored = Number(tuningSliderMaxes[config.key]);
+  const configured = Number(config.max);
+  if (config.hardMax) return configured;
+  const minimum = Number(config.min) + Number(config.step);
+  let maximum = Number.isFinite(stored) && stored >= minimum ? stored : configured;
+  const current = Number(currentValue);
+  if (Number.isFinite(current) && current > maximum) maximum = current;
+  return maximum;
+}
+
+function saveTuningSliderMaxes() {
+  try {
+    localStorage.setItem(TUNING_MAXES_STORAGE_KEY, JSON.stringify(tuningSliderMaxes));
+  } catch (_error) {
+    // 浏览器禁用本地存储时仍允许本次页面继续调参。
+  }
+}
 
 function loadStoredScopeChannels() {
   try {
@@ -457,7 +498,7 @@ function tuningStepDecimals(step) {
   return text.includes('.') ? text.length - text.indexOf('.') - 1 : 0;
 }
 
-function normalizeTuningValue(config, rawValue) {
+function normalizeTuningValue(config, rawValue, maximum = tuningSliderMaximum(config)) {
   let value = Number(rawValue);
   if (!Number.isFinite(value)) value = Number(config.defaultValue);
   if (config.kind === 'toggle') return value ? 1 : 0;
@@ -466,7 +507,7 @@ function normalizeTuningValue(config, rawValue) {
       ? value
       : Number(config.defaultValue);
   }
-  value = Math.max(config.min, Math.min(config.max, value));
+  value = Math.max(config.min, Math.min(maximum, value));
   const decimals = tuningStepDecimals(config.step);
   const steps = Math.round((value - config.min) / config.step);
   return Number((config.min + steps * config.step).toFixed(decimals));
@@ -486,14 +527,21 @@ function renderTuningControls() {
   const replaying = state.mode === 'replay';
 
   for (const [key, control] of tuningControlElements) {
-    const value = normalizeTuningValue(control.config, values[key]);
+    const maximum = tuningSliderMaximum(control.config, values[key]);
+    const value = normalizeTuningValue(control.config, values[key], maximum);
     const editing = document.activeElement === control.range ||
-      document.activeElement === control.number;
+      document.activeElement === control.number ||
+      document.activeElement === control.maxInput;
     control.root.classList.toggle('replay-locked', replaying);
 
     if (control.range) {
+      control.range.max = String(maximum);
+      control.number.max = String(maximum);
       control.range.disabled = replaying;
       control.number.disabled = replaying;
+      if (document.activeElement !== control.maxInput) {
+        control.maxInput.value = commandTuningValue(control.config, maximum);
+      }
       if (!editing) {
         control.range.value = String(value);
         control.number.value = String(value);
@@ -629,16 +677,31 @@ function buildTuningControls() {
         const number = document.createElement('input');
         number.type = 'number';
         number.min = String(config.min);
-        number.max = String(config.max);
+        const initialMaximum = tuningSliderMaximum(config);
+        number.max = String(initialMaximum);
         number.step = String(config.step);
         number.setAttribute('aria-label', `${config.label}数值`);
         const unit = document.createElement('span');
         unit.className = 'tuning-unit';
         unit.textContent = config.unit || '';
-        inputRow.append(range, number, unit);
+        range.max = String(initialMaximum);
+        const maxEditor = document.createElement('label');
+        maxEditor.className = 'tuning-max-editor';
+        const maxLabel = document.createElement('span');
+        maxLabel.textContent = '上限';
+        const maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.min = String(Number(config.min) + Number(config.step));
+        if (config.hardMax) maxInput.max = String(config.max);
+        maxInput.step = String(config.step);
+        maxInput.value = commandTuningValue(config, initialMaximum);
+        maxInput.setAttribute('aria-label', `${config.label}滑块上限`);
+        maxEditor.append(maxLabel, maxInput);
+        inputRow.append(range, number, unit, maxEditor);
         root.append(inputRow);
         control.range = range;
         control.number = number;
+        control.maxInput = maxInput;
 
         range.addEventListener('input', () => {
           number.value = range.value;
@@ -656,6 +719,36 @@ function buildTuningControls() {
         });
         number.addEventListener('keydown', (event) => {
           if (event.key === 'Enter') number.blur();
+        });
+        maxInput.addEventListener('input', () => {
+          const candidate = Number(maxInput.value);
+          const current = Number(number.value);
+          const minimum = Math.max(Number(config.min) + Number(config.step),
+            Number.isFinite(current) ? current : Number(config.min));
+          if (Number.isFinite(candidate) && candidate >= minimum) {
+            range.max = String(candidate);
+            number.max = String(candidate);
+          }
+        });
+        maxInput.addEventListener('change', () => {
+          const requested = Number(maxInput.value);
+          const current = Number(number.value);
+          const minimum = Math.max(Number(config.min) + Number(config.step),
+            Number.isFinite(current) ? current : Number(config.min));
+          let maximum = Number.isFinite(requested) ? requested : Number(config.max);
+          maximum = Math.max(minimum, maximum);
+          if (config.hardMax) maximum = Math.min(Number(config.max), maximum);
+          const steps = Math.ceil((maximum - Number(config.min)) / Number(config.step));
+          maximum = Number((Number(config.min) + steps * Number(config.step))
+            .toFixed(tuningStepDecimals(config.step)));
+          tuningSliderMaxes[config.key] = maximum;
+          saveTuningSliderMaxes();
+          range.max = String(maximum);
+          number.max = String(maximum);
+          maxInput.value = commandTuningValue(config, maximum);
+        });
+        maxInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') maxInput.blur();
         });
       }
 

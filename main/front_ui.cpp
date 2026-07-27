@@ -3,6 +3,7 @@
 #include "drive_by.hpp"
 #include "lq_all_demo.hpp"
 #include "gyro_yaw_rate_control.hpp"
+#include "hardware_test.hpp"
 #include "lq_display_tft18.hpp"
 
 #include <chrono>
@@ -158,6 +159,11 @@ void stop_car()
 
 void start_car()
 {
+    if (hardware_test_is_enabled()) {
+        printf("[硬件测试] 当前已开启，拒绝发车；请先关闭hwTest\n");
+        return;
+    }
+
     // 发车时不直接写死速度，而是使用当前屏幕上选中的速度策略。
     // 遥控松开包即使稍晚到达，也不能覆盖已经开始的正常行驶。
     // 航向保持属于停车态专用测试，发车前必须先清掉它的对称轮速目标。
@@ -341,6 +347,11 @@ bool front_ui_remote_set(int command)
         return true;
     }
 
+    if (hardware_test_is_enabled()) {
+        remote_command = FRONT_UI_REMOTE_STOP;
+        return false;
+    }
+
     // 遥控只属于停车模式。run=1时无条件拒绝，确保不会插入正常方向环。
     if (car_running) {
         remote_command = FRONT_UI_REMOTE_STOP;
@@ -422,6 +433,9 @@ void front_ui_remote_control_update()
 
 void front_ui_hold_stop()
 {
+    if (hardware_test_is_enabled()) {
+        return;
+    }
     // 停车状态下由速度/方向定时器持续调用，防止其他控制环写入非零输出。
     stop_car();
 }

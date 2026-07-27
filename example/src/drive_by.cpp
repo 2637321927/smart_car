@@ -20,7 +20,7 @@ using DriveByClock = std::chrono::steady_clock;
 // K0 开启但没有目标时按 35RPS 正常巡线；红色触发后只把“基准速度”降到
 // 12.5RPS，普通方向环仍会在该基准上叠加左右差速。
 volatile float drive_by_normal_speed_rps = 35.0f;
-volatile float drive_by_recognition_speed_rps = 12.5f;
+volatile float drive_by_recognition_speed_rps = 11.0f;
 volatile float drive_by_rps_to_mps = 0.047f;
 volatile int drive_by_mode = 0;
 volatile int drive_by_use_track_tangent = 0;
@@ -42,18 +42,18 @@ int drive_by_stop_ms = 200;            // 兼容旧识别测试，不再用于�
 int drive_by_infer_timeout_ms = 500;
 int drive_by_cooldown_ms = 1000;
 
-volatile float drive_by_turn_angle_deg = 25.0f;
-volatile float drive_by_return_bias_deg = 53.0f;
-volatile float drive_by_pass_distance_m = 0.0f;
+volatile float drive_by_turn_angle_deg = 51.0f;
+volatile float drive_by_return_bias_deg = 52.0f;
+volatile float drive_by_pass_distance_m = 0.03f;
 volatile float drive_by_target_after_margin_m = 0.30f;
-volatile float drive_by_view_angle_max_deg = 45.0f;
+volatile float drive_by_view_angle_max_deg = 46.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
-// 25度标准绕行转角下，KP=8可在起步时直接请求约200dps。
-// KD只保留少量角速度阻尼，避免原来的0.8在刚起转后过早压低目标角速度。
-volatile float drive_by_heading_kp = 12.0f;
+// 51度标准绕行转角下，KP=31会立即触发505dps外环限幅，保证起转阶段足够积极。
+// KD只保留少量角速度阻尼，避免刚起转后过早压低目标角速度。
+volatile float drive_by_heading_kp = 31.0f;
 volatile float drive_by_heading_kd = 0.2f;
 // 这是航向外环允许给出的目标角速度上限；接近目标角度时，KP/KD仍会主动降速。
-volatile float drive_by_heading_max_dps = 200.0f;
+volatile float drive_by_heading_max_dps = 505.0f;
 // 航向保持测试只允许较小差速，避免调试KP时误用正常巡线的较大gRMax。
 volatile float drive_by_heading_hold_max_turn_rps = 10.0f;
 volatile float drive_by_recovery_yaw_rate_dps = 55.0f;

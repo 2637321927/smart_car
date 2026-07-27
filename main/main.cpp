@@ -4,6 +4,7 @@
 #include "img.hpp"
 #include "circle.hpp"
 #include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
+#include "hardware_test.hpp"  // 停车态PWM1单通道硬件测试
 #include "drive_by.hpp"  // 目标板触发后的固定动作脚本
 #include "gyro_yaw_rate_control.hpp"  // MPU6050 角速度环 demo
 #include "odometry.hpp"              // 编码器里程计（环岛出环距离）
@@ -434,6 +435,25 @@ if (sscanf(buf, "#drive=%d;", &itmp) == 1)
     drive_by_set_enable(itmp != 0);
 }
 
+if (sscanf(buf, "#hwTest=%d;", &itmp) == 1)
+{
+    const bool requested_enable = itmp != 0;
+    const bool accepted = hardware_test_set_enabled(requested_enable);
+    printf("[硬件测试] 请求=%s 结果=%s 当前=%s PWM1=%d PWM2=0\n",
+           requested_enable ? "开启" : "关闭",
+           accepted ? "成功" : "已拒绝（需run=0且绕行/遥控/航向保持均关闭）",
+           hardware_test_is_enabled() ? "开启" : "关闭",
+           hardware_test_get_pwm());
+}
+
+if (sscanf(buf, "#hwPwm=%d;", &itmp) == 1)
+{
+    hardware_test_set_pwm(itmp);
+    printf("[硬件测试] PWM1正向占空比=%d（范围0-5000，PWM2=0，当前%s）\n",
+           hardware_test_get_pwm(),
+           hardware_test_is_enabled() ? "已输出" : "仅保存未输出");
+}
+
 // ==================== 目标板高速绕行在线调参 ====================
 // 识别阶段的 dbRecSpd 只改变基准速度，普通方向环仍会继续产生左右差速。
 if (sscanf(buf, "#dbMode=%d;", &itmp) == 1)
@@ -649,7 +669,8 @@ if (sscanf(buf, "#test_driveby=%d;", &itmp) == 1)
 
 if (sscanf(buf, "#yawHold=%d;", &itmp) == 1)
 {
-    const bool enabled = drive_by_heading_hold_set_enable(itmp != 0);
+    const bool enabled = !hardware_test_is_enabled() &&
+        drive_by_heading_hold_set_enable(itmp != 0);
     printf("[VOFA] 航向保持测试：请求=%s 结果=%s\n",
            itmp != 0 ? "开启" : "关闭",
            enabled ? "成功" : "已拒绝（需run=0、脚本/遥控空闲且陀螺仪数据新鲜）");
@@ -1036,7 +1057,8 @@ void tuning_telemetry_send()
         "\"dbTurnRps\":%d,\"dbForwardRps\":%d,\"dbExitRps\":%d,"
         "\"dbBrakePwm\":%d,\"dbBrakeRelease\":%.2f,"
         "\"dbBrakeTimeout\":%d,\"dbTestDist\":%.3f,"
-        "\"circle_exit\":%.3f,\"udp\":%d,\"vofa\":%d,\"is_udp_img\":%d"
+        "\"circle_exit\":%.3f,\"udp\":%d,\"vofa\":%d,\"is_udp_img\":%d,"
+        "\"hwTest\":%d,\"hwPwm\":%d"
         "}",
         safe_float(P), safe_float(I), safe_float(D),
         safe_float(set_speed_of_motor1_rps),
@@ -1074,7 +1096,8 @@ void tuning_telemetry_send()
         drive_by_brake_timeout_ms,
         safe_float(drive_by_test_target_distance_m),
         safe_float(circle_exit_distance_m),
-        udp_debug_mode, vofa_telemetry_enabled, is_udp_img);
+        udp_debug_mode, vofa_telemetry_enabled, is_udp_img,
+        hardware_test_is_enabled() ? 1 : 0, hardware_test_get_pwm());
 
     if (tuning_length > 0 &&
         tuning_length < static_cast<int>(sizeof(tuning_str))) {
@@ -1435,6 +1458,11 @@ gyro_yaw_rate_control_init();
     });
 
    speed_timer.set_seconds_ms(3, []() {
+     // 硬件测试是电机输出最高优先级。关闭时该函数只做一次快速判断；
+     // 开启时本周期只允许PWM1正向输出，普通速度环和其它停车态控制均跳过。
+     if (hardware_test_update()) {
+       return;
+     }
      // 正常发车优先级最高；run=0时航向保持和按住遥控按钮可单独使用速度环。
      if (front_ui_is_running()) {
        // 主动制动期间由drive_by直接输出受限反向PWM；返回false时，普通速度PID
@@ -1466,6 +1494,10 @@ gyro_yaw_rate_control_init();
     });
 
     dir_timer.set_seconds_ms(8, []() {
+      // 硬件测试期间禁止任何方向控制器改写左右轮目标或清空测试PWM。
+      if (hardware_test_is_enabled()) {
+        return;
+      }
       if (front_ui_is_running()) {
         // 普通状态只经过一次快速状态判断；仅绕行会执行缓存积分和航向闭环。
         drive_by_control_update();

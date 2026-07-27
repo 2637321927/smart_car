@@ -123,6 +123,8 @@ async function main() {
       dbBrakePwm: 5000,
       yawHoldRMax: 10,
       udp: 2,
+      hwTest: 0,
+      hwPwm: 0,
     })));
     await sendUdp(makeRoadPacket());
     await delay(120);
@@ -173,19 +175,27 @@ async function main() {
       'dbHKd', 'dbHMax', 'dbHTol', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
       'yawHoldRMax',
       'dbBrakeRelease', 'dbBrakeTimeout', 'dbTestDist', 'circle_exit', 'udp', 'vofa',
-      'is_udp_img',
+      'is_udp_img', 'hwTest', 'hwPwm',
     ].forEach((key) => assert(appResponse.text.includes(`key: '${key}'`), key));
     assert(appResponse.text.includes("[2, '六次示教']"));
     assert(appResponse.text.includes("label: '示教轨迹速度'"));
     assert(appResponse.text.includes("label: '示教轨迹总路程'"));
     assert(appResponse.text.includes("label: '示教航向倍率'"));
-    assert(appResponse.text.includes("key: 'dbHKp', label: '航向外环P', min: 0, max: 20, step: 0.1, defaultValue: 12"));
+    assert(appResponse.text.includes("key: 'dbHKp', label: '航向外环P', min: 0, max: 60, step: 0.1, defaultValue: 31"));
+    assert(appResponse.text.includes("key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 505"));
+    assert(appResponse.text.includes("const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes'"));
+    assert(appResponse.text.includes("maxEditor.className = 'tuning-max-editor'"));
+    assert(appResponse.text.includes("maxLabel.textContent = '上限'"));
     assert(appResponse.text.includes("key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0"));
-    assert(appResponse.text.includes("key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 12.5"));
-    assert(appResponse.text.includes("key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 53"));
-    assert(appResponse.text.includes("key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0"));
+    assert(appResponse.text.includes("key: 'dbRecSpd', label: '识别基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 11"));
+    assert(appResponse.text.includes("key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 51"));
+    assert(appResponse.text.includes("key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 52"));
+    assert(appResponse.text.includes("key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.03"));
+    assert(appResponse.text.includes("key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 46"));
     assert(appResponse.text.includes("key: 'dbHTol', label: '航向允许误差（退出+1°）', min: 0, max: 10, step: 0.1, unit: 'deg', defaultValue: 4.5"));
     assert(appResponse.text.includes("key: 'dbBrakePwm', label: '主动制动PWM', min: 0, max: 5000, step: 50, defaultValue: 5000"));
+    assert(appResponse.text.includes("key: 'hwTest', label: 'PWM1硬件测试', kind: 'toggle', defaultValue: 0"));
+    assert(appResponse.text.includes("key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 5000, step: 50, defaultValue: 0, hardMax: true"));
     assert(appResponse.text.includes("#remote=0;"));
     assert(appResponse.text.includes("#yawHold="));
     assert(appResponse.text.includes("#tangentDbg="));
@@ -226,6 +236,8 @@ async function main() {
     assert(recordingText.includes('"dbLearnScale":1.15'));
     assert(recordingText.includes('"dbHTol":2'));
     assert(recordingText.includes('"yawHoldRMax":10'));
+    assert(recordingText.includes('"hwTest":0'));
+    assert(recordingText.includes('"hwPwm":0'));
     console.log('Road debugger integration test passed');
   } finally {
     services.udpReceiver.close();

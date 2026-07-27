@@ -479,7 +479,7 @@ h2 { font-size: 1.05rem; }
 
 .tuning-controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   align-items: start;
   gap: 0 18px;
   padding: 4px 20px 20px;
@@ -544,9 +544,9 @@ h2 { font-size: 1.05rem; }
 
 .tuning-input-row {
   display: grid;
-  grid-template-columns: minmax(70px, 1fr) 72px 30px;
+  grid-template-columns: minmax(70px, 1fr) 68px 26px 82px;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
 }
 
 .tuning-input-row input[type="range"] {
@@ -579,6 +579,22 @@ h2 { font-size: 1.05rem; }
   font-size: 0.62rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tuning-max-editor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 0.58rem;
+  white-space: nowrap;
+}
+
+.tuning-input-row .tuning-max-editor input[type="number"] {
+  width: 56px;
+  min-width: 0;
+  padding-inline: 4px;
 }
 
 .tuning-segment {
