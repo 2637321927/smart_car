@@ -61,7 +61,7 @@ volatile float drive_by_heading_tolerance_deg = 4.5f;
 volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
 volatile float drive_by_yaw_sign = -1.0f;
-volatile int drive_by_brake_pwm = 7000;
+volatile int drive_by_brake_pwm = 9000;
 volatile float drive_by_brake_release_rps = 0.0f;
 volatile int drive_by_brake_confirm_count = 2;
 volatile int drive_by_brake_timeout_ms = 511;
@@ -82,10 +82,13 @@ constexpr int kFarDetectTop = 60;
 constexpr int kFarDetectBottom = 40;
 constexpr int kFarDetectLeft = 60;
 constexpr int kFarDetectRight = 60;
-// 远距离候选只用于提前减速。面积门槛过低时，赛道上的小块红色噪声也可能连续触发；
-// 从40提高到60，在保留远距离预警作用的同时，降低误触发概率。
-constexpr int kFarDetectMinArea = 60;
-constexpr int kFarDetectMinWidth = 8;
+// 录像统计表明，真实目标在正式触发前经常出现55~59像素的临界轮廓。
+// 这里仅放宽远距离预检测，正式红块确认仍保留110像素门槛以过滤误触发。
+constexpr int kFarDetectMinArea = 55;
+constexpr int kFarDetectMinWidth = 7;
+constexpr float kFarDetectMinAspectRatio = 1.2f;
+constexpr float kFarDetectMaxAspectRatio = 5.5f;
+constexpr int kFarDetectWindowSize = 3;
 constexpr int kFarDetectConfirmCount = 2;
 constexpr int kApproachTimeoutMs = 300;
 constexpr int kCandidateRetryCooldownMs = 300;
@@ -232,6 +235,9 @@ DriveByClock::time_point g_candidate_retry_after = DriveByClock::now();
 DriveByClock::time_point g_brake_start = DriveByClock::now();
 int g_detect_frame_counter = 0;
 int g_far_candidate_count = 0;
+bool g_far_candidate_window[kFarDetectWindowSize] = {};
+int g_far_candidate_window_index = 0;
+int g_far_candidate_window_count = 0;
 int g_heading_settle_count = 0;
 int g_brake_confirm_count = 0;
 int g_pending_result = 1;
@@ -499,6 +505,23 @@ void command_recognition_base_speed()
     pwm2_duty_rps = base_rps - differential;
 }
 
+void command_idle_candidate_speed()
+{
+    if (g_far_candidate_count > 0) {
+        // 第一票候选只要求普通速度闭环把基准降到识别速度，不允许提前输出反向PWM。
+        // 原巡线参数只在第一次命中时保存，第二票确认后继续由完整识别流程使用。
+        save_control_once();
+        command_recognition_base_speed();
+        return;
+    }
+
+    if (g_saved.valid) {
+        // 最近3次检测里已经没有候选票，说明单次红色很可能是噪声，立即恢复触发前巡线。
+        restore_control();
+    }
+    command_normal_base_speed();
+}
+
 void command_motion_wheels(float base_rps, float turn_rps)
 {
     // 绕行运动阶段由航向闭环独占左右轮目标，普通方向环此时不会再写输出。
@@ -588,6 +611,37 @@ void record_far_detection_performance(float used_ms)
     g_detection_performance_window_start = now;
 }
 
+void reset_far_candidate_window()
+{
+    std::fill(g_far_candidate_window,
+              g_far_candidate_window + kFarDetectWindowSize,
+              false);
+    g_far_candidate_window_index = 0;
+    g_far_candidate_window_count = 0;
+    g_far_candidate_count = 0;
+}
+
+bool update_far_candidate_window(bool found)
+{
+    // 候选确认改为“最近3次检测中至少命中2次”。这样目标面积在阈值附近
+    // 偶尔抖低一帧时不会把前一次有效结果完全丢掉，同时连续两次命中仍可立即触发。
+    g_far_candidate_window[g_far_candidate_window_index] = found;
+    g_far_candidate_window_index =
+        (g_far_candidate_window_index + 1) % kFarDetectWindowSize;
+    g_far_candidate_window_count = std::min(g_far_candidate_window_count + 1,
+                                            kFarDetectWindowSize);
+
+    g_far_candidate_count = 0;
+    for (int index = 0; index < g_far_candidate_window_count; ++index) {
+        if (g_far_candidate_window[index]) {
+            ++g_far_candidate_count;
+        }
+    }
+
+    return g_far_candidate_window_count >= kFarDetectConfirmCount &&
+           g_far_candidate_count >= kFarDetectConfirmCount;
+}
+
 FarRedCandidate detect_far_red_candidate(const cv::Mat& frame)
 {
     FarRedCandidate result;
@@ -631,7 +685,9 @@ FarRedCandidate detect_far_red_candidate(const cv::Mat& frame)
             continue;
         }
         const float aspect_ratio = (float)rect.width / (float)rect.height;
-        if (aspect_ratio < 1.3f || aspect_ratio > 5.0f || area <= best_candidate_area) {
+        if (aspect_ratio < kFarDetectMinAspectRatio ||
+            aspect_ratio > kFarDetectMaxAspectRatio ||
+            area <= best_candidate_area) {
             continue;
         }
 
@@ -1039,7 +1095,7 @@ void reset_runtime(bool restore_outputs)
     g_abort_reason = DB_ABORT_NONE;
     g_candidate_retry_after = DriveByClock::now();
     g_detect_frame_counter = 0;
-    g_far_candidate_count = 0;
+    reset_far_candidate_window();
     g_heading_settle_count = 0;
     g_pending_result = 1;
     g_turn_side = 0;
@@ -1085,7 +1141,7 @@ void finish_session(DriveByAbortReason reason)
     g_active_mode = 0;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
-    g_far_candidate_count = 0;
+    reset_far_candidate_window();
     g_debug.red_candidate = 0;
     g_debug.red_candidate_count = 0;
     g_debug.detection_stage = 0;
@@ -1213,7 +1269,7 @@ void cancel_false_candidate()
     g_candidate_retry_after = g_cooldown_start +
         std::chrono::milliseconds(kCandidateRetryCooldownMs);
     g_seen_lock = false;
-    g_far_candidate_count = 0;
+    reset_far_candidate_window();
     g_target_geometry_captured = false;
     g_track_reference_valid = false;
     g_inference_complete = false;
@@ -1423,7 +1479,7 @@ void complete_motion_handoff()
     g_active_mode = 0;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
-    g_far_candidate_count = 0;
+    reset_far_candidate_window();
     g_debug.red_candidate = 0;
     g_debug.red_candidate_count = 0;
     g_debug.detection_stage = 0;
@@ -1750,27 +1806,30 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
     red_contour_area = 0;
 
     if (DriveByClock::now() < g_candidate_retry_after) {
-        g_far_candidate_count = 0;
+        reset_far_candidate_window();
         g_debug.red_candidate_count = 0;
+        command_idle_candidate_speed();
         return;
     }
 
     if (g_seen_lock) {
-        g_far_candidate_count = 0;
+        reset_far_candidate_window();
         g_debug.red_candidate_count = 0;
+        command_idle_candidate_speed();
         if (!candidate.found && elapsed_ms(g_cooldown_start) >= drive_by_cooldown_ms) {
             g_seen_lock = false;
         }
         return;
     }
 
-    g_far_candidate_count = candidate.found
-        ? std::min(g_far_candidate_count + 1, kFarDetectConfirmCount)
-        : 0;
+    const bool candidate_confirmed =
+        update_far_candidate_window(candidate.found);
     g_debug.red_candidate_count = g_far_candidate_count;
-    if (g_far_candidate_count >= kFarDetectConfirmCount) {
+    if (candidate_confirmed) {
         start_approach_session(candidate);
+        return;
     }
+    command_idle_candidate_speed();
 }
 
 } // namespace
@@ -1824,7 +1883,8 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
     if (g_drive_by_busy) {
         update_busy_state(frame, ncnn);
     } else {
-        command_normal_base_speed();
+        // 默认每2帧才执行一次红块检测；未检测的中间帧也必须维持第一票候选的预减速。
+        command_idle_candidate_speed();
         update_idle_detection(frame, ncnn);
     }
 }

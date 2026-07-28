@@ -215,7 +215,7 @@ async function main() {
     assert(appResponse.text.includes("key: 'dbExitRps', label: '转入阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10"));
     assert(appResponse.text.includes("key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 46"));
     assert(appResponse.text.includes("key: 'dbHTol', label: '航向允许误差（退出+1°）', min: 0, max: 10, step: 0.1, unit: 'deg', defaultValue: 4.5"));
-    assert(appResponse.text.includes("key: 'dbBrakePwm', label: '主动制动反向PWM', min: 0, max: 9000, step: 50, defaultValue: 7000, hardMax: true"));
+    assert(appResponse.text.includes("key: 'dbBrakePwm', label: '主动制动反向PWM', min: 0, max: 9000, step: 50, defaultValue: 9000, hardMax: true"));
     assert(appResponse.text.includes("key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbBrakeTimeout', label: '制动超时', min: 1, max: 2000, step: 10, unit: 'ms', defaultValue: 511"));
     assert(appResponse.text.includes("key: 'hwTest', label: 'PWM1硬件测试', kind: 'toggle', defaultValue: 0"));
