@@ -59,6 +59,7 @@ const elements = {
   driveByTestButton: $('driveByTestButton'),
   driveEnableCommand: $('driveEnableCommand'),
   driveDisableCommand: $('driveDisableCommand'),
+  brakeTestCommand: $('brakeTestCommand'),
   headingHoldCommand: $('headingHoldCommand'),
   tangentDebugCommand: $('tangentDebugCommand'),
   remoteButtons: [...document.querySelectorAll('[data-remote]')],
@@ -106,6 +107,8 @@ const PARAMETER_LABELS = {
   drive_recognizing: '识别阶段',
   drive_motion: '绕行运动阶段',
   drive_test_mode: 'TEST绕行模式',
+  drive_brake_test_enabled: '持续刹车测试',
+  drive_brake_test_holding: '刹车测试零PWM保持',
   drive_brake_active: '主动制动中',
   drive_brake_pwm: '主动制动PWM',
   drive_brake_elapsed_ms: '主动制动耗时',
@@ -212,9 +215,9 @@ const TUNING_GROUPS = [
       { key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0 },
       { key: 'dbNormalSpd', label: '正常巡线前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
       { key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 9.5 },
-      { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 51 },
-      { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 24 },
-      { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0 },
+      { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 42 },
+      { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 0 },
+      { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.32 },
       { key: 'dbSafeDist', label: '目标后安全余量', min: 0, max: 1, step: 0.01, unit: 'm', defaultValue: 0 },
       { key: 'dbRpsMps', label: '轮速-车速换算系数', min: 0.01, max: 0.1, step: 0.001, unit: 'm/(s·RPS)', defaultValue: 0.047 },
       { key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 46 },
@@ -231,12 +234,12 @@ const TUNING_GROUPS = [
     title: '绕行速度与制动',
     subtitle: '运动阶段速度、制动与测试距离',
     controls: [
-      { key: 'dbTurnRps', label: '转出阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10 },
+      { key: 'dbTurnRps', label: '转出阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 0 },
       { key: 'dbForwardRps', label: '斜行阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10 },
       { key: 'dbExitRps', label: '转入阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10 },
-      { key: 'dbBrakePwm', label: '主动制动反向PWM', min: 0, max: 7000, step: 50, defaultValue: 7000, hardMax: true },
-      { key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 15 },
-      { key: 'dbBrakeTimeout', label: '制动超时', min: 1, max: 2000, step: 10, unit: 'ms', defaultValue: 301 },
+      { key: 'dbBrakePwm', label: '主动制动反向PWM', min: 0, max: 9000, step: 50, defaultValue: 7000, hardMax: true },
+      { key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 0 },
+      { key: 'dbBrakeTimeout', label: '制动超时', min: 1, max: 2000, step: 10, unit: 'ms', defaultValue: 511 },
       { key: 'dbTestDist', label: 'TEST目标距离', min: 0, max: 5, step: 0.01, unit: 'm', defaultValue: 0.5 },
     ],
   },
@@ -308,8 +311,8 @@ const TUNING_DESCRIPTIONS = Object.freeze({
   dbTurnRps: '三阶段TURN_OUT转出时的左右轮前进基准速度，单位RPS，不是角速度。最终轮速=该基准±角速度环差速；调大前进更快，但同样转角需要更强差速和更大空间。',
   dbForwardRps: 'PASS_SHORT斜行阶段的前进基准速度，单位RPS；边线定时方案也使用它。它决定斜行前进快慢，不直接决定车身旋转速度。',
   dbExitRps: '三阶段TURN_TO_TRACK转入及其额外找中线阶段的前进基准速度，单位RPS，不是角速度。调大回赛道更快，但丢线时轨迹更难控制。',
-  dbBrakePwm: '红块触发后的主动制动专用反向PWM幅值。调大刹车更强、减速距离更短，但冲击和反转风险更高；最高7000只在主动制动路径允许，正常行驶仍禁止。',
-  dbBrakeRelease: '主动制动释放阈值，单位RPS。左右轮连续两次都不高于它就退出反向PWM并恢复速度闭环；调大更早释放，调小刹得更慢、更彻底。',
+  dbBrakePwm: '红块触发后的主动制动专用反向PWM幅值。调大刹车更强、减速距离更短，但冲击和反转风险更高；最高9000只在主动制动路径允许，正常反向输出仍限制为4000。',
+  dbBrakeRelease: '主动制动释放阈值，单位RPS。左右轮连续两次都不高于它就退出反向PWM；普通绕行恢复速度闭环，刹车测试则保持零PWM等待识别结束。调大更早释放，调小刹得更慢、更彻底。',
   dbBrakeTimeout: '主动制动允许持续的最长时间，单位ms。超过后仍未满足释放条件会停车保护；调大不是增强制动力，只是允许反向PWM保持更久。',
   dbTestDist: '点击TEST绕行时模拟的“触发点到目标板”距离，单位m。它参与三阶段通过目标的距离判断；真实红块识别使用视觉估计，不使用该值。',
   udp: '控制发往Debugger（192.168.43.155）的调试数据：0关闭，1只发参数波形，2再加道路左/中/右三线。只控制发送，不影响小车在8082端口接收前端命令。',
@@ -1205,18 +1208,36 @@ function updateSummary() {
   const liveRunning = Boolean(Number(liveParams.run ?? 0));
   const driveBusy = Boolean(Number(liveParams.drive_busy ?? 0));
   const driveEnabled = Boolean(Number(liveParams.drive_enabled ?? 0));
+  const brakeTestEnabled = Boolean(Number(liveParams.drive_brake_test_enabled ?? 0));
+  const displayedBrakeTestEnabled = Boolean(Number(
+    params.drive_brake_test_enabled ?? liveParams.drive_brake_test_enabled ?? 0));
+  const displayedBrakeTestHolding = Boolean(Number(
+    params.drive_brake_test_holding ?? liveParams.drive_brake_test_holding ?? 0));
+  const displayedDriveBusy = Boolean(Number(
+    params.drive_busy ?? liveParams.drive_busy ?? 0));
   const yawHoldEnabled = Boolean(Number(liveParams.yaw_hold_enabled ?? 0));
   const tangentDebugEnabled = Boolean(Number(liveParams.tangent_debug_enabled ?? 0));
-  elements.driveByTestButton.disabled = !liveRunning || driveBusy || yawHoldEnabled;
+  elements.driveByTestButton.disabled = !liveRunning || driveBusy || yawHoldEnabled || brakeTestEnabled;
   elements.driveByTestButton.title = !liveRunning
     ? '车辆停车时不可启动绕行测试'
-    : (driveBusy ? '绕行脚本正在执行' : '启动绕行脚本测试');
+    : (brakeTestEnabled ? '请先关闭持续刹车测试' :
+      (driveBusy ? '绕行脚本正在执行' : '启动绕行脚本测试'));
   elements.driveEnableCommand.classList.toggle('selected-command', driveEnabled);
   elements.driveDisableCommand.classList.toggle('selected-command', !driveEnabled);
+  elements.brakeTestCommand.classList.toggle('selected-command', displayedBrakeTestEnabled);
+  elements.brakeTestCommand.textContent = !displayedBrakeTestEnabled
+    ? '刹车测试关闭'
+    : (displayedDriveBusy ? '刹车测试进行中' : '刹车测试待触发');
+  elements.brakeTestCommand.disabled = state.mode !== 'live' || !state.liveParams ||
+    (!brakeTestEnabled && (driveBusy || yawHoldEnabled || Boolean(Number(liveParams.hwTest ?? 0))));
+  elements.brakeTestCommand.title = displayedBrakeTestHolding
+    ? '已达到释放速度，当前保持零PWM等待识别完成'
+    : (displayedBrakeTestEnabled ? '点击关闭；停车后再次发车仍会继续测试' :
+      '使用真实红块检测和正常推理，完成后直接停车且不进入绕行');
   elements.headingHoldCommand.classList.toggle('selected-command', yawHoldEnabled);
   elements.headingHoldCommand.textContent = yawHoldEnabled ? '关闭航向保持' : '航向保持测试';
   elements.headingHoldCommand.disabled = state.mode !== 'live' ||
-    (!yawHoldEnabled && (liveRunning || driveBusy));
+    (!yawHoldEnabled && (liveRunning || driveBusy || brakeTestEnabled));
   elements.headingHoldCommand.title = yawHoldEnabled
     ? '关闭停车态航向保持测试'
     : '仅run=0、绕行空闲且陀螺仪正常时可开启';
@@ -1226,7 +1247,7 @@ function updateSummary() {
   elements.tangentDebugCommand.title = '开启时自动切到UDP+道路三线';
 
   const remoteEnabled = state.mode === 'live' && Boolean(state.liveParams) &&
-    !liveRunning && !yawHoldEnabled;
+    !liveRunning && !yawHoldEnabled && !brakeTestEnabled;
   elements.remoteButtons.forEach((button) => {
     button.disabled = !remoteEnabled;
     button.title = remoteEnabled ? '按住移动，松开立即停止' : '仅实时模式且run=0时可用';
@@ -1623,6 +1644,10 @@ function bindEvents() {
   elements.driveByRight.addEventListener('click', () => setDriveByTestDirection(2));
   elements.driveByTestButton.addEventListener('click', () => {
     sendCommand(`#test_driveby=${state.driveByTestDirection};`).catch((error) => showToast(error.message));
+  });
+  elements.brakeTestCommand.addEventListener('click', () => {
+    const enabled = Boolean(Number(state.liveParams?.drive_brake_test_enabled ?? 0));
+    sendCommand(`#test_brake=${enabled ? 0 : 1};`).catch((error) => showToast(error.message));
   });
   elements.headingHoldCommand.addEventListener('click', () => {
     toggleHeadingHold().catch((error) => showToast(error.message));

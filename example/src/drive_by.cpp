@@ -29,7 +29,7 @@ volatile int drive_by_use_track_tangent = 0;
 // 三阶段分别保留独立基准速度：转出使用drive_by_turn_speed_rps，斜行使用
 // drive_by_forward_speed_rps，转入使用drive_by_exit_speed_rps。它们都是左右
 // 差速叠加前的基准速度，不表示某一侧车轮的最终目标速度。
-int drive_by_turn_speed_rps = 10;
+int drive_by_turn_speed_rps = 0;
 int drive_by_turn_inner_speed_rps = 0; // 兼容旧脚本，新的角度闭环不直接使用。
 int drive_by_forward_speed_rps = 10;
 int drive_by_exit_speed_rps = 10;
@@ -41,13 +41,13 @@ int drive_by_stop_ms = 200;            // 兼容旧识别测试，不再用于�
 int drive_by_infer_timeout_ms = 500;
 int drive_by_cooldown_ms = 1000;
 
-volatile float drive_by_turn_angle_deg = 51.0f;
-volatile float drive_by_return_bias_deg = 24.0f;
-volatile float drive_by_pass_distance_m = 0.0f;
+volatile float drive_by_turn_angle_deg = 42.0f;
+volatile float drive_by_return_bias_deg = 0.0f;
+volatile float drive_by_pass_distance_m = 0.32f;
 volatile float drive_by_target_after_margin_m = 0.0f;
 volatile float drive_by_view_angle_max_deg = 46.0f;
 volatile int drive_by_view_wait_timeout_ms = 120;
-// 51度标准绕行转角下，KP=31会立即触发505dps外环限幅，保证起转阶段足够积极。
+// 42度标准绕行转角下，KP=31会立即触发505dps外环限幅，保证起转阶段足够积极。
 // KD只保留少量角速度阻尼，避免刚起转后过早压低目标角速度。
 volatile float drive_by_heading_kp = 31.0f;
 volatile float drive_by_heading_kd = 0.2f;
@@ -61,15 +61,15 @@ volatile float drive_by_rate_tolerance_dps = 20.0f;
 volatile int drive_by_gyro_stale_ms = 60;
 volatile float drive_by_yaw_sign = -1.0f;
 volatile int drive_by_brake_pwm = 7000;
-volatile float drive_by_brake_release_rps = 15.0f;
+volatile float drive_by_brake_release_rps = 0.0f;
 volatile int drive_by_brake_confirm_count = 2;
-volatile int drive_by_brake_timeout_ms = 301;
+volatile int drive_by_brake_timeout_ms = 511;
 volatile float drive_by_test_target_distance_m = 0.50f;
 
 namespace {
 
 constexpr int kInferFrames = 3;
-constexpr int kBrakePwmMax = 7000;
+constexpr int kBrakePwmMax = 9000;
 constexpr int kSaveSize = 96;
 constexpr int kDetectFrameInterval = 2;
 constexpr int kHeadingSettleCycles = 3;
@@ -178,6 +178,20 @@ struct RecognitionReport {
     float finish_right_rps = 0.0f;
 };
 
+struct BrakeTestReport {
+    int brake_pwm = 0;
+    int brake_elapsed_ms = 0;
+    float start_left_rps = 0.0f;
+    float start_right_rps = 0.0f;
+    float release_left_rps = 0.0f;
+    float release_right_rps = 0.0f;
+    float brake_distance_m = 0.0f;
+    int inference_result = 1;
+    bool inference_complete = false;
+    bool inference_succeeded = false;
+    DriveByAbortReason reason = DB_ABORT_NONE;
+};
+
 struct FarRedCandidate {
     bool found = false;
     int max_contour_area = 0;
@@ -195,8 +209,12 @@ volatile bool g_brake_active = false;
 volatile bool g_brake_completed = false;
 volatile bool g_inference_complete = false;
 volatile bool g_test_mode = false;
+volatile bool g_brake_test_enabled = false;
+volatile bool g_brake_test_active = false;
+volatile bool g_brake_test_holding = false;
 volatile bool g_stop_requested = false;
 volatile bool g_report_pending = false;
+volatile bool g_brake_test_report_pending = false;
 volatile bool g_visual_aim_line_valid = false;
 // 每次开始运动时锁存drive_by_mode。在线调参即使恰好发生在绕行中途，
 // 当前脚本也不会从一套状态机跳到另一套，新的模式从下一次绕行生效。
@@ -225,6 +243,12 @@ float g_target_track_heading_global_deg = 0.0f;
 float g_target_distance_at_trigger_m = 0.0f;
 SavedControl g_saved;
 RecognitionReport g_report;
+BrakeTestReport g_brake_test_report;
+float g_brake_test_start_left_rps = 0.0f;
+float g_brake_test_start_right_rps = 0.0f;
+float g_brake_test_release_left_rps = 0.0f;
+float g_brake_test_release_right_rps = 0.0f;
+int g_brake_test_elapsed_ms = 0;
 DriveByDebug g_debug = {};
 volatile bool g_heading_hold_enabled = false;
 volatile bool g_tangent_debug_enabled = false;
@@ -438,8 +462,22 @@ void command_normal_base_speed()
     set_speed_of_motor2_rps = drive_by_normal_speed_rps;
 }
 
+void command_zero_targets()
+{
+    set_speed_of_motor1_rps = 0.0f;
+    set_speed_of_motor2_rps = 0.0f;
+    pwm1_duty_rps = 0.0f;
+    pwm2_duty_rps = 0.0f;
+}
+
 void command_recognition_base_speed()
 {
+    if (g_brake_test_holding) {
+        // 刹车测试达到释放阈值后只等待识别结束，绝不能让相机线程重新写回9.5RPS。
+        command_zero_targets();
+        return;
+    }
+
     // 只改变基准速度，保留方向环刚刚给出的左右差速。
     // dir_timer 下一次运行时会继续用最新视觉误差更新该差速。
     float differential = (pwm1_duty_rps - pwm2_duty_rps) * 0.5f;
@@ -481,6 +519,13 @@ void start_active_brake()
     g_debug.brake_pwm = -std::min(kBrakePwmMax,
                                   std::abs((int)drive_by_brake_pwm));
     g_debug.brake_elapsed_ms = 0;
+    if (g_brake_test_active) {
+        g_brake_test_start_left_rps = encoder1_speed_avg;
+        g_brake_test_start_right_rps = encoder2_speed_avg;
+        g_brake_test_release_left_rps = encoder1_speed_avg;
+        g_brake_test_release_right_rps = encoder2_speed_avg;
+        g_brake_test_elapsed_ms = 0;
+    }
 }
 
 void clear_active_brake(bool clear_completed)
@@ -738,6 +783,41 @@ void print_recognition_report(int final_result)
     }
 }
 
+void print_brake_test_report()
+{
+    const BrakeTestReport report = g_brake_test_report;
+    g_brake_test_report_pending = false;
+    printf("[刹车测试] 制动PWM=%d，初始轮速=(%.2f, %.2f)RPS\n",
+           report.brake_pwm,
+           report.start_left_rps,
+           report.start_right_rps);
+    printf("[刹车测试] 释放轮速=(%.2f, %.2f)RPS，制动耗时=%d毫秒，制动距离=%.3f米\n",
+           report.release_left_rps,
+           report.release_right_rps,
+           report.brake_elapsed_ms,
+           report.brake_distance_m);
+    if (!report.inference_complete) {
+        printf("[刹车测试] 识别结果=未完成，结束原因=%s（%s）\n",
+               abort_reason_chinese_name(report.reason),
+               abort_reason_name(report.reason));
+    } else if (!report.inference_succeeded ||
+               report.reason == DB_ABORT_VIEW_TIMEOUT) {
+        if (report.reason == DB_ABORT_NONE) {
+            printf("[刹车测试] 识别结果=识别失败，结束原因=无有效分类结果（no_valid_result）\n");
+        } else {
+            printf("[刹车测试] 识别结果=识别失败，结束原因=%s（%s）\n",
+                   abort_reason_chinese_name(report.reason),
+                   abort_reason_name(report.reason));
+        }
+    } else {
+        printf("[刹车测试] 识别结果=%d（%s），结束原因=%s（%s）\n",
+               report.inference_result,
+               result_action_name(report.inference_result),
+               abort_reason_chinese_name(report.reason),
+               abort_reason_name(report.reason));
+    }
+}
+
 bool compute_heading_from_line(int center_index, float *heading_deg)
 {
     if (heading_deg == nullptr || rptsn_num < 3 || sample_dist <= 0.0f) {
@@ -910,6 +990,8 @@ void reset_runtime(bool restore_outputs)
     g_current_track_heading_valid = false;
     g_inference_complete = false;
     g_test_mode = false;
+    g_brake_test_active = false;
+    g_brake_test_holding = false;
     g_stop_requested = false;
     g_report_pending = false;
     g_visual_aim_line_valid = false;
@@ -928,6 +1010,7 @@ void reset_runtime(bool restore_outputs)
     g_phase_distance_m = 0.0f;
     g_report = RecognitionReport{};
     g_debug = DriveByDebug{};
+    g_debug.brake_test_holding = 0;
     g_debug.test_target_distance_m = drive_by_test_target_distance_m;
     have_target = false;
     red_block_rect = cv::Rect();
@@ -955,6 +1038,8 @@ void finish_session(DriveByAbortReason reason)
     g_drive_by_busy = false;
     g_inference_complete = false;
     g_test_mode = false;
+    g_brake_test_active = false;
+    g_brake_test_holding = false;
     g_stop_requested = false;
     g_report_pending = false;
     g_visual_aim_line_valid = false;
@@ -970,6 +1055,56 @@ void finish_session(DriveByAbortReason reason)
     print_recognition_report(item_flag);
 }
 
+void complete_brake_test_recognition(DriveByAbortReason reason)
+{
+    if (g_report.total_ms <= 0.0) {
+        g_report.total_ms = duration_ms(g_recognition_start, DriveByClock::now());
+        g_report.finish_left_rps = encoder1_speed_avg;
+        g_report.finish_right_rps = encoder2_speed_avg;
+    }
+    g_pending_result = item_flag;
+    g_inference_complete = true;
+    g_abort_reason = reason;
+    g_debug.abort_reason = (int)reason;
+    // 识别线程只提交完成状态。若制动尚未到阈值，3ms线程继续制动；
+    // 若已经在零PWM保持，3ms线程会在下一个周期完成统一停车。
+    enter_state(DB_WAIT_BRAKE);
+}
+
+void finish_brake_test_stop(DriveByAbortReason reason)
+{
+    BrakeTestReport report;
+    report.brake_pwm = -std::min(kBrakePwmMax,
+                                 std::abs((int)drive_by_brake_pwm));
+    report.brake_elapsed_ms = g_brake_test_elapsed_ms;
+    report.start_left_rps = g_brake_test_start_left_rps;
+    report.start_right_rps = g_brake_test_start_right_rps;
+    report.release_left_rps = g_brake_test_release_left_rps;
+    report.release_right_rps = g_brake_test_release_right_rps;
+    report.brake_distance_m = g_distance_since_trigger_m;
+    report.inference_result = item_flag;
+    report.inference_complete = g_inference_complete;
+    report.inference_succeeded = g_report.valid_count > 0;
+    report.reason = reason;
+
+    g_brake_test_active = false;
+    g_brake_test_holding = false;
+    g_brake_active = false;
+    g_drive_by_busy = false;
+    command_zero_targets();
+    motor_speed_force_pwm(0, 0);
+    front_ui_stop();
+
+    // front_ui_stop()会复位本次运行态。测试开关是持续配置，因此不在停车时清除；
+    // 报告也在停车之后重新排队，由相机线程低优先级打印。
+    g_brake_test_report = report;
+    g_brake_test_report_pending = true;
+    g_abort_reason = reason;
+    g_debug.abort_reason = (int)reason;
+    g_debug.brake_elapsed_ms = report.brake_elapsed_ms;
+    g_debug.brake_test_holding = 0;
+}
+
 void start_approach_session(const FarRedCandidate& candidate)
 {
     save_control_once();
@@ -981,6 +1116,8 @@ void start_approach_session(const FarRedCandidate& candidate)
     g_current_track_heading_valid = false;
     g_inference_complete = false;
     g_test_mode = false;
+    g_brake_test_active = g_brake_test_enabled;
+    g_brake_test_holding = false;
     g_stop_requested = false;
     g_report_pending = false;
     g_visual_aim_line_valid = false;
@@ -998,6 +1135,7 @@ void start_approach_session(const FarRedCandidate& candidate)
     g_report.trigger_left_rps = encoder1_speed_avg;
     g_report.trigger_right_rps = encoder2_speed_avg;
     g_debug = DriveByDebug{};
+    g_debug.brake_test_holding = 0;
     g_debug.test_target_distance_m = drive_by_test_target_distance_m;
     g_debug.red_candidate = 1;
     g_debug.red_candidate_count = g_far_candidate_count;
@@ -1042,10 +1180,13 @@ void cancel_false_candidate()
     g_track_reference_valid = false;
     g_inference_complete = false;
     g_test_mode = false;
+    g_brake_test_active = false;
+    g_brake_test_holding = false;
     g_stop_requested = false;
     g_visual_aim_line_valid = false;
     g_active_mode = 0;
     g_debug.test_mode = 0;
+    g_debug.brake_test_holding = 0;
     g_debug.red_candidate = 0;
     g_debug.red_candidate_count = 0;
     g_debug.detection_stage = 0;
@@ -1438,6 +1579,10 @@ void complete_inference()
 
     g_pending_result = item_flag;
     g_inference_complete = true;
+    if (g_brake_test_active) {
+        complete_brake_test_recognition(DB_ABORT_NONE);
+        return;
+    }
     if (!g_brake_completed || g_brake_active) {
         // 无论投票结果是否需要左右绕行，都先等主动制动完整结束。
         // 这样“直行”结果不会在仍高于释放速度时突然恢复35RPS。
@@ -1494,7 +1639,11 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
                 }
             } else if (elapsed_ms(g_state_start) >= drive_by_view_wait_timeout_ms) {
                 item_flag = 1;
-                finish_session(DB_ABORT_VIEW_TIMEOUT);
+                if (g_brake_test_active) {
+                    complete_brake_test_recognition(DB_ABORT_VIEW_TIMEOUT);
+                } else {
+                    finish_session(DB_ABORT_VIEW_TIMEOUT);
+                }
             }
         }
         break;
@@ -1506,7 +1655,11 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
             complete_inference();
         } else if (elapsed_ms(g_state_start) >= drive_by_infer_timeout_ms) {
             item_flag = 1;
-            finish_session(DB_ABORT_VIEW_TIMEOUT);
+            if (g_brake_test_active) {
+                complete_brake_test_recognition(DB_ABORT_VIEW_TIMEOUT);
+            } else {
+                finish_session(DB_ABORT_VIEW_TIMEOUT);
+            }
         }
         break;
 
@@ -1584,6 +1737,9 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
 void drive_by_init()
 {
     g_drive_by_enable = false;
+    g_brake_test_enabled = false;
+    g_brake_test_report = BrakeTestReport{};
+    g_brake_test_report_pending = false;
     g_heading_hold_enabled = false;
     g_heading_hold_quiet = false;
     g_tangent_debug_enabled = false;
@@ -1594,15 +1750,20 @@ void drive_by_init()
 
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
 {
+    if (g_brake_test_report_pending) {
+        print_brake_test_report();
+    }
     if (g_report_pending) {
         // 8ms控制回调已经恢复普通巡线，这里只补做不会影响转向的报告输出。
         g_report_pending = false;
         print_recognition_report(item_flag);
     }
 
-    // TEST模式不改变K0开关，因此即使目标板模式关闭，也必须允许已经启动的
-    // 测试脚本继续运行；只有普通识别流程受K0开关约束。
-    if (!g_drive_by_enable && !g_test_mode) {
+    // 刹车测试开关可以在停车时预先开启，但只有run=1才启动真实红块检测。
+    // 已经触发的测试和TEST绕行不受K0开关变化影响，必须继续完成安全停车。
+    const bool real_detection_enabled = g_drive_by_enable ||
+        (g_brake_test_enabled && front_ui_is_running());
+    if (!real_detection_enabled && !g_test_mode && !g_brake_test_active) {
         if (g_drive_by_busy) {
             reset_runtime(true);
         }
@@ -1659,17 +1820,30 @@ bool drive_by_speed_control_update()
         return true;
     }
 
+    if (g_brake_test_active && g_brake_test_holding) {
+        command_zero_targets();
+        motor_speed_force_pwm(0, 0);
+        g_debug.brake_test_holding = 1;
+        if (g_inference_complete) {
+            finish_brake_test_stop(g_abort_reason);
+        }
+        return true;
+    }
+
     if (!g_brake_active) {
         return false;
     }
 
     const int brake_elapsed_ms = (int)elapsed_ms(g_brake_start);
     g_debug.brake_elapsed_ms = brake_elapsed_ms;
+    if (g_brake_test_active) {
+        g_brake_test_elapsed_ms = brake_elapsed_ms;
+    }
 
     const float release_rps = std::fabs((float)drive_by_brake_release_rps);
     // 主动制动只用于车辆原本向前行驶的场景。这里按“正向速度已经降到阈值”
     // 判断，不再取绝对值；若大制动力让轮速轻微穿过零点，负速度仍会满足释放条件，
-    // 避免继续反向加速直到300ms超时。连续确认次数仍保留，用于过滤单次编码器毛刺。
+    // 避免继续反向加速直到制动超时。连续确认次数仍保留，用于过滤单次编码器毛刺。
     const bool both_wheels_slow =
         encoder1_speed_avg <= release_rps &&
         encoder2_speed_avg <= release_rps;
@@ -1682,6 +1856,18 @@ bool drive_by_speed_control_update()
         clear_active_brake(false);
         g_brake_completed = true;
         motor_speed_pid_reset();
+        if (g_brake_test_active) {
+            g_brake_test_holding = true;
+            g_brake_test_release_left_rps = encoder1_speed_avg;
+            g_brake_test_release_right_rps = encoder2_speed_avg;
+            g_debug.brake_test_holding = 1;
+            command_zero_targets();
+            motor_speed_force_pwm(0, 0);
+            if (g_inference_complete) {
+                finish_brake_test_stop(g_abort_reason);
+            }
+            return true;
+        }
         command_recognition_base_speed();
         if (g_inference_complete && g_state == DB_WAIT_BRAKE) {
             if (g_pending_result == 0 || g_pending_result == 2) {
@@ -1696,6 +1882,13 @@ bool drive_by_speed_control_update()
 
     if (brake_elapsed_ms >= std::max(1, (int)drive_by_brake_timeout_ms)) {
         const DriveByAbortReason reason = DB_ABORT_BRAKE_TIMEOUT;
+        if (g_brake_test_active) {
+            g_brake_test_release_left_rps = encoder1_speed_avg;
+            g_brake_test_release_right_rps = encoder2_speed_avg;
+            g_brake_test_elapsed_ms = brake_elapsed_ms;
+            finish_brake_test_stop(reason);
+            return true;
+        }
         clear_active_brake(true);
         motor_speed_pid_reset();
         g_abort_reason = reason;
@@ -1719,7 +1912,7 @@ bool drive_by_speed_control_update()
 bool drive_by_start_test(int simulated_item_flag,
                          float simulated_target_distance_m)
 {
-    if (!front_ui_is_running() || g_drive_by_busy ||
+    if (!front_ui_is_running() || g_drive_by_busy || g_brake_test_enabled ||
         (simulated_item_flag != 0 && simulated_item_flag != 2)) {
         return false;
     }
@@ -1930,7 +2123,7 @@ void drive_by_set_enable(bool enable)
         return;
     }
     g_drive_by_enable = enable;
-    if (!enable) {
+    if (!enable && !g_brake_test_enabled) {
         reset_runtime(true);
     }
     printf("[目标板识别] 状态=%s\n", enable ? "开启" : "关闭");
@@ -1939,6 +2132,44 @@ void drive_by_set_enable(bool enable)
 void drive_by_toggle_enable()
 {
     drive_by_set_enable(!g_drive_by_enable);
+}
+
+bool drive_by_brake_test_set_enable(bool enable)
+{
+    if (enable) {
+        if (g_brake_test_enabled) {
+            return true;
+        }
+        if (g_drive_by_busy || g_heading_hold_enabled ||
+            front_ui_remote_is_active()) {
+            return false;
+        }
+        g_brake_test_enabled = true;
+        if (front_ui_is_running()) {
+            // 测试可在车辆已经运行时开启，此时也要立即锁定35RPS；
+            // 停车时开启则由下一次front_ui_start()应用相同策略。
+            front_ui_select_speed(35);
+        }
+        return true;
+    }
+
+    g_brake_test_enabled = false;
+    if (g_brake_test_active) {
+        // 运行中关闭测试绝不能恢复触发前速度，直接走统一停车清零路径。
+        g_drive_by_busy = false;
+        front_ui_stop();
+    }
+    return true;
+}
+
+bool drive_by_brake_test_is_enabled()
+{
+    return g_brake_test_enabled;
+}
+
+bool drive_by_brake_test_is_holding()
+{
+    return g_brake_test_holding;
 }
 
 bool drive_by_cancel()
@@ -1994,7 +2225,7 @@ bool drive_by_heading_hold_set_enable(bool enable)
     if (g_heading_hold_enabled) {
         return true;
     }
-    if (front_ui_is_running() || g_drive_by_busy ||
+    if (front_ui_is_running() || g_drive_by_busy || g_brake_test_enabled ||
         front_ui_remote_is_active() ||
         !gyro_yaw_rate_control_is_ready() ||
         !gyro_yaw_rate_control_gyro_is_fresh()) {

@@ -35,6 +35,8 @@ extern bool ui_ready;
 extern volatile int tft_UI_switch;
 // 当前选中的速度策略目标值，单位 rps。
 int front_ui_selected_speed();
+// 选择已有速度策略；车辆正在运行时会立即应用新的基准速度。
+bool front_ui_select_speed(int speed_rps);
 extern volatile float AIM;
 extern std::chrono::steady_clock::time_point last_start_time;
 #endif

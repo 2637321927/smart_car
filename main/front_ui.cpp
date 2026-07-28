@@ -174,6 +174,9 @@ void start_car()
     motor_speed_pid_reset();
     pwm1.atim_pwm_set_duty(0);
     pwm2.atim_pwm_set_duty(0);
+    if (drive_by_brake_test_is_enabled()) {
+        select_speed_strategy(35);
+    }
     apply_speed_strategy();
     std::cout << "run\n";
 
@@ -274,7 +277,7 @@ void front_ui_poll()
     if (pressed_edge(key_prev, prev_state)) {
         drive_by_toggle_enable();
         if (drive_by_is_enabled()) {
-            // 目标板模式正常阶段固定35RPS，红色触发后由drive_by主动制动并降到10RPS。
+            // 目标板模式正常阶段固定35RPS，红色触发后由drive_by主动制动并降到9.5RPS。
             select_speed_strategy(35);
         }
         dirty = true;
@@ -284,7 +287,7 @@ void front_ui_poll()
     // K1：下一个速度策略。
     if (pressed_edge(key_next, next_state)) {
         // 目标板模式的正常速度固定35RPS，因此K0开启期间忽略K1切档。
-        if (!drive_by_is_enabled()) {
+        if (!drive_by_is_enabled() && !drive_by_brake_test_is_enabled()) {
             select_next_strategy();
         }
         dirty = true;
@@ -347,7 +350,7 @@ bool front_ui_remote_set(int command)
         return true;
     }
 
-    if (hardware_test_is_enabled()) {
+    if (hardware_test_is_enabled() || drive_by_brake_test_is_enabled()) {
         remote_command = FRONT_UI_REMOTE_STOP;
         return false;
     }
@@ -443,4 +446,12 @@ void front_ui_hold_stop()
 int front_ui_selected_speed()
 {
     return kStrategies[selected_strategy].speed_rps;
+}
+
+bool front_ui_select_speed(int speed_rps)
+{
+    const int previous_strategy = selected_strategy;
+    select_speed_strategy(speed_rps);
+    return selected_strategy != previous_strategy ||
+        kStrategies[selected_strategy].speed_rps == speed_rps;
 }

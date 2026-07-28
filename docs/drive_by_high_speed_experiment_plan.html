@@ -250,7 +250,7 @@
       <p class="subtitle">当前实现保留三阶段航向闭环，并增加可切换的边线瞄准实验方案；本文用于记录原理、默认参数和实车调试方法。</p>
       <div class="badges">
         <span class="badge">巡线目标 35RPS</span>
-        <span class="badge">绕行速度 10/10/10RPS</span>
+        <span class="badge">绕行速度 0/10/10RPS</span>
         <span class="badge">红色出现后才推理</span>
         <span class="badge">有限时域双积分</span>
       </div>
@@ -291,7 +291,7 @@
 → 三帧投票完成且制动完成后按dbMode进入所选绕行方案
 → dbMode=0：三阶段角度闭环，第二转完成后恢复巡线
 → dbMode=1：按dbSideMs定时瞄准边线，切回中线并在中线恢复后恢复巡线</code></pre>
-      <div class="notice">dbMode=0默认速度为10/10/10RPS；dbMode=1使用dbForwardRps=10RPS。实测换算采用1RPS≈0.047m/s。</div>
+      <div class="notice">dbMode=0默认速度为0/10/10RPS；dbMode=1使用dbForwardRps=10RPS。实测换算采用1RPS≈0.047m/s。</div>
     </section>
 
     <section id="overview">
@@ -337,6 +337,7 @@ K0 开启、没有红色
         <li>worker 无任务时通过条件变量休眠。</li>
       </ul>
       <div class="notice">当前代码采用同步三帧投票；若前两帧有效结果一致，会直接形成多数票并提前结束。识别期间保持9.5RPS基准和普通方向环。</div>
+      <p>持续刹车测试使用<code>#test_brake=1;</code>开启、<code>#test_brake=0;</code>关闭。它复用相同的远距候选、严格红块确认和投票流程；制动达到<code>dbBrakeRelease</code>后保持零PWM等待识别结束，随后直接停车，不进入绕行。开关会跨停车保持。主动制动专用PWM范围为0至9000，默认7000；普通反向输出仍限制为4000。</p>
     </section>
 
     <section id="geometry">
@@ -411,14 +412,14 @@ heading_error = desired_vehicle_yaw - vehicle_yaw</code></pre>
       <table>
         <thead><tr><th>阶段</th><th>相对所选参考航向的偏角</th><th>默认基准速度</th><th>目的</th></tr></thead>
         <tbody>
-          <tr><td><code>TURN_OUT</code></td><td>绕行侧51°</td><td>10RPS</td><td>向目标板侧方移出</td></tr>
-          <tr><td><code>PASS_SHORT</code></td><td>继续保持绕行侧51°</td><td>10RPS</td><td>沿斜向轨迹越过目标板</td></tr>
-          <tr><td><code>TURN_TO_TRACK</code></td><td>赛道内侧24°</td><td>10RPS</td><td>反向转向，让车头主动朝赛道内侧</td></tr>
+          <tr><td><code>TURN_OUT</code></td><td>绕行侧42°</td><td>0RPS</td><td>原地向目标板侧方转出</td></tr>
+          <tr><td><code>PASS_SHORT</code></td><td>继续保持绕行侧42°</td><td>10RPS</td><td>沿斜向轨迹越过目标板</td></tr>
+          <tr><td><code>TURN_TO_TRACK</code></td><td>回到赛道参考航向0°</td><td>10RPS</td><td>反向转向并交还巡线</td></tr>
           <tr><td><code>RECOVER_CENTER_LINE</code></td><td>左绕+55dps、右绕-55dps</td><td>10RPS</td><td>仅在第二转结束仍找不到中线时启用</td></tr>
           <tr><td>完成</td><td>普通视觉方向环接管</td><td>35RPS</td><td>中线可靠后立即恢复普通巡线</td></tr>
         </tbody>
       </table>
-      <p>左右绕行完全镜像。以左绕为例，第一次目标为左偏51°，第二次目标为右偏24°，因此第二次实际反转约75°。</p>
+      <p>左右绕行完全镜像。以左绕为例，第一次目标为左偏42°，第二次回到参考航向0°，因此第二次实际反转约42°。</p>
       <pre><code>desired_yaw = locked_track_heading + phase_offset
 target_yaw_rate = clamp(
     heading_kp * heading_error - heading_kd * gyro_dps,
@@ -435,17 +436,17 @@ target_yaw_rate = clamp(
 PASS_SHORT必须同时满足：
 phase_distance &gt;= dbPassDist
 distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
-      <p><code>dbPassDist</code>和<code>dbSafeDist</code>当前均默认0m。第一次转出时，车头积分沿转出方向达到或越过<code>dbTurnAngle</code>就进入斜行，不再要求角速度先降到接近0。第二次转回沿回程方向达到或越过<code>dbReturnBias</code>后检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。旧的稳定判定只作为未越线时的兜底。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
+      <p><code>dbPassDist</code>默认0.32m，<code>dbSafeDist</code>默认0m。第一次转出时，车头积分沿转出方向达到或越过<code>dbTurnAngle</code>就进入斜行，不再要求角速度先降到接近0。第二次转回沿回程方向达到或越过<code>dbReturnBias</code>后检查中线：可靠时直接恢复普通方向环；仍丢线时左绕给+dbRecoverDps、右绕给-dbRecoverDps，并保持dbExitRps直到中线恢复。旧的稳定判定只作为未越线时的兜底。默认dbRecoverDps=55dps；陀螺仪不可用时回退为±100视觉误差。交还时不恢复识别前保存的旧差速。</p>
       <h4>三阶段调参接口</h4>
       <table>
         <thead><tr><th>VOFA参数</th><th>作用</th><th>默认值</th></tr></thead>
         <tbody>
           <tr><td><code>dbUseTangent</code></td><td>是否使用目标位置处赛道切线作为绕行零度</td><td>0（关闭）</td></tr>
-          <tr><td><code>dbTurnAngle</code></td><td>第一次向绕行侧偏转的角度</td><td>51deg</td></tr>
-          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>24deg</td></tr>
-          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0m</td></tr>
+          <tr><td><code>dbTurnAngle</code></td><td>第一次向绕行侧偏转的角度</td><td>42deg</td></tr>
+          <tr><td><code>dbReturnBias</code></td><td>第二转结束后朝赛道内侧的预偏角</td><td>0deg</td></tr>
+          <tr><td><code>dbPassDist</code></td><td>PASS_SHORT阶段最短斜行距离</td><td>0.32m</td></tr>
           <tr><td><code>dbSafeDist</code></td><td>越过目标位置后的安全余量</td><td>0m</td></tr>
-          <tr><td><code>dbTurnRps</code></td><td>TURN_OUT基准速度</td><td>10RPS</td></tr>
+          <tr><td><code>dbTurnRps</code></td><td>TURN_OUT基准速度</td><td>0RPS</td></tr>
           <tr><td><code>dbForwardRps</code></td><td>PASS_SHORT基准速度</td><td>10RPS</td></tr>
           <tr><td><code>dbExitRps</code></td><td>TURN_TO_TRACK基准速度</td><td>10RPS</td></tr>
           <tr><td><code>dbHMax</code></td><td>航向外环允许输出的最大目标角速度</td><td>505dps</td></tr>
@@ -479,10 +480,10 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         <thead><tr><th>阶段</th><th>示例持续时间</th><th>基准速度</th><th>航向变化</th><th>距离说明</th></tr></thead>
         <tbody>
           <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后9.5RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
-          <tr><td>TURN_OUT</td><td>180ms</td><td>10RPS</td><td>0°→左51°</td><td>总里程继续累计</td></tr>
-          <tr><td>PASS_SHORT</td><td>400ms</td><td>10RPS</td><td>保持左51°</td><td>最短阶段距离和安全余量均为0m</td></tr>
-          <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左51°</td><td>总里程达到目标距离0.50m后允许第二转</td></tr>
-          <tr><td>TURN_TO_TRACK</td><td>180ms</td><td>10RPS</td><td>左51°→右24°</td><td>车头朝赛道内侧</td></tr>
+          <tr><td>TURN_OUT</td><td>180ms</td><td>0RPS</td><td>0°→左42°</td><td>原地完成第一次转向</td></tr>
+          <tr><td>PASS_SHORT</td><td>400ms</td><td>10RPS</td><td>保持左42°</td><td>阶段至少行驶0.32m且越过目标距离</td></tr>
+          <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左42°</td><td>总里程达到目标距离0.50m后允许第二转</td></tr>
+          <tr><td>TURN_TO_TRACK</td><td>180ms</td><td>10RPS</td><td>左42°→参考0°</td><td>回到赛道参考方向</td></tr>
           <tr><td>普通巡线</td><td>下一个8ms周期</td><td>35RPS</td><td>最新视觉误差接管</td><td>不再执行额外回正阶段</td></tr>
         </tbody>
       </table>
@@ -496,9 +497,9 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
       <table>
         <thead><tr><th>阶段</th><th>锁定的赛道切线</th><th>相对偏角</th><th>车辆目标航向</th></tr></thead>
         <tbody>
-          <tr><td>TURN_OUT</td><td>+16°</td><td>左偏51°</td><td>+67°</td></tr>
-          <tr><td>PASS_SHORT</td><td>+16°</td><td>左偏51°</td><td>保持+67°</td></tr>
-          <tr><td>TURN_TO_TRACK</td><td>+16°</td><td>右偏24°</td><td>-8°</td></tr>
+          <tr><td>TURN_OUT</td><td>+16°</td><td>左偏42°</td><td>+58°</td></tr>
+          <tr><td>PASS_SHORT</td><td>+16°</td><td>左偏42°</td><td>保持+58°</td></tr>
+          <tr><td>TURN_TO_TRACK</td><td>+16°</td><td>回到参考0°</td><td>+16°</td></tr>
           <tr><td>普通巡线</td><td>使用最新视觉中线</td><td>由视觉误差决定</td><td>跟随当前缓弯继续调整</td></tr>
         </tbody>
       </table>
@@ -562,7 +563,7 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
         </tbody>
       </table>
       <pre><code>2秒角度漂移 ≈ gyro_dps平均值 × 2</code></pre>
-      <p>随后手推小车完成约2秒的三阶段姿态：向左转约51°、保持该航向向前移动、再向右转到相对所选参考航向右偏约52°。导出 gyro CSV 并拍摄俯视视频，后续统一计算每段积分角度。</p>
+      <p>随后手推小车完成约2秒的三阶段姿态：向左转约42°、保持该航向向前移动、再向右转回所选参考航向0°。导出 gyro CSV 并拍摄俯视视频，后续统一计算每段积分角度。</p>
 
       <h3>9.4 实验四：红色首次检测距离与分类角度</h3>
       <div class="notice danger">当前代码投票得到左绕或右绕后会进入三阶段脚本。静态识别必须架空车轮，并随时准备按K2。</div>

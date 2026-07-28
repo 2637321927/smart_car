@@ -90,7 +90,7 @@ void close_circle_control(
 void motor_speed_pid_reset();
 // 在速度线程中直接写左右轮PWM，内部仍执行软件正反向限幅。
 void motor_speed_force_pwm(int motor1_pwm, int motor2_pwm);
-// Braking-only output: accepts negative PWM only and caps it at -7000.
+// Braking-only output: accepts negative PWM only and caps it at -9000.
 void motor_speed_force_brake_pwm(int motor1_pwm, int motor2_pwm);
 void vofa_receive(lq_udp_client &udp);
 

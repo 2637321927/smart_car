@@ -80,6 +80,7 @@ typedef struct
     int brake_active;
     int brake_pwm;
     int brake_elapsed_ms;
+    int brake_test_holding;
     float test_target_distance_m;
 } DriveByDebug;
 
@@ -112,6 +113,10 @@ bool drive_by_speed_control_update();
 // 跳过红块与NCNN，直接模拟左绕(0)或右绕(2)，用于单独调试运动脚本。
 bool drive_by_start_test(int simulated_item_flag,
                          float simulated_target_distance_m);
+// 持续刹车测试使用真实红块与推理流程；开关只在显式关闭或重启时清除。
+bool drive_by_brake_test_set_enable(bool enable);
+bool drive_by_brake_test_is_enabled();
+bool drive_by_brake_test_is_holding();
 bool drive_by_is_busy();
 bool drive_by_is_recognizing();
 bool drive_by_is_motion_phase();

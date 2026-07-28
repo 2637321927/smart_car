@@ -41,8 +41,9 @@ bool hardware_test_set_enabled(bool enabled)
         }
 
         // 测试模式只能从完全停车的空闲状态进入。这里拒绝而不是强行打断
-        // 其它功能，防止误触开关时改变正常行车或正在执行的绕行动作。
+        // 其它功能，防止误触开关时改变正常行车、刹车测试或正在执行的绕行动作。
         if (front_ui_is_running() || drive_by_is_busy() ||
+            drive_by_brake_test_is_enabled() ||
             front_ui_remote_is_active() ||
             drive_by_heading_hold_is_enabled()) {
             return false;

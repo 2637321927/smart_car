@@ -613,7 +613,7 @@ if (sscanf(buf, "#dbExitRps=%f;", &ftmp) == 1)
 if (sscanf(buf, "#dbBrakePwm=%d;", &itmp) == 1)
 {
     if (itmp < 0) itmp = -itmp;
-    if (itmp > 7000) itmp = 7000;
+    if (itmp > 9000) itmp = 9000;
     drive_by_brake_pwm = itmp;
     printf("[VOFA] dbBrakePwm = %d\n", drive_by_brake_pwm);
 }
@@ -650,6 +650,17 @@ if (sscanf(buf, "#test_driveby=%d;", &itmp) == 1)
            itmp == 0 ? "左绕" : (itmp == 2 ? "右绕" : "无效"),
            drive_by_test_target_distance_m,
            started ? "已启动" : "已拒绝（需先发车、方向为0/2且脚本空闲）");
+}
+
+if (sscanf(buf, "#test_brake=%d;", &itmp) == 1)
+{
+    const bool requested_enable = itmp != 0;
+    const bool accepted = (!requested_enable || !hardware_test_is_enabled()) &&
+        drive_by_brake_test_set_enable(requested_enable);
+    printf("[VOFA] 刹车测试：请求=%s 结果=%s 当前=%s\n",
+           requested_enable ? "开启" : "关闭",
+           accepted ? "成功" : "已拒绝（绕行/航向保持/遥控/硬件测试正在占用）",
+           drive_by_brake_test_is_enabled() ? "开启" : "关闭");
 }
 
 if (sscanf(buf, "#yawHold=%d;", &itmp) == 1)
@@ -1146,6 +1157,8 @@ void udp_send(void){
              "\"drive_recognizing\":%d,"
              "\"drive_motion\":%d,"
              "\"drive_test_mode\":%d,"
+             "\"drive_brake_test_enabled\":%d,"
+             "\"drive_brake_test_holding\":%d,"
              "\"drive_brake_active\":%d,"
              "\"drive_brake_pwm\":%d,"
              "\"drive_brake_elapsed_ms\":%d,"
@@ -1214,6 +1227,8 @@ void udp_send(void){
              drive_by_is_recognizing() ? 1 : 0,
              drive_by_is_motion_phase() ? 1 : 0,
              drive_debug.test_mode,
+             drive_by_brake_test_is_enabled() ? 1 : 0,
+             drive_by_brake_test_is_holding() ? 1 : 0,
              drive_debug.brake_active,
              drive_debug.brake_pwm,
              drive_debug.brake_elapsed_ms,
@@ -1447,7 +1462,7 @@ gyro_yaw_rate_control_init();
      // 正常发车优先级最高；run=0时航向保持和按住遥控按钮可单独使用速度环。
      if (front_ui_is_running()) {
        // 主动制动期间由drive_by直接输出受限反向PWM；返回false时，普通速度PID
-       // 在同一周期从已复位状态接管10RPS目标。
+       // 在同一周期从已复位状态接管识别阶段目标；刹车测试会继续独占零PWM。
        if (!drive_by_speed_control_update()) {
          test_enc_and_motor_rps();
        }
@@ -1485,7 +1500,7 @@ gyro_yaw_rate_control_init();
       }
       // K0只是目标板功能开关，不应该在没有目标时关闭正常方向环。
       // 识别阶段和边线方案复用普通方向环；两套航向闭环方案独占左右轮目标。
-      if (front_ui_is_running() &&
+      if (front_ui_is_running() && !drive_by_brake_test_is_holding() &&
           (!drive_by_is_busy() || drive_by_is_recognizing() ||
            drive_by_uses_visual_direction_control())) {
         PID_control_test(latest_error);
