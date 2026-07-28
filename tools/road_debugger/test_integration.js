@@ -245,7 +245,7 @@ async function main() {
     assert(appResponse.text.includes("key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 42"));
-    assert(appResponse.text.includes("key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 0"));
+    assert(appResponse.text.includes("key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 30"));
     assert(appResponse.text.includes("key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.32"));
     assert(appResponse.text.includes("key: 'dbSafeDist', label: '目标后安全余量', min: 0, max: 1, step: 0.01, unit: 'm', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbTurnRps', label: '转出阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 0"));

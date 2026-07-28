@@ -231,7 +231,7 @@ const TUNING_GROUPS = [
       { key: 'dbNormalSpd', label: '正常巡线前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
       { key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 0 },
       { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 42 },
-      { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 0 },
+      { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 30 },
       { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.32 },
       { key: 'dbSafeDist', label: '目标后安全余量', min: 0, max: 1, step: 0.01, unit: 'm', defaultValue: 0 },
       { key: 'dbRpsMps', label: '轮速-车速换算系数', min: 0.01, max: 0.1, step: 0.001, unit: 'm/(s·RPS)', defaultValue: 0.047 },

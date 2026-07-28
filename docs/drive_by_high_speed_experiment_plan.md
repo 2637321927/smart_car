@@ -344,7 +344,7 @@ distance_since_trigger >= target_distance + dbSafeDist  // 当前默认不追加
 |---|---|---:|
 | `dbUseTangent` | 是否使用目标位置处赛道切线作为绕行零度 | `0`（关闭） |
 | `dbTurnAngle` | 第一次向绕行侧偏转的角度 | `42deg` |
-| `dbReturnBias` | 第二转结束后朝赛道内侧的预偏角 | `0deg` |
+| `dbReturnBias` | 第二转结束后朝赛道内侧的预偏角 | `30deg` |
 | `dbPassDist` | `PASS_SHORT`阶段最短斜行距离 | `0.32m` |
 | `dbSafeDist` | 越过目标位置后的安全余量 | `0m` |
 | `dbTurnRps` | `TURN_OUT`基准速度 | `0RPS` |

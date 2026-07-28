@@ -43,7 +43,7 @@ int drive_by_infer_timeout_ms = 500;
 int drive_by_cooldown_ms = 1000;
 
 volatile float drive_by_turn_angle_deg = 42.0f;
-volatile float drive_by_return_bias_deg = 0.0f;
+volatile float drive_by_return_bias_deg = 30.0f;
 volatile float drive_by_pass_distance_m = 0.32f;
 volatile float drive_by_target_after_margin_m = 0.0f;
 volatile float drive_by_view_angle_max_deg = 46.0f;
