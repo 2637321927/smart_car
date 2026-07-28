@@ -43,9 +43,9 @@ constexpr auto kDebounceTime = std::chrono::milliseconds(180);
 constexpr auto kRefreshTime = std::chrono::milliseconds(500);
 
 // 遥控只用于run=0时把车低速开回起点。前进/后退固定15RPS，
-// 左右使用陀螺仪角速度内环原地转向，固定目标角速度120dps。
+// 左右使用陀螺仪角速度内环原地转向，固定目标角速度160dps。
 constexpr float kRemoteLinearSpeedRps = 15.0f;
-constexpr float kRemoteYawRateDps = 120.0f;
+constexpr float kRemoteYawRateDps = 160.0f;
 constexpr auto kRemoteCommandTimeout = std::chrono::milliseconds(250);
 
 // 引脚来自 Doc/301母版引脚资源分配.png：
@@ -424,7 +424,7 @@ void front_ui_remote_control_update()
     set_speed_of_motor1_rps = 0.0f;
     set_speed_of_motor2_rps = 0.0f;
     if (!gyro_yaw_rate_control_is_ready()) {
-        // 没有角速度反馈时无法保证120dps，宁可保持停止，也不盲目给固定差速。
+        // 没有角速度反馈时无法保证160dps，宁可保持停止，也不盲目给固定差速。
         pwm1_duty_rps = 0.0f;
         pwm2_duty_rps = 0.0f;
         return;

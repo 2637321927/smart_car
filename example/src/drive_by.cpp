@@ -72,8 +72,6 @@ namespace {
 constexpr int kInferFrames = 3;
 constexpr int kBrakePwmMax = 9000;
 constexpr int kSaveSize = 96;
-constexpr float kFarDetectOverrunMs = 8.0f;
-constexpr int kPerformanceWindowMs = 1000;
 constexpr int kHeadingSettleCycles = 3;
 constexpr float kHeadingDeadzoneHysteresisDeg = 1.0f;
 constexpr float kHeadingQuietRateDps = 5.0f;
@@ -221,8 +219,8 @@ volatile bool g_stop_requested = false;
 volatile bool g_report_pending = false;
 volatile bool g_brake_test_report_pending = false;
 volatile bool g_visual_aim_line_valid = false;
-// 每次开始运动时锁存drive_by_mode。在线调参即使恰好发生在绕行中途，
-// 当前脚本也不会从一套状态机跳到另一套，新的模式从下一次绕行生效。
+// 运行入口固定为三阶段脚本。保留该字段只为隔离尚未删除的历史边线实现，
+// 任何在线命令都不能把当前绕行切换到边线状态机。
 int g_active_mode = 0;
 DriveByState g_state = DB_IDLE;
 DriveByAbortReason g_abort_reason = DB_ABORT_NONE;
@@ -258,11 +256,6 @@ float g_brake_test_release_left_rps = 0.0f;
 float g_brake_test_release_right_rps = 0.0f;
 int g_brake_test_elapsed_ms = 0;
 DriveByDebug g_debug = {};
-DriveByDetectionPerformance g_detection_performance = {};
-DriveByClock::time_point g_detection_performance_window_start = DriveByClock::now();
-double g_detection_performance_sum_ms = 0.0;
-float g_detection_performance_window_max_ms = 0.0f;
-int g_detection_performance_sample_count = 0;
 volatile bool g_heading_hold_enabled = false;
 volatile bool g_tangent_debug_enabled = false;
 volatile bool g_heading_hold_quiet = false;
@@ -572,43 +565,14 @@ void clear_active_brake(bool clear_completed)
 
 bool should_detect_this_frame()
 {
-    // 只允许实验需要的1帧/2帧两档。即使收到异常VOFA值，也不会让检测永久停掉。
-    const int frame_interval = drive_by_detect_frame_interval <= 1 ? 1 : 2;
+    // 红块预检测固定每2帧一次，避免逐帧颜色检测拖慢正常道路处理。
+    const int frame_interval = 2;
     ++g_detect_frame_counter;
     if (g_detect_frame_counter < frame_interval) {
         return false;
     }
     g_detect_frame_counter = 0;
     return true;
-}
-
-void record_far_detection_performance(float used_ms)
-{
-    g_detection_performance.last_ms = used_ms;
-    g_detection_performance_sum_ms += used_ms;
-    g_detection_performance_window_max_ms = std::max(
-        g_detection_performance_window_max_ms, used_ms);
-    ++g_detection_performance_sample_count;
-    if (used_ms > kFarDetectOverrunMs) {
-        ++g_detection_performance.overrun_count;
-    }
-
-    const DriveByClock::time_point now = DriveByClock::now();
-    if (duration_ms(g_detection_performance_window_start, now) <
-        kPerformanceWindowMs) {
-        return;
-    }
-
-    if (g_detection_performance_sample_count > 0) {
-        g_detection_performance.average_ms = static_cast<float>(
-            g_detection_performance_sum_ms /
-            static_cast<double>(g_detection_performance_sample_count));
-        g_detection_performance.max_ms = g_detection_performance_window_max_ms;
-    }
-    g_detection_performance_sum_ms = 0.0;
-    g_detection_performance_window_max_ms = 0.0f;
-    g_detection_performance_sample_count = 0;
-    g_detection_performance_window_start = now;
 }
 
 void reset_far_candidate_window()
@@ -1066,6 +1030,7 @@ void enter_state(DriveByState next)
     g_heading_settle_count = 0;
     g_debug.phase_distance_m = 0.0f;
     g_debug.detection_stage = detection_stage(next);
+    g_debug.state_code = (int)next;
 }
 
 void reset_runtime(bool restore_outputs)
@@ -1141,6 +1106,7 @@ void finish_session(DriveByAbortReason reason)
     g_active_mode = 0;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
+    g_debug.state_code = (int)DB_IDLE;
     reset_far_candidate_window();
     g_debug.red_candidate = 0;
     g_debug.red_candidate_count = 0;
@@ -1265,6 +1231,7 @@ void cancel_false_candidate()
     gyro_yaw_rate_control_reset_controller();
     g_drive_by_busy = false;
     g_state = DB_IDLE;
+    g_debug.state_code = (int)DB_IDLE;
     g_cooldown_start = DriveByClock::now();
     g_candidate_retry_after = g_cooldown_start +
         std::chrono::milliseconds(kCandidateRetryCooldownMs);
@@ -1297,7 +1264,8 @@ void begin_motion_script(int result)
     g_turn_side = result == 0 ? 1 : -1;
     // 只保留0三阶段和1边线方案。即使旧配置残留值2，也安全回退到
     // 三阶段，不会被误映射成另一条仍在使用的路线。
-    g_active_mode = drive_by_mode == 1 ? 1 : 0;
+    // 边线绕行已经停用。保留旧实现仅用于历史回退，运行入口固定走三阶段脚本。
+    g_active_mode = 0;
 
     g_motion_heading_quiet = false;
 
@@ -1479,6 +1447,7 @@ void complete_motion_handoff()
     g_active_mode = 0;
     g_debug.test_mode = 0;
     g_state = DB_IDLE;
+    g_debug.state_code = (int)DB_IDLE;
     reset_far_candidate_window();
     g_debug.red_candidate = 0;
     g_debug.red_candidate_count = 0;
@@ -1793,10 +1762,7 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
         return;
     }
 
-    const DriveByClock::time_point detection_start = DriveByClock::now();
     const FarRedCandidate candidate = detect_far_red_candidate(frame);
-    record_far_detection_performance(static_cast<float>(
-        duration_ms(detection_start, DriveByClock::now())));
     g_debug.red_candidate = candidate.found ? 1 : 0;
     g_debug.red_contour_area = candidate.max_contour_area;
     g_debug.detection_stage = 0;
@@ -1845,11 +1811,6 @@ void drive_by_init()
     g_tangent_debug_enabled = false;
     drive_by_detect_frame_interval = 2;
     g_detect_frame_counter = 0;
-    g_detection_performance = DriveByDetectionPerformance{};
-    g_detection_performance_window_start = DriveByClock::now();
-    g_detection_performance_sum_ms = 0.0;
-    g_detection_performance_window_max_ms = 0.0f;
-    g_detection_performance_sample_count = 0;
     g_heading_hold_debug = DriveByHeadingHoldDebug{};
     g_tangent_debug = DriveByTangentDebug{};
     reset_runtime(false);
@@ -2305,11 +2266,6 @@ const char *drive_by_abort_reason_chinese()
 const DriveByDebug &drive_by_get_debug()
 {
     return g_debug;
-}
-
-const DriveByDetectionPerformance &drive_by_get_detection_performance()
-{
-    return g_detection_performance;
 }
 
 bool drive_by_heading_hold_set_enable(bool enable)

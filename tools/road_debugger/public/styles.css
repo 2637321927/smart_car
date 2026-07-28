@@ -74,7 +74,7 @@ h1, h2 { margin: 0; font-weight: 680; }
 h1 { font-size: clamp(1.65rem, 2vw, 2.35rem); letter-spacing: 0.04em; }
 h2 { font-size: 1.05rem; }
 
-.top-status, .line-stats, .trend-legend, .scope-heading-actions, .parameter-heading-tools {
+.top-status, .line-stats, .trend-legend, .scope-heading-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -102,6 +102,11 @@ h2 { font-size: 1.05rem; }
 
 .badge-online { color: var(--green); border-color: rgba(114, 224, 152, 0.36); }
 .badge-alert { color: var(--red); border-color: rgba(255, 100, 95, 0.4); }
+.metric-chip.metric-alert {
+  color: var(--red);
+  border-color: rgba(255, 100, 95, 0.4);
+  background: rgba(255, 100, 95, 0.08);
+}
 
 .dashboard {
   display: grid;
@@ -111,10 +116,8 @@ h2 { font-size: 1.05rem; }
     minmax(320px, 390px);
   grid-template-areas:
     "road scope command"
-    "timeline timeline timeline"
-    "camera camera camera"
-    "status detection params"
-    "tuning tuning tuning";
+    "tuning tuning tuning"
+    "timeline timeline timeline";
   gap: 18px;
   align-items: start;
 }
@@ -127,10 +130,6 @@ h2 { font-size: 1.05rem; }
 .scope-panel { grid-area: scope; }
 .command-panel { grid-area: command; }
 .timeline-row { grid-area: timeline; }
-.camera-performance-panel { grid-area: camera; }
-.status-panel { grid-area: status; }
-.detection-panel { grid-area: detection; }
-.params-panel { grid-area: params; }
 .tuning-panel { grid-area: tuning; }
 
 .panel {
@@ -203,6 +202,68 @@ h2 { font-size: 1.05rem; }
   border-radius: 3px;
   background: rgba(5, 14, 16, 0.82);
 }
+
+.detection-inset {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 180px;
+  padding: 8px;
+  border: 1px solid rgba(245, 223, 116, 0.4);
+  border-radius: 7px;
+  background: rgba(4, 14, 16, 0.92);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(5px);
+}
+
+.detection-inset-heading, .command-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.detection-inset-heading strong { font-size: 0.74rem; }
+.detection-inset .badge { padding: 3px 6px; font-size: 0.58rem; }
+.detection-inset #detectionCanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 7px;
+  border: 1px solid rgba(139, 190, 190, 0.16);
+  border-radius: 4px;
+  background: #071113;
+}
+.detection-inset-result {
+  display: grid;
+  gap: 3px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.58rem;
+}
+.detection-inset-result strong { color: var(--text); font-size: 0.68rem; }
+
+.camera-stats-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 10px 18px 14px;
+  border-top: 1px solid rgba(139, 190, 190, 0.12);
+}
+.camera-stats-strip[hidden] { display: none; }
+.camera-stats-strip span {
+  padding: 5px 8px;
+  border: 1px solid rgba(139, 190, 190, 0.12);
+  border-radius: 4px;
+  color: var(--muted);
+  background: rgba(4, 14, 16, 0.32);
+  font-size: 0.64rem;
+}
+.camera-stats-strip strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.camera-stats-strip strong.metric-alert { color: var(--red); }
 
 .scope-heading-actions { justify-content: flex-end; }
 .scope-chart {
@@ -361,7 +422,6 @@ h2 { font-size: 1.05rem; }
 }
 
 .input:focus, .filter-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(81, 216, 208, 0.1); }
-.filter-input { width: 96px; height: 30px; }
 .grow { flex: 1; }
 .port-input { width: 84px; }
 .speed-select { width: 78px; }
@@ -411,6 +471,13 @@ h2 { font-size: 1.05rem; }
   color: #071012;
   border-color: rgba(81, 216, 208, 0.85);
   background: var(--cyan);
+}
+.quick-commands .recognition-command {
+  grid-column: 1 / -1;
+  min-height: 48px;
+  font-size: 0.92rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
 }
 .quick-commands .debug-command.selected-command {
   color: #161203;
@@ -494,43 +561,6 @@ h2 { font-size: 1.05rem; }
 .command-panel .muted { padding: 0 18px 16px; }
 
 .muted { margin: 0; color: var(--muted); font-size: 0.72rem; }
-
-.parameter-list {
-  max-height: 530px;
-  overflow: auto;
-  scrollbar-color: rgba(81, 216, 208, 0.35) transparent;
-}
-
-.parameter-row {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
-  gap: 9px;
-  align-items: center;
-  padding: 8px 18px;
-  border-bottom: 1px solid rgba(139, 190, 190, 0.075);
-  font-size: 0.74rem;
-}
-
-.parameter-row.pinned { background: rgba(245, 223, 116, 0.045); }
-.parameter-label { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
-.parameter-row strong { color: var(--text); font-weight: 620; font-variant-numeric: tabular-nums; }
-.parameter-pin, .parameter-clear-pins {
-  border: 1px solid rgba(139, 190, 190, 0.2);
-  border-radius: 4px;
-  color: var(--muted);
-  background: rgba(4, 14, 16, 0.45);
-}
-.parameter-pin {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  font-size: 0.88rem;
-  line-height: 1;
-}
-.parameter-pin:hover, .parameter-clear-pins:hover { color: var(--yellow); border-color: rgba(245, 223, 116, 0.4); }
-.parameter-pin.pinned { color: var(--yellow); border-color: rgba(245, 223, 116, 0.35); background: rgba(245, 223, 116, 0.08); }
-.parameter-clear-pins { min-height: 30px; padding: 4px 8px; font-size: 0.68rem; }
-.parameter-clear-pins:disabled { cursor: not-allowed; opacity: 0.38; }
 
 .tuning-heading { align-items: center; }
 .tuning-heading-status {
@@ -808,12 +838,8 @@ h2 { font-size: 1.05rem; }
       "road"
       "scope"
       "command"
-      "timeline"
-      "camera"
-      "status"
-      "detection"
-      "params"
-      "tuning";
+      "tuning"
+      "timeline";
   }
   .scope-toolbar { grid-template-columns: 1fr; }
   .tuning-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -823,16 +849,20 @@ h2 { font-size: 1.05rem; }
   .shell { padding: 12px; }
   .topbar, .panel-heading { align-items: flex-start; flex-direction: column; }
   .scope-heading-actions { align-items: flex-start; justify-content: flex-start; }
-  .camera-performance-heading { align-items: flex-start; }
-  .detect-frequency-controls { justify-content: flex-start; }
   .dashboard { gap: 12px; }
   .road-stage { min-height: 280px; }
+  .detection-inset {
+    position: static;
+    width: auto;
+    margin: 0 12px 12px;
+  }
   .timeline-row { flex-wrap: wrap; }
   .timeline-row input[type="range"] { order: 5; flex-basis: 100%; }
   .record-row, .replay-row { flex-wrap: wrap; }
   .record-row .grow, .replay-row .grow { flex-basis: 100%; }
   .quick-commands { grid-template-columns: repeat(2, 1fr); }
   .quick-commands button, .quick-commands .run-command { grid-column: span 1; }
+  .quick-commands .recognition-command { grid-column: 1 / -1; }
   .drive-by-test-controls { grid-template-columns: 1fr; }
   .remote-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
   .tuning-heading-status { align-items: flex-start; justify-content: flex-start; }

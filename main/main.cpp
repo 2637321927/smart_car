@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
@@ -33,7 +34,7 @@ volatile  float pwm1_duty_rps=0.0f;
  volatile  float latest_error = 0;
  volatile int vision_y_guard_active = 0;
  volatile int vision_y_guard_turn_sign = 0;
- volatile float vision_y_guard_target_dps = 360.0f;
+ volatile float vision_y_guard_target_dps = 500.0f;
  volatile float vision_y_guard_aim_dy_px = 0.0f;
  volatile  float encoder_1=0;
  volatile  float encoder_2=0;
@@ -82,6 +83,7 @@ float filter_error(float new_error)
 namespace {
 
 constexpr float kVisionYGuardExitMarginPx = 20.0f;
+void camera_performance_set_enabled(bool enabled);
 
 void update_vision_y_guard(float raw_visual_error,
                            float aim_y,
@@ -149,6 +151,9 @@ lq_udp_client udp_client_img;
 // Debugger默认发送参数波形和道路三线；传统VOFA波形回传默认关闭，避免重复占用带宽。
 volatile int udp_debug_mode = 2;
 volatile int vofa_telemetry_enabled = 0;
+volatile int camera_performance_enabled = 0;
+volatile unsigned long long udp_control_send_fail_total = 0;
+volatile unsigned long long udp_road_send_fail_total = 0;
 cv::Mat bgr_bird;
 volatile int test_count = 0;
 enum AvoidState
@@ -485,6 +490,13 @@ if (sscanf(buf, "#udp=%d;", &itmp) == 1)
     printf("[VOFA] UDP调试模式=%d（%s）\n", udp_debug_mode, mode_name);
 }
 
+if (sscanf(buf, "#camStats=%d;", &itmp) == 1)
+{
+    camera_performance_set_enabled(itmp != 0);
+    printf("[VOFA] 相机状态统计=%s\n",
+           camera_performance_enabled ? "开启" : "关闭");
+}
+
 if (sscanf(buf, "#vofa=%d;", &itmp) == 1)
 {
     vofa_telemetry_enabled = itmp != 0 ? 1 : 0;
@@ -520,23 +532,13 @@ if (sscanf(buf, "#hwPwm=%d;", &itmp) == 1)
 // 识别阶段的 dbRecSpd 只改变基准速度，普通方向环仍会继续产生左右差速。
 if (sscanf(buf, "#dbMode=%d;", &itmp) == 1)
 {
-    if (itmp == 0 || itmp == 1) {
-        drive_by_mode = itmp;
-        const char *mode_name = drive_by_mode == 0
-            ? "三阶段角度闭环" : "边线定时瞄准";
-        printf("[VOFA] dbMode = %d（%s）\n",
-               drive_by_mode, mode_name);
-    } else {
-        printf("[VOFA] dbMode=%d已删除，仅支持0（三阶段）或1（边线）\n", itmp);
-    }
+    drive_by_mode = 0;
+    printf("[VOFA] dbMode已固定为0（三阶段脚本），边线模式已停用\n");
 }
 
 if (sscanf(buf, "#dbSideMs=%d;", &itmp) == 1)
 {
-    if (itmp < 500) itmp = 500;
-    if (itmp > 2000) itmp = 2000;
-    drive_by_side_follow_ms = itmp;
-    printf("[VOFA] dbSideMs = %d ms\n", drive_by_side_follow_ms);
+    printf("[VOFA] dbSideMs已停用，绕行固定使用三阶段脚本\n");
 }
 
 if (sscanf(buf, "#dbUseTangent=%d;", &itmp) == 1)
@@ -561,10 +563,8 @@ if (sscanf(buf, "#dbRecSpd=%f;", &ftmp) == 1)
 
 if (sscanf(buf, "#dbDetectEvery=%d;", &itmp) == 1)
 {
-    // 实验接口只保留每帧和每2帧两档，避免误输入0后永久关闭红块预检测。
-    drive_by_detect_frame_interval = itmp <= 1 ? 1 : 2;
-    printf("[VOFA] 红块预检测频率=每%d帧一次\n",
-           drive_by_detect_frame_interval);
+    drive_by_detect_frame_interval = 2;
+    printf("[VOFA] 红块预检测已固定为每2帧一次\n");
 }
 
 if (sscanf(buf, "#dbTurnAngle=%f;", &ftmp) == 1)
@@ -783,13 +783,12 @@ if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
 
 // ==================== 角速度环在线调参 ====================
 // 推荐调参顺序：
-// 1. #gyro=0;      请求使用原来的视觉 PD。
-// 2. #gyro=1;      请求使用角速度反馈；实际是否进入 GYRO_RATE 看 MPU6050 ready。
-// 3. #gSign=-1;    如果手动右转时 gyro_z 正负反了，改它。
-// 4. #tSign=-1;    如果一闭环就越修越偏，改它。
-// 5. 先调 #gIP，再慢慢加 #gII。新手阶段 #gII 可以先设 0。
-// 6. #gTMax=160;   限制外环最大目标角速度，等价 #gyro_target_max_dps=160;
-// 7. #gRMax=15;    限制内环最大差速输出，等价 #gyro_turn_max_rps=15;
+// 1. 角速度反馈固定开启；旧#gyro命令只报告固定状态，不再切换视觉PD。
+// 2. #gSign=-1;    如果手动右转时 gyro_z 正负反了，改它。
+// 3. #tSign=-1;    如果一闭环就越修越偏，改它。
+// 4. 先调 #gIP，再慢慢加 #gII。新手阶段 #gII 可以先设 0。
+// 5. #gTMax=160;   限制外环最大目标角速度，等价 #gyro_target_max_dps=160;
+// 6. #gRMax=15;    限制内环最大差速输出，等价 #gyro_turn_max_rps=15;
 if (sscanf(buf, "#run=%f;", &ftmp) == 1)
 {
     front_ui_set_running(ftmp != 0.0f);
@@ -805,12 +804,10 @@ if (sscanf(buf, "#remote=%d;", &itmp) == 1)
 
 if (sscanf(buf, "#gyro=%f;", &ftmp) == 1)
 {
-    gyro_yaw_rate_feedback_enabled = (ftmp != 0.0f) ? 1 : 0;
+    gyro_yaw_rate_feedback_enabled = 1;
     gyro_yaw_rate_control_reset();
-    printf("[VOFA] gyro_yaw_rate_feedback_enabled = %d, ready=%d, requested_mode=%s\n",
-           gyro_yaw_rate_feedback_enabled,
-           gyro_yaw_rate_control_is_ready() ? 1 : 0,
-           gyro_yaw_rate_feedback_enabled ? "GYRO_RATE" : "VISUAL_PD");
+    printf("[VOFA] 角速度反馈已固定开启，ready=%d\n",
+           gyro_yaw_rate_control_is_ready() ? 1 : 0);
 }
 
 if (sscanf(buf, "#gDbg=%f;", &ftmp) == 1)
@@ -877,7 +874,7 @@ if (sscanf(buf, "#gRMax=%f;", &ftmp) == 1 ||
 if (sscanf(buf, "#yGuardDps=%f;", &ftmp) == 1)
 {
     if (ftmp < 0.0f) ftmp = -ftmp;
-    if (ftmp > 500.0f) ftmp = 500.0f;
+    if (ftmp > 700.0f) ftmp = 700.0f;
     vision_y_guard_target_dps = ftmp;
     if (vision_y_guard_target_dps <= 0.0f) {
         vision_y_guard_active = 0;
@@ -958,7 +955,13 @@ namespace {
 constexpr int kRoadTelemetryMaxPoints = 64;
 // RDL1 v1原头部为52字节。新增的4字节切线锚点位于尾部，服务端仍接受旧52字节包。
 constexpr uint16_t kRoadTelemetryHeaderSize = 56;
-constexpr int kRoadTelemetryMinIntervalMs = 12;
+constexpr int kRoadTelemetryMinIntervalMs = 20;
+constexpr uint8_t kControlTelemetryVersion = 1;
+constexpr uint8_t kControlTelemetryHeaderSize = 16;
+constexpr int kControlTelemetryIntCount = 16;
+constexpr int kControlTelemetryFloatCount = 33;
+constexpr int kControlTelemetryPacketSize = kControlTelemetryHeaderSize +
+    kControlTelemetryIntCount * 4 + kControlTelemetryFloatCount * 4;
 // 可调参数变化远慢于控制波形。单独低频发送参数快照，既能让前端和录像
 // 精确还原调参状态，也不会继续膨胀已经较大的 12ms 动态 JSON 数据包。
 constexpr int kTuningTelemetryIntervalMs = 250;
@@ -981,8 +984,22 @@ float g_camera_performance_window_max_ms = 0.0f;
 int g_camera_performance_frame_count = 0;
 bool g_camera_performance_started = false;
 
+void camera_performance_set_enabled(bool enabled)
+{
+    camera_performance_enabled = enabled ? 1 : 0;
+    g_camera_performance = CameraPerformanceSnapshot{};
+    g_camera_performance_window_start = steady_clock::now();
+    g_camera_performance_sum_ms = 0.0;
+    g_camera_performance_window_max_ms = 0.0f;
+    g_camera_performance_frame_count = 0;
+    g_camera_performance_started = false;
+}
+
 void record_camera_frame_performance(steady_clock::time_point frame_start)
 {
+    if (camera_performance_enabled == 0) {
+        return;
+    }
     const steady_clock::time_point now = steady_clock::now();
     const float used_ms = static_cast<float>(
         duration<double, std::milli>(now - frame_start).count());
@@ -1039,6 +1056,19 @@ void telemetry_write_u32(uint8_t *&cursor, uint32_t value)
     *cursor++ = static_cast<uint8_t>((value >> 8) & 0xff);
     *cursor++ = static_cast<uint8_t>((value >> 16) & 0xff);
     *cursor++ = static_cast<uint8_t>((value >> 24) & 0xff);
+}
+
+void telemetry_write_i32(uint8_t *&cursor, int32_t value)
+{
+    telemetry_write_u32(cursor, static_cast<uint32_t>(value));
+}
+
+void telemetry_write_f32(uint8_t *&cursor, float value)
+{
+    uint32_t bits = 0;
+    const float safe_value = safe_float(value);
+    std::memcpy(&bits, &safe_value, sizeof(bits));
+    telemetry_write_u32(cursor, bits);
 }
 
 int telemetry_point_count(int source_count)
@@ -1149,7 +1179,10 @@ void road_telemetry_send()
     telemetry_write_line(cursor, rptsn, rptsn_num, center_count);
     telemetry_write_line(cursor, rpts1s, rpts1s_num, right_count);
 
-    udp_client_debugger.udp_send(packet, static_cast<size_t>(cursor - packet));
+    if (udp_client_debugger.udp_send(
+            packet, static_cast<size_t>(cursor - packet)) < 0) {
+        ++udp_road_send_fail_total;
+    }
 }
 
 void tuning_telemetry_send()
@@ -1168,20 +1201,20 @@ void tuning_telemetry_send()
     last_sent = now;
 
     char tuning_str[2048];
-    const int tuning_length = snprintf(
+    int tuning_length = snprintf(
         tuning_str,
         sizeof(tuning_str),
         "{"
         "\"packet_type\":\"tuning\","
-        "\"P\":%.3f,\"I\":%.3f,\"D\":%.3f,\"spd\":%.2f,"
+        "\"P\":%.3f,\"I\":%.3f,\"D\":%.3f,"
         "\"dirP\":%.4f,\"dirD\":%.4f,\"AIM\":%.3f,"
         "\"spd_slow_ratio\":%d,\"begin_x\":%d,"
-        "\"gyro\":%d,\"gDbg\":%d,\"gTar\":%.2f,"
+        "\"gDbg\":%d,\"gTar\":%.2f,"
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"yGuardDps\":%.2f,"
         "\"gSign\":%.1f,\"tSign\":%.1f,"
-        "\"dbMode\":%d,\"dbUseTangent\":%d,\"dbSideMs\":%d,"
-        "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,\"dbDetectEvery\":%d,"
+        "\"dbUseTangent\":%d,"
+        "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
@@ -1193,13 +1226,13 @@ void tuning_telemetry_send()
         "\"dbBrakePwm\":%d,\"dbBrakeRelease\":%.2f,"
         "\"dbBrakeTimeout\":%d,\"dbTestDist\":%.3f,"
         "\"circle_exit\":%.3f,\"udp\":%d,\"vofa\":%d,\"is_udp_img\":%d,"
-        "\"hwTest\":%d,\"hwPwm\":%d"
-        "}",
+        "\"hwTest\":%d,\"hwPwm\":%d,"
+        "\"camStats\":%d,"
+        "\"udp_control_send_fail_total\":%llu,"
+        "\"udp_road_send_fail_total\":%llu",
         safe_float(P), safe_float(I), safe_float(D),
-        safe_float(set_speed_of_motor1_rps),
         safe_float(dir_P), safe_float(dir_D), safe_float(AIM),
         spd_slow_ratio, begin_x,
-        gyro_yaw_rate_feedback_enabled,
         gyro_manual_target_enabled,
         safe_float(gyro_manual_target_dps),
         safe_float(gyro_outer_kp), safe_float(gyro_outer_kd),
@@ -1207,10 +1240,9 @@ void tuning_telemetry_send()
         safe_float(gyro_target_max_dps), safe_float(gyro_turn_max_rps),
         safe_float(vision_y_guard_target_dps),
         safe_float(gyro_z_sign), safe_float(gyro_turn_sign),
-        drive_by_mode, drive_by_use_track_tangent, drive_by_side_follow_ms,
+        drive_by_use_track_tangent,
         safe_float(drive_by_normal_speed_rps),
         safe_float(drive_by_recognition_speed_rps),
-        drive_by_detect_frame_interval,
         safe_float(drive_by_turn_angle_deg),
         safe_float(drive_by_return_bias_deg),
         safe_float(drive_by_pass_distance_m),
@@ -1231,25 +1263,188 @@ void tuning_telemetry_send()
         safe_float(drive_by_test_target_distance_m),
         safe_float(circle_exit_distance_m),
         udp_debug_mode, vofa_telemetry_enabled, is_udp_img,
-        hardware_test_is_enabled() ? 1 : 0, hardware_test_get_pwm());
+        hardware_test_is_enabled() ? 1 : 0, hardware_test_get_pwm(),
+        camera_performance_enabled,
+        (unsigned long long)udp_control_send_fail_total,
+        (unsigned long long)udp_road_send_fail_total);
 
     if (tuning_length > 0 &&
         tuning_length < static_cast<int>(sizeof(tuning_str))) {
-        udp_client_debugger.udp_send(
-            tuning_str, static_cast<size_t>(tuning_length));
+        tuning_length += snprintf(
+            tuning_str + tuning_length,
+            sizeof(tuning_str) - static_cast<size_t>(tuning_length),
+            "}");
+    }
+
+    if (tuning_length > 0 &&
+        tuning_length < static_cast<int>(sizeof(tuning_str))) {
+        if (udp_client_debugger.udp_send(
+                tuning_str, static_cast<size_t>(tuning_length)) < 0) {
+            ++udp_control_send_fail_total;
+        }
+    }
+
+    // 相机统计默认关闭。开启时使用独立的小型低频包，避免把完整调参快照
+    // 推过1000字节目标；PC端会把camera增量合并到最近一次调参快照。
+    if (camera_performance_enabled != 0) {
+        char camera_str[256];
+        const int camera_length = snprintf(
+            camera_str,
+            sizeof(camera_str),
+            "{\"packet_type\":\"camera\","
+            "\"camera_fps\":%.2f,\"camera_process_last_ms\":%.2f,"
+            "\"camera_process_avg_ms\":%.2f,\"camera_process_max_ms\":%.2f,"
+            "\"camera_process_overrun_count\":%llu}",
+            safe_float(g_camera_performance.fps),
+            safe_float(g_camera_performance.last_ms),
+            safe_float(g_camera_performance.average_ms),
+            safe_float(g_camera_performance.max_ms),
+            (unsigned long long)g_camera_performance.overrun_count);
+        if (camera_length > 0 &&
+            camera_length < static_cast<int>(sizeof(camera_str)) &&
+            udp_client_debugger.udp_send(
+                camera_str, static_cast<size_t>(camera_length)) < 0) {
+            ++udp_control_send_fail_total;
+        }
+    }
+}
+
+void control_telemetry_send()
+{
+    if (udp_debug_mode < 1) {
+        return;
+    }
+
+    static_assert(kControlTelemetryPacketSize < 256,
+                  "CTL1 must stay below the planned 256-byte limit");
+    static const steady_clock::time_point started_at = steady_clock::now();
+    const steady_clock::time_point now = steady_clock::now();
+    const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
+    const DriveByDebug &drive_debug = drive_by_get_debug();
+    const DriveByHeadingHoldDebug &heading_hold_debug =
+        drive_by_heading_hold_get_debug();
+    const DriveByTangentDebug &tangent_debug = drive_by_tangent_debug_get();
+    const bool heading_hold_enabled = drive_by_heading_hold_is_enabled();
+    lq_timer_timeout_snapshot timeout_debug = {};
+    lq_timer_timeout_get_snapshot(&timeout_debug);
+
+    uint16_t flags0 = 0;
+    if (vision_y_guard_active != 0) flags0 |= 1u << 0;
+    if (front_ui_is_running()) flags0 |= 1u << 1;
+    if (heading_hold_enabled) flags0 |= 1u << 2;
+    if (drive_by_tangent_debug_is_enabled()) flags0 |= 1u << 3;
+    if (tangent_debug.valid) flags0 |= 1u << 4;
+    if (drive_by_is_enabled()) flags0 |= 1u << 5;
+    if (drive_by_is_busy()) flags0 |= 1u << 6;
+    if (drive_by_is_recognizing()) flags0 |= 1u << 7;
+    if (drive_by_is_motion_phase()) flags0 |= 1u << 8;
+    if (drive_debug.test_mode != 0) flags0 |= 1u << 9;
+    if (drive_by_brake_test_is_enabled()) flags0 |= 1u << 10;
+    if (drive_by_brake_test_is_holding()) flags0 |= 1u << 11;
+    if (drive_debug.brake_active != 0) flags0 |= 1u << 12;
+    if (drive_debug.target_geometry_valid != 0) flags0 |= 1u << 13;
+    if (drive_debug.view_ready != 0) flags0 |= 1u << 14;
+    if (drive_debug.red_candidate != 0) flags0 |= 1u << 15;
+
+    uint16_t flags1 = 0;
+    if (have_target) flags1 |= 1u << 0;
+    if (hardware_test_is_enabled()) flags1 |= 1u << 1;
+    if (camera_performance_enabled != 0) flags1 |= 1u << 2;
+    if (front_ui_remote_is_active()) flags1 |= 1u << 3;
+
+    uint8_t packet[kControlTelemetryPacketSize] = {};
+    uint8_t *cursor = packet;
+    *cursor++ = 'C';
+    *cursor++ = 'T';
+    *cursor++ = 'L';
+    *cursor++ = '1';
+    *cursor++ = kControlTelemetryVersion;
+    *cursor++ = kControlTelemetryHeaderSize;
+    telemetry_write_u16(cursor, kControlTelemetryPacketSize);
+    telemetry_write_u32(cursor, static_cast<uint32_t>(
+        duration_cast<milliseconds>(now - started_at).count()));
+    telemetry_write_u16(cursor, flags0);
+    telemetry_write_u16(cursor, flags1);
+
+    telemetry_write_i32(cursor, gyro_debug.gyro_timeout_count);
+    telemetry_write_i32(cursor, timeout_debug.id);
+    telemetry_write_i32(cursor, timeout_debug.total > 0x7fffffffULL
+        ? 0x7fffffff : static_cast<int32_t>(timeout_debug.total));
+    telemetry_write_i32(cursor, front_ui_selected_speed());
+    telemetry_write_i32(cursor, drive_debug.state_code);
+    telemetry_write_i32(cursor, drive_debug.abort_reason);
+    telemetry_write_i32(cursor, drive_debug.brake_pwm);
+    telemetry_write_i32(cursor, drive_debug.brake_elapsed_ms);
+    telemetry_write_i32(cursor, drive_debug.infer_valid_count);
+    telemetry_write_i32(cursor, drive_debug.red_candidate_count);
+    telemetry_write_i32(cursor, drive_debug.red_contour_area);
+    telemetry_write_i32(cursor, drive_debug.detection_stage);
+    telemetry_write_i32(cursor, static_cast<int32_t>(circle_type));
+    telemetry_write_i32(cursor, static_cast<int32_t>(cross_type));
+    telemetry_write_i32(cursor, static_cast<int32_t>(track_type));
+    telemetry_write_i32(cursor, item_flag);
+
+    telemetry_write_f32(cursor, encoder1_speed_avg);
+    telemetry_write_f32(cursor, encoder2_speed_avg);
+    telemetry_write_f32(cursor, latest_error);
+    telemetry_write_f32(cursor, pwm1_duty_rps);
+    telemetry_write_f32(cursor, pwm2_duty_rps);
+    telemetry_write_f32(cursor, current_pwm1 / 100.0f);
+    telemetry_write_f32(cursor, current_pwm2 / 100.0f);
+    telemetry_write_f32(cursor, P1_motor);
+    telemetry_write_f32(cursor, P2_motor);
+    telemetry_write_f32(cursor, I1_motor);
+    telemetry_write_f32(cursor, I2_motor);
+    telemetry_write_f32(cursor, gyro_debug.target_yaw_rate_dps);
+    telemetry_write_f32(cursor, gyro_debug.gyro_z_lpf);
+    telemetry_write_f32(cursor, vision_y_guard_aim_dy_px);
+    telemetry_write_f32(cursor, vision_y_guard_target_dps);
+    telemetry_write_f32(cursor, timeout_debug.used_ms);
+    telemetry_write_f32(cursor, timeout_debug.target_ms);
+    telemetry_write_f32(cursor, tangent_debug.valid ? tangent_debug.angle_deg : 0.0f);
+    telemetry_write_f32(cursor, heading_hold_enabled
+        ? heading_hold_debug.yaw_deg : drive_debug.yaw_deg);
+    telemetry_write_f32(cursor, heading_hold_enabled
+        ? heading_hold_debug.target_yaw_deg : drive_debug.target_yaw_deg);
+    telemetry_write_f32(cursor, heading_hold_enabled
+        ? heading_hold_debug.heading_error_deg : drive_debug.heading_error_deg);
+    telemetry_write_f32(cursor, drive_debug.track_heading_deg);
+    telemetry_write_f32(cursor, drive_debug.target_track_heading_deg);
+    telemetry_write_f32(cursor, drive_debug.view_angle_deg);
+    telemetry_write_f32(cursor, drive_debug.target_distance_m);
+    telemetry_write_f32(cursor, drive_debug.distance_since_trigger_m);
+    telemetry_write_f32(cursor, drive_debug.phase_distance_m);
+    telemetry_write_f32(cursor, heading_hold_enabled
+        ? heading_hold_debug.target_yaw_rate_dps : drive_debug.target_yaw_rate_dps);
+    telemetry_write_f32(cursor, heading_hold_enabled
+        ? heading_hold_debug.turn_rps : drive_debug.turn_rps);
+    telemetry_write_f32(cursor, circle_exit_distance_m);
+    telemetry_write_f32(cursor, odometry_get_distance());
+    telemetry_write_f32(cursor, AIM);
+    telemetry_write_f32(cursor, drive_by_test_target_distance_m);
+
+    if (cursor - packet != kControlTelemetryPacketSize) {
+        return;
+    }
+    if (udp_client_debugger.udp_send(packet, sizeof(packet)) < 0) {
+        ++udp_control_send_fail_total;
     }
 }
 
 } // namespace
 
 void udp_send(void){
+    control_telemetry_send();
+    if (!vofa_telemetry_enabled) {
+        tuning_telemetry_send();
+        return;
+    }
+
     char encoder_str[3072];
     static uint32_t udp_sequence = 0;
     static const steady_clock::time_point udp_started_at = steady_clock::now();
     const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
     const DriveByDebug &drive_debug = drive_by_get_debug();
-    const DriveByDetectionPerformance &red_detection_performance =
-        drive_by_get_detection_performance();
     const DriveByHeadingHoldDebug &heading_hold_debug =
         drive_by_heading_hold_get_debug();
     const DriveByTangentDebug &tangent_debug = drive_by_tangent_debug_get();
@@ -1292,11 +1487,6 @@ void udp_send(void){
              "\"camera_process_max_ms\":%.2f,"
              "\"camera_fps\":%.2f,"
              "\"camera_process_overrun_count\":%llu,"
-             "\"red_pre_every\":%d,"
-             "\"red_pre_last_ms\":%.2f,"
-             "\"red_pre_avg_ms\":%.2f,"
-             "\"red_pre_max_ms\":%.2f,"
-             "\"red_pre_overrun_count\":%llu,"
              "\"to_id\":%d,"
              "\"to_used\":%.2f,"
              "\"to_target\":%.2f,"
@@ -1375,11 +1565,6 @@ void udp_send(void){
              safe_float(g_camera_performance.max_ms),
              safe_float(g_camera_performance.fps),
              (unsigned long long)g_camera_performance.overrun_count,
-             drive_by_detect_frame_interval,
-             safe_float(red_detection_performance.last_ms),
-             safe_float(red_detection_performance.average_ms),
-             safe_float(red_detection_performance.max_ms),
-             (unsigned long long)red_detection_performance.overrun_count,
              timeout_debug.id,
              safe_float(timeout_debug.used_ms),
              safe_float(timeout_debug.target_ms),
@@ -1441,13 +1626,7 @@ void udp_send(void){
 
 // 截断的JSON没有调试价值，直接丢弃，避免PC端把它统计为协议错误。
 if (json_length > 0 && json_length < static_cast<int>(sizeof(encoder_str))) {
-    // Debugger和VOFA发送开关相互独立；关闭VOFA回传不会影响8082端口接收调参指令。
-    if (vofa_telemetry_enabled) {
-        udp_client.udp_send(encoder_str, static_cast<size_t>(json_length));
-    }
-    if (udp_debug_mode >= 1) {
-        udp_client_debugger.udp_send(encoder_str, static_cast<size_t>(json_length));
-    }
+    udp_client.udp_send(encoder_str, static_cast<size_t>(json_length));
 }
 
 // 调参快照采用独立的低频数据包，不占用12ms动态波形包的空间。
@@ -1691,8 +1870,7 @@ gyro_yaw_rate_control_init();
 //std::cout<<"fuck you2"s<<std::endl; 
 while (1)
 {
-     // 统计从本轮主循环开始到全部图像/识别处理结束的真实耗时；1ms主动让步不计入。
-     const steady_clock::time_point camera_frame_start = steady_clock::now();
+     steady_clock::time_point camera_frame_start;
          if (has_input()) {
             char c = getchar();
             if (c == 'q') {
@@ -1704,6 +1882,10 @@ while (1)
         }
            front_ui_poll();  // 扫描 K0/K1/K2，并在 TFT18 上刷新状态
            vofa_recv_cmd()   ;
+           // 默认关闭时不读取时钟；开启后只统计图像采集到本帧处理结束的耗时。
+           if (camera_performance_enabled != 0) {
+               camera_frame_start = steady_clock::now();
+           }
 // std::lock_guard<std::mutex> lock(g_mutex);
  //cv::Mat frame = cam.get_raw_frame();
 //latest_error=img_test(frame);

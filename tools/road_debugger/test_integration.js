@@ -71,6 +71,33 @@ function makeRoadPacket() {
   return packet;
 }
 
+function makeControlPacket() {
+  const packet = Buffer.alloc(212);
+  packet.write('CTL1', 0, 'ascii');
+  packet.writeUInt8(1, 4);
+  packet.writeUInt8(16, 5);
+  packet.writeUInt16LE(packet.length, 6);
+  packet.writeUInt32LE(500, 8);
+  packet.writeUInt16LE((1 << 1) | (1 << 5) | (1 << 6) | (1 << 12), 12);
+  packet.writeUInt16LE(1, 14);
+  const integers = [3, 5, 7, 35, 6, 0, -7000, 40, 2, 2, 61, 4, 0, 0, 0, 2];
+  const floats = [
+    20.1, 19.9, 2.5, 20, 20, -12, -10, 3, 4, 1, 1.5,
+    180, 170, 12, 420, 10.2, 8, 0, 24, 25, 1, 0, 0, 15,
+    0.5, 0.2, 0.1, 180, 7, 1.2, 2.4, 0.25, 0.5,
+  ];
+  let offset = 16;
+  integers.forEach((value) => {
+    packet.writeInt32LE(value, offset);
+    offset += 4;
+  });
+  floats.forEach((value) => {
+    packet.writeFloatLE(value, offset);
+    offset += 4;
+  });
+  return packet;
+}
+
 function sendUdp(payload) {
   return new Promise((resolve, reject) => {
     const socket = dgram.createSocket('udp4');
@@ -95,27 +122,20 @@ async function main() {
 
     await sendUdp(Buffer.from(JSON.stringify({
       seq: 9,
-      run: 1,
-      encoder1_speed_avg: 20.1,
-      encoder2_speed_avg: 19.9,
-      ex_rps1: 20,
-      ex_rps2: 20,
-      latest_error: 2.5,
+      run: 0,
+      encoder1_speed_avg: 10.1,
+      encoder2_speed_avg: 9.9,
       camera_process_avg_ms: 16.4,
       camera_fps: 59.7,
-      red_pre_every: 2,
-      red_pre_avg_ms: 1.8,
       have_target: 1,
       item_flag: 1,
     })));
+    await sendUdp(makeControlPacket());
     await sendUdp(Buffer.from(JSON.stringify({
       packet_type: 'tuning',
       P: 454,
       I: 14,
-      gyro: 1,
-      yGuardDps: 360,
-      dbMode: 1,
-      dbSideMs: 850,
+      yGuardDps: 500,
       dbUseTangent: 1,
       dbTurnAngle: 25,
       dbReturnBias: 46,
@@ -126,16 +146,29 @@ async function main() {
       dbBrakePwm: 6000,
       yawHoldRMax: 10,
       udp: 2,
+      vofa: 0,
       hwTest: 0,
       hwPwm: 0,
+      camStats: 1,
+      udp_control_send_fail_total: 2,
+      udp_road_send_fail_total: 1,
+    })));
+    await sendUdp(Buffer.from(JSON.stringify({
+      packet_type: 'camera',
+      camera_process_last_ms: 17.2,
+      camera_process_avg_ms: 16.8,
+      camera_process_max_ms: 23.5,
+      camera_fps: 59.4,
+      camera_process_overrun_count: 1,
     })));
     await sendUdp(makeRoadPacket());
     await delay(120);
 
     const statusResponse = await request('GET', '/api/status');
     assert.strictEqual(statusResponse.status, 200);
-    assert.strictEqual(statusResponse.json.jsonPackets, 2);
-    assert.strictEqual(statusResponse.json.tuningPackets, 1);
+    assert.strictEqual(statusResponse.json.jsonPackets, 3);
+    assert.strictEqual(statusResponse.json.tuningPackets, 2);
+    assert.strictEqual(statusResponse.json.controlPackets, 1);
     assert.strictEqual(statusResponse.json.roadPackets, 1);
     assert.strictEqual(statusResponse.json.invalidPackets, 0);
 
@@ -150,15 +183,11 @@ async function main() {
     assert(pageResponse.text.includes('brakeTestCommand'));
     assert(pageResponse.text.includes('headingHoldCommand'));
     assert(pageResponse.text.includes('tangentDebugCommand'));
-    assert(pageResponse.text.includes('cameraPerformanceTitle'));
-    assert(pageResponse.text.includes('detectEveryFrameButton'));
-    assert(pageResponse.text.includes('detectEveryTwoFramesButton'));
+    assert(pageResponse.text.includes('cameraStatsCommand'));
+    assert(pageResponse.text.includes('cameraStatsStrip'));
     assert(pageResponse.text.includes('cameraProcessAverage'));
-    assert(pageResponse.text.includes('redPreAverage'));
     assert(pageResponse.text.includes('#spd=35;'));
     assert(pageResponse.text.includes('#spd=0;'));
-    assert(pageResponse.text.includes('#drive=1;'));
-    assert(pageResponse.text.includes('#drive=0;'));
     assert(pageResponse.text.includes('#udp=0;'));
     assert(pageResponse.text.includes('#udp=2;'));
     assert(!pageResponse.text.includes('#spd=20;'));
@@ -167,19 +196,28 @@ async function main() {
     assert(pageResponse.text.includes('remoteDown'));
     assert(pageResponse.text.includes('remoteLeft'));
     assert(pageResponse.text.includes('remoteRight'));
-    assert(pageResponse.text.includes('左转 120dps'));
-    assert(pageResponse.text.includes('右转 120dps'));
+    assert(pageResponse.text.includes('左转 160dps'));
+    assert(pageResponse.text.includes('右转 160dps'));
     assert(!pageResponse.text.includes('转 60dps'));
     assert(pageResponse.text.includes('tuningControls'));
     assert(pageResponse.text.includes('tuningSnapshotTime'));
-    assert(pageResponse.text.includes('clearPinnedParameters'));
+    assert(pageResponse.text.includes('timeoutBadge'));
+    assert(!pageResponse.text.includes('parameterList'));
+    assert(!pageResponse.text.includes('detectEveryFrameButton'));
+    assert(!pageResponse.text.includes('detectEveryTwoFramesButton'));
 
     const appResponse = await request('GET', '/app.js');
     assert.strictEqual(appResponse.status, 200);
+    const htmlIds = new Set([...pageResponse.text.matchAll(/id="([^"]+)"/g)]
+      .map((match) => match[1]));
+    const missingDomIds = [...appResponse.text.matchAll(/\$\('([^']+)'\)/g)]
+      .map((match) => match[1])
+      .filter((id) => !htmlIds.has(id));
+    assert.deepStrictEqual([...new Set(missingDomIds)], []);
     const tuningKeys = [
-      'P', 'I', 'D', 'spd', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
-      'gyro', 'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax', 'yGuardDps',
-      'gSign', 'tSign', 'dbMode', 'dbSideMs', 'dbUseTangent', 'dbNormalSpd', 'dbRecSpd',
+      'P', 'I', 'D', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
+      'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax', 'yGuardDps',
+      'gSign', 'tSign', 'dbUseTangent', 'dbNormalSpd', 'dbRecSpd',
       'dbTurnAngle', 'dbPassDist',
       'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
       'dbHKd', 'dbHMax', 'dbHTol', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
@@ -198,15 +236,13 @@ async function main() {
     assert(!appResponse.text.includes("key: 'dbLearnRps'"));
     assert(!appResponse.text.includes("key: 'dbLearnDist'"));
     assert(!appResponse.text.includes("key: 'dbLearnScale'"));
-    assert(appResponse.text.includes("key: 'dbSideMs', label: '边线瞄准持续时间', min: 500, max: 2000, step: 50, unit: 'ms', defaultValue: 500, hardMax: true"));
     assert(appResponse.text.includes("key: 'dbHKp', label: '航向外环P', min: 0, max: 60, step: 0.1, defaultValue: 31"));
     assert(appResponse.text.includes("key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 505"));
-    assert(appResponse.text.includes("key: 'yGuardDps', label: '瞄点越界救车角速度', min: 0, max: 500, step: 5, unit: 'dps', defaultValue: 360, hardMax: true"));
+    assert(appResponse.text.includes("key: 'yGuardDps', label: '瞄点越界救车角速度', min: 0, max: 700, step: 5, unit: 'dps', defaultValue: 500, hardMax: true"));
     assert(appResponse.text.includes("const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes'"));
     assert(appResponse.text.includes("maxEditor.className = 'tuning-max-editor'"));
     assert(appResponse.text.includes("maxLabel.textContent = '上限'"));
     assert(appResponse.text.includes("key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0"));
-    assert(appResponse.text.includes("key: 'spd', label: '左右轮前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 42"));
     assert(appResponse.text.includes("key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 0"));
@@ -226,21 +262,44 @@ async function main() {
     assert(appResponse.text.includes("#yawHold="));
     assert(appResponse.text.includes("#tangentDbg="));
     assert(appResponse.text.includes("#test_brake="));
-    assert(appResponse.text.includes("#dbDetectEvery=1;"));
-    assert(appResponse.text.includes("#dbDetectEvery=2;"));
+    assert(appResponse.text.includes("#drive=${enabled ? 0 : 1};"));
+    assert(appResponse.text.includes("#camStats=${enabled ? 0 : 1};"));
     assert(appResponse.text.includes('camera_process_avg_ms'));
-    assert(appResponse.text.includes('red_pre_avg_ms'));
     assert(appResponse.text.includes('renderCameraPerformance'));
-    assert(appResponse.text.includes("const PINNED_PARAMETERS_STORAGE_KEY = 'pinnedParameters'"));
-    assert(appResponse.text.includes('togglePinnedParameter'));
-    assert(appResponse.text.includes("pin.textContent = pinned ? '★' : '☆'"));
-    assert(appResponse.text.includes('state.pinnedParameters.filter'));
+    assert(appResponse.text.includes('TIMEOUT_SOURCE_NAMES'));
+    assert(appResponse.text.includes('telemetryMode'));
+    assert(appResponse.text.includes('controlAge <= 100'));
+    assert(appResponse.text.includes('controlAge <= 500'));
+    assert(!appResponse.text.includes("key: 'spd'"));
+    assert(!appResponse.text.includes("key: 'gyro'"));
+    assert(!appResponse.text.includes("key: 'dbMode'"));
+    assert(!appResponse.text.includes("key: 'dbSideMs'"));
+    assert(!appResponse.text.includes('#dbDetectEvery='));
+    assert(!appResponse.text.includes('PINNED_PARAMETERS_STORAGE_KEY'));
     assert(appResponse.text.includes('params.drive_brake_test_enabled'));
     assert(appResponse.text.includes('sendRemoteHeartbeat'));
 
+    const mainSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'main.cpp'), 'utf8');
+    const frontUiSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'front_ui.cpp'), 'utf8');
+    const dirPdSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'dir_pd.cpp'), 'utf8');
+    assert(mainSource.includes('constexpr int kRoadTelemetryMinIntervalMs = 20;'));
+    assert(mainSource.includes('constexpr int kControlTelemetryPacketSize'));
+    assert(mainSource.includes('kControlTelemetryPacketSize < 256'));
+    assert(mainSource.includes('{\\"packet_type\\":\\"camera\\",'));
+    assert(mainSource.includes('udp_control_send_fail_total'));
+    assert(mainSource.includes('udp_road_send_fail_total'));
+    assert(!mainSource.includes('red_pre_last_ms'));
+    assert(!mainSource.includes('red_pre_avg_ms'));
+    assert(mainSource.includes('vision_y_guard_target_dps = 500.0f;'));
+    assert(mainSource.includes('if (ftmp > 700.0f) ftmp = 700.0f;'));
+    assert(frontUiSource.includes('constexpr float kRemoteYawRateDps = 160.0f;'));
+    assert(dirPdSource.includes('constexpr float kVisionYGuardMaxDps = 700.0f;'));
+    assert(dirPdSource.includes('constexpr float kVisionYGuardMaxTurnRps = 25.0f;'));
+    assert.strictEqual((dirPdSource.match(/\[救车\] 触发救车/g) || []).length, 1);
+
     const stopResponse = await request('POST', '/api/recording/stop', {});
     assert.strictEqual(stopResponse.status, 200);
-    assert.strictEqual(stopResponse.json.recording.eventCount, 3);
+    assert.strictEqual(stopResponse.json.recording.eventCount, 5);
 
     const listResponse = await request('GET', '/api/recordings');
     assert.strictEqual(listResponse.status, 200);
@@ -265,17 +324,18 @@ async function main() {
       'utf8');
     assert(recordingText.includes('"type":"params"'));
     assert(recordingText.includes('"camera_process_avg_ms":16.4'));
-    assert(recordingText.includes('"red_pre_every":2'));
-    assert(recordingText.includes('"red_pre_avg_ms":1.8'));
+    assert(recordingText.includes('"to_id":5'));
+    assert(recordingText.includes('"to_used":10.199999809265137'));
     assert(recordingText.includes('"type":"road"'));
     assert(recordingText.includes('"type":"tuning"'));
-    assert(recordingText.includes('"dbMode":1'));
-    assert(recordingText.includes('"dbSideMs":850'));
     assert(recordingText.includes('"dbUseTangent":1'));
     assert(recordingText.includes('"dbHTol":2'));
     assert(recordingText.includes('"yawHoldRMax":10'));
     assert(recordingText.includes('"hwTest":0'));
     assert(recordingText.includes('"hwPwm":0'));
+    assert(recordingText.includes('"camStats":1'));
+    assert(recordingText.includes('"camera_process_avg_ms":16.8'));
+    assert(recordingText.includes('"udp_control_send_fail_total":2'));
     console.log('Road debugger integration test passed');
   } finally {
     services.udpReceiver.close();

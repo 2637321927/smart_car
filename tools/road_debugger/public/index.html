@@ -17,6 +17,7 @@
         <span id="connectionBadge" class="badge badge-offline">等待UDP</span>
         <span id="modeBadge" class="badge">实时模式</span>
         <span id="packetAge" class="metric-chip">-- ms</span>
+        <span id="timeoutBadge" class="metric-chip">最近超时：无</span>
       </div>
     </header>
 
@@ -41,6 +42,25 @@
               <span id="frameSequence">帧 --</span>
               <span id="frameInterval">间隔 -- ms</span>
             </div>
+            <aside class="detection-inset" aria-label="红块与目标板">
+              <div class="detection-inset-heading">
+                <strong>目标板</strong>
+                <span id="targetBadge" class="badge badge-offline">未检测</span>
+              </div>
+              <canvas id="detectionCanvas" width="320" height="240"></canvas>
+              <div class="detection-inset-result">
+                <strong id="itemResult">1 / 直行</strong>
+                <span id="redRectText">红块 --</span>
+                <span id="plateRectText">目标板 --</span>
+              </div>
+            </aside>
+          </div>
+          <div id="cameraStatsStrip" class="camera-stats-strip" hidden>
+            <span>FPS <strong id="cameraFps">--</strong></span>
+            <span>当前 <strong id="cameraProcessLast">-- ms</strong></span>
+            <span>平均 <strong id="cameraProcessAverage">-- ms</strong></span>
+            <span>最大 <strong id="cameraProcessMaximum">-- ms</strong></span>
+            <span>超时 <strong id="cameraProcessOverruns">-- 次</strong></span>
           </div>
         </article>
 
@@ -97,96 +117,30 @@
         </select>
       </div>
 
-      <article class="panel camera-performance-panel" aria-labelledby="cameraPerformanceTitle">
-        <div class="panel-heading compact camera-performance-heading">
-          <div>
-            <p class="section-label">CAMERA LOOP / RED PRE-DETECTION</p>
-            <h2 id="cameraPerformanceTitle">相机性能实验窗口</h2>
-          </div>
-          <div class="detect-frequency-controls" role="group" aria-label="红块预检测频率">
-            <span id="detectFrequencyBadge" class="scope-mode">当前每2帧检测</span>
-            <button id="detectEveryFrameButton" class="button ghost detect-frequency-button" type="button">每帧检测</button>
-            <button id="detectEveryTwoFramesButton" class="button ghost detect-frequency-button" type="button">每2帧检测</button>
-          </div>
-        </div>
-        <div class="performance-grid">
-          <div><span>实际帧率</span><strong id="cameraFps">-- FPS</strong></div>
-          <div><span>当前帧处理</span><strong id="cameraProcessLast">-- ms</strong></div>
-          <div><span>1秒平均处理</span><strong id="cameraProcessAverage">-- ms</strong></div>
-          <div><span>1秒最大处理</span><strong id="cameraProcessMaximum">-- ms</strong></div>
-          <div><span>整帧超25ms</span><strong id="cameraProcessOverruns">-- 次</strong></div>
-          <div><span>当前红块预检测</span><strong id="redPreLast">-- ms</strong></div>
-          <div><span>1秒平均预检测</span><strong id="redPreAverage">-- ms</strong></div>
-          <div><span>1秒最大预检测</span><strong id="redPreMaximum">-- ms</strong></div>
-          <div><span>预检测超8ms</span><strong id="redPreOverruns">-- 次</strong></div>
-        </div>
-        <p class="performance-note">整帧处理统计不包含循环末尾主动让出的1ms；平均值和最大值按约1秒窗口刷新，超时次数为开机累计。</p>
-      </article>
-
       <aside class="side-column">
-        <article class="panel status-panel">
-          <div class="panel-heading compact">
-            <div>
-              <p class="section-label">UDP STATUS</p>
-              <h2>连接状态</h2>
-            </div>
-            <span id="runIndicator" class="run-indicator">STOP</span>
-          </div>
-          <dl class="status-grid">
-            <div><dt>监听端口</dt><dd id="udpPort">8080</dd></div>
-            <div><dt>本机IP</dt><dd id="localAddress">--</dd></div>
-            <div><dt>小车来源</dt><dd id="remoteAddress">--</dd></div>
-            <div><dt>参数包</dt><dd id="jsonPacketCount">0</dd></div>
-            <div><dt>道路帧</dt><dd id="roadPacketCount">0</dd></div>
-            <div><dt>丢帧估计</dt><dd id="dropCount">0</dd></div>
-            <div><dt>协议错误</dt><dd id="invalidPacketCount">0</dd></div>
-            <div><dt>当前模式</dt><dd id="driveState">--</dd></div>
-          </dl>
-        </article>
-
-        <article class="panel detection-panel">
-          <div class="panel-heading compact">
-            <div>
-              <p class="section-label">TARGET DETECTION</p>
-              <h2>红块与目标板</h2>
-            </div>
-            <span id="targetBadge" class="badge badge-offline">未检测</span>
-          </div>
-          <canvas id="detectionCanvas" width="640" height="480"></canvas>
-          <div class="result-strip">
-            <div><span>识别结果</span><strong id="itemResult">1 / 直行</strong></div>
-            <div><span>红块</span><strong id="redRectText">--</strong></div>
-            <div><span>目标板</span><strong id="plateRectText">--</strong></div>
-          </div>
-        </article>
-
         <article class="panel command-panel">
           <div class="panel-heading compact">
             <div>
               <p class="section-label">VOFA COMMAND</p>
               <h2>调参指令</h2>
             </div>
-          </div>
-          <div class="command-address">
-            <input id="carIp" class="input" value="192.168.43.93" aria-label="小车IP">
-            <input id="carPort" class="input port-input" value="8082" aria-label="命令端口">
-          </div>
-          <div class="command-entry">
-            <input id="commandInput" class="input grow" placeholder="#P=300;" aria-label="VOFA指令">
-            <button id="sendCommand" class="button" type="button">发送</button>
+            <div class="command-state">
+              <span id="driveState" class="scope-mode">--</span>
+              <span id="runIndicator" class="run-indicator">STOP</span>
+            </div>
           </div>
           <div class="quick-commands">
             <button class="run-command start-command" type="button" data-command="#run=1;">发车</button>
             <button class="run-command stop-command" type="button" data-command="#run=0;">停车</button>
             <button type="button" data-command="#spd=35;">35RPS</button>
             <button type="button" data-command="#spd=0;">0RPS</button>
-            <button id="driveEnableCommand" class="recognition-command" type="button" data-command="#drive=1;">识别开启</button>
-            <button id="driveDisableCommand" class="recognition-command" type="button" data-command="#drive=0;">识别关闭</button>
+            <button id="driveToggleCommand" class="recognition-command" type="button">识别关闭，点击开启</button>
             <button id="brakeTestCommand" class="debug-command" type="button">刹车测试关闭</button>
             <button type="button" data-command="#udp=0;">UDP关闭</button>
             <button type="button" data-command="#udp=2;">UDP+道路三线</button>
             <button id="headingHoldCommand" class="debug-command" type="button">航向保持测试</button>
             <button id="tangentDebugCommand" class="debug-command" type="button">中线切线显示</button>
+            <button id="cameraStatsCommand" class="debug-command" type="button">相机状态关闭</button>
             <div class="drive-by-test-controls">
               <div class="drive-by-direction" role="group" aria-label="测试绕行方向">
                 <button id="driveByLeft" class="direction-option" type="button" aria-pressed="false">左绕</button>
@@ -204,10 +158,10 @@
                   <span>↑</span><small>前进 15RPS</small>
                 </button>
                 <button id="remoteLeft" class="remote-left" type="button" data-remote="3" disabled>
-                  <span>←</span><small>左转 120dps</small>
+                  <span>←</span><small>左转 160dps</small>
                 </button>
                 <button id="remoteRight" class="remote-right" type="button" data-remote="4" disabled>
-                  <span>→</span><small>右转 120dps</small>
+                  <span>→</span><small>右转 160dps</small>
                 </button>
                 <button id="remoteDown" class="remote-down" type="button" data-remote="2" disabled>
                   <span>↓</span><small>后退 15RPS</small>
@@ -215,22 +169,15 @@
               </div>
             </div>
           </div>
-          <p id="commandStatus" class="muted">指令发送到小车UDP 8082端口</p>
-        </article>
-
-        <article class="panel params-panel">
-          <div class="panel-heading compact">
-            <div>
-              <p class="section-label">TIMELINE PARAMETERS</p>
-              <h2>当前时刻UDP参数</h2>
-            </div>
-            <div class="parameter-heading-tools">
-              <span id="parameterTimestamp" class="parameter-time">实时</span>
-              <button id="clearPinnedParameters" class="parameter-clear-pins" type="button" disabled>清除置顶</button>
-              <input id="parameterFilter" class="filter-input" placeholder="筛选">
-            </div>
+          <div class="command-address">
+            <input id="carIp" class="input" value="192.168.43.93" aria-label="小车IP">
+            <input id="carPort" class="input port-input" value="8082" aria-label="命令端口">
           </div>
-          <div id="parameterList" class="parameter-list"></div>
+          <div class="command-entry">
+            <input id="commandInput" class="input grow" placeholder="#P=300;" aria-label="VOFA指令">
+            <button id="sendCommand" class="button" type="button">发送</button>
+          </div>
+          <p id="commandStatus" class="muted">指令发送到小车UDP 8082端口</p>
         </article>
       </aside>
 

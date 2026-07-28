@@ -11,14 +11,38 @@ volatile int spd_slow_ratio = 30;
 
 namespace
 {
+constexpr float kVisionYGuardBaseRps = 20.0f;
+constexpr float kVisionYGuardMaxDps = 700.0f;
+constexpr float kVisionYGuardMaxTurnRps = 25.0f;
+
 void print_direction_control_status(const char *mode,
                                     const char *reason,
                                     float vision_error,
                                     float base_rps,
-                                    float differential_rps)
+                                    float differential_rps,
+                                    bool rescue_mode)
 {
     static const char *last_mode = nullptr;
     static const char *last_reason = nullptr;
+    static bool rescue_log_active = false;
+
+    if (rescue_mode) {
+        if (!rescue_log_active) {
+            printf("[救车] 触发救车\n");
+            rescue_log_active = true;
+        }
+        last_mode = mode;
+        last_reason = reason;
+        return;
+    }
+
+    if (rescue_log_active) {
+        // 救车退出只恢复普通模式缓存，不再额外打印一条退出信息。
+        rescue_log_active = false;
+        last_mode = mode;
+        last_reason = reason;
+        return;
+    }
 
     if (last_mode == mode && last_reason == reason) {
         return;
@@ -97,11 +121,11 @@ void PID_control_test(float error)
         control_mode = "Y_GUARD_GYRO";
         control_reason = "aim_y_behind_car";
         const float rescue_target_dps = std::min(
-            500.0f, std::fabs((float)vision_y_guard_target_dps));
+            kVisionYGuardMaxDps, std::fabs((float)vision_y_guard_target_dps));
         diffrential = gyro_yaw_rate_control_update_target_yaw_rate_with_limits(
             vision_y_guard_turn_sign * rescue_target_dps,
-            500.0f,
-            20.0f);
+            kVisionYGuardMaxDps,
+            kVisionYGuardMaxTurnRps);
     } else if (use_gyro_yaw_rate_feedback) {
         control_mode = "GYRO_RATE";
         control_reason = "mpu6050_feedback";
@@ -121,7 +145,7 @@ void PID_control_test(float error)
         diffrential = calculate_diffrential(visual_error, 0);
     }
 
-    const float max_dif = y_guard_active ? 20.0f : 15.0f;
+    const float max_dif = y_guard_active ? kVisionYGuardMaxTurnRps : 15.0f;
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     float target_spd1 = set_speed_of_motor1_rps;
@@ -133,11 +157,14 @@ void PID_control_test(float error)
 
     // spd_slow_ratio 表示最大减速百分比，30 表示 error 达到 max_error 时最多降速 30%。
     // 这里仍保留 0.7 的下限保护，避免基准速度被降得太低。
-    float abs_error = y_guard_active ? 100.0f : error;
-    if (abs_error < 0) abs_error = -abs_error;
-    float slow_ratio = 1.0f - (slow_ratio_percent / 100.0f) * abs_error / max_error;
-    if (slow_ratio < 0.5f) slow_ratio = 0.5f;
-    float set_spd1 = target_spd1 * slow_ratio;
+    float set_spd1 = kVisionYGuardBaseRps;
+    if (!y_guard_active) {
+        float abs_error = error;
+        if (abs_error < 0) abs_error = -abs_error;
+        float slow_ratio = 1.0f - (slow_ratio_percent / 100.0f) * abs_error / max_error;
+        if (slow_ratio < 0.5f) slow_ratio = 0.5f;
+        set_spd1 = target_spd1 * slow_ratio;
+    }
   
     pwm1_duty_rps = set_spd1 + diffrential;
     pwm2_duty_rps = set_spd1 - diffrential;
@@ -163,6 +190,7 @@ void PID_control_test(float error)
         pwm2_duty_rps = 200.0f;
     };
 
-    print_direction_control_status(control_mode, control_reason, error, set_spd1, diffrential);
+    print_direction_control_status(
+        control_mode, control_reason, error, set_spd1, diffrential, y_guard_active);
    
 }

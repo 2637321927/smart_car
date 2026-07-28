@@ -7,6 +7,7 @@ const elements = {
   connectionBadge: $('connectionBadge'),
   modeBadge: $('modeBadge'),
   packetAge: $('packetAge'),
+  timeoutBadge: $('timeoutBadge'),
   leftCount: $('leftCount'),
   centerCount: $('centerCount'),
   rightCount: $('rightCount'),
@@ -19,22 +20,12 @@ const elements = {
   scopeChannelSelect: $('scopeChannelSelect'),
   addScopeChannel: $('addScopeChannel'),
   detectionCanvas: $('detectionCanvas'),
-  udpPort: $('udpPort'),
-  localAddress: $('localAddress'),
-  remoteAddress: $('remoteAddress'),
-  jsonPacketCount: $('jsonPacketCount'),
-  roadPacketCount: $('roadPacketCount'),
-  dropCount: $('dropCount'),
-  invalidPacketCount: $('invalidPacketCount'),
   driveState: $('driveState'),
   runIndicator: $('runIndicator'),
   targetBadge: $('targetBadge'),
   itemResult: $('itemResult'),
   redRectText: $('redRectText'),
   plateRectText: $('plateRectText'),
-  parameterList: $('parameterList'),
-  parameterFilter: $('parameterFilter'),
-  clearPinnedParameters: $('clearPinnedParameters'),
   recordButton: $('recordButton'),
   recordingName: $('recordingName'),
   recordingState: $('recordingState'),
@@ -49,7 +40,6 @@ const elements = {
   playbackTime: $('playbackTime'),
   playbackSpeed: $('playbackSpeed'),
   scopeModeText: $('scopeModeText'),
-  parameterTimestamp: $('parameterTimestamp'),
   carIp: $('carIp'),
   carPort: $('carPort'),
   commandInput: $('commandInput'),
@@ -58,23 +48,17 @@ const elements = {
   driveByLeft: $('driveByLeft'),
   driveByRight: $('driveByRight'),
   driveByTestButton: $('driveByTestButton'),
-  driveEnableCommand: $('driveEnableCommand'),
-  driveDisableCommand: $('driveDisableCommand'),
+  driveToggleCommand: $('driveToggleCommand'),
   brakeTestCommand: $('brakeTestCommand'),
   headingHoldCommand: $('headingHoldCommand'),
   tangentDebugCommand: $('tangentDebugCommand'),
-  detectFrequencyBadge: $('detectFrequencyBadge'),
-  detectEveryFrameButton: $('detectEveryFrameButton'),
-  detectEveryTwoFramesButton: $('detectEveryTwoFramesButton'),
+  cameraStatsCommand: $('cameraStatsCommand'),
+  cameraStatsStrip: $('cameraStatsStrip'),
   cameraFps: $('cameraFps'),
   cameraProcessLast: $('cameraProcessLast'),
   cameraProcessAverage: $('cameraProcessAverage'),
   cameraProcessMaximum: $('cameraProcessMaximum'),
   cameraProcessOverruns: $('cameraProcessOverruns'),
-  redPreLast: $('redPreLast'),
-  redPreAverage: $('redPreAverage'),
-  redPreMaximum: $('redPreMaximum'),
-  redPreOverruns: $('redPreOverruns'),
   remoteButtons: [...document.querySelectorAll('[data-remote]')],
   tuningControls: $('tuningControls'),
   tuningSnapshotTime: $('tuningSnapshotTime'),
@@ -188,7 +172,14 @@ const SCOPE_PRESETS = {
 const SCOPE_CHANNELS_STORAGE_KEY = 'scopeChannels';
 const ROAD_COLUMN_STORAGE_KEY = 'roadColumnPercent';
 const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes';
-const PINNED_PARAMETERS_STORAGE_KEY = 'pinnedParameters';
+const TIMEOUT_SOURCE_NAMES = {
+  1: '陀螺仪服务',
+  2: '编码器',
+  3: '速度环',
+  4: 'UDP',
+  5: '方向环',
+  6: 'MPU6050读取',
+};
 
 // 这里只列出小车端 main.cpp 当前真正支持的在线命令。连续量统一使用
 // “滑块 + 数值框”，离散模式使用开关或分段按钮，避免误发无效指令。
@@ -200,7 +191,6 @@ const TUNING_GROUPS = [
       { key: 'P', label: '速度P', min: 0, max: 1000, step: 1, defaultValue: 454 },
       { key: 'I', label: '速度I', min: 0, max: 100, step: 0.1, defaultValue: 14 },
       { key: 'D', label: '速度D', min: 0, max: 200, step: 0.1, defaultValue: 0 },
-      { key: 'spd', label: '左右轮前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 0 },
     ],
   },
   {
@@ -219,7 +209,6 @@ const TUNING_GROUPS = [
     title: '角速度环',
     subtitle: '视觉外环与陀螺仪内环',
     controls: [
-      { key: 'gyro', label: '角速度反馈', kind: 'toggle', defaultValue: 1 },
       { key: 'gDbg', label: '手动目标模式', kind: 'toggle', defaultValue: 0 },
       { key: 'gTar', label: '手动目标角速度', min: -360, max: 360, step: 1, unit: 'dps', defaultValue: 0 },
       { key: 'gOP', label: '外环P', min: 0, max: 15, step: 0.01, defaultValue: 4.5 },
@@ -228,7 +217,7 @@ const TUNING_GROUPS = [
       { key: 'gII', label: '内环I', min: 0, max: 0.2, step: 0.001, defaultValue: 0 },
       { key: 'gTMax', label: '目标角速度上限', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 360 },
       { key: 'gRMax', label: '差速上限', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 20 },
-      { key: 'yGuardDps', label: '瞄点越界救车角速度', min: 0, max: 500, step: 5, unit: 'dps', defaultValue: 360, hardMax: true },
+      { key: 'yGuardDps', label: '瞄点越界救车角速度', min: 0, max: 700, step: 5, unit: 'dps', defaultValue: 500, hardMax: true },
       { key: 'yawHoldRMax', label: '航向保持差速上限', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 10 },
       { key: 'gSign', label: '陀螺仪符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: -1 },
       { key: 'tSign', label: '差速输出符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: 1 },
@@ -236,10 +225,8 @@ const TUNING_GROUPS = [
   },
   {
     title: '绕行几何',
-    subtitle: '方案选择、识别前进速度、距离与航向角外环',
+    subtitle: '固定三阶段脚本的识别速度、距离与航向角外环',
     controls: [
-      { key: 'dbMode', label: '绕行方案', kind: 'segment', options: [[0, '角度三阶段'], [1, '边线定时']], defaultValue: 0 },
-      { key: 'dbSideMs', label: '边线瞄准持续时间', min: 500, max: 2000, step: 50, unit: 'ms', defaultValue: 500, hardMax: true },
       { key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0 },
       { key: 'dbNormalSpd', label: '正常巡线前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
       { key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 0 },
@@ -299,14 +286,12 @@ const TUNING_DESCRIPTIONS = Object.freeze({
   P: '速度环系数，无直接物理单位。它按本次与上次轮速误差之差增加PWM；调大通常响应更快，过大时轮速容易过冲和振荡。普通速度闭环生效，主动制动和硬件测试时不使用。',
   I: '速度环系数，无直接物理单位。它按当前“目标RPS-实际RPS”持续增加PWM，用来消除稳态速度差；调大能更快追上目标，过大容易过冲。',
   D: '速度环系数，无直接物理单位。它根据连续三次轮速误差的变化修正PWM增量，用于抑制快速变化；调大可能增加阻尼，也会放大编码器噪声。',
-  spd: '普通巡线时左右轮共同的前进基准速度，单位RPS，不是角速度。方向控制会在它上面叠加正负差速；设为0只表示没有前进基准，方向环仍可能让两轮反向转动。',
   dirP: '仅用于视觉PD模式或陀螺仪未就绪回退模式。把当前视觉横向误差直接换成轮速差；调大后转向更积极，过大容易在直道左右摇摆。',
   dirD: '仅用于视觉PD模式或回退模式。根据本帧与上帧视觉误差之差生成轮速差；调大可提前抑制转向趋势，但图像噪声大时会产生抖动。',
   AIM: '在鸟瞰中线上向前选取目标点的距离，单位m。调大通常看得更远、行驶更平滑但入弯更晚；调小转弯更灵敏但更容易受近处噪声影响。十字状态可能临时覆盖它。',
   spd_slow_ratio: '视觉误差达到最大值时允许降低的前进基准速度百分比。调大后大弯减速更多、过弯更稳但更慢；0%表示不按视觉误差减速。',
   begin_x: '左右边线搜索在图像底部从“图像中心±该像素值”开始。调大让搜索起点更靠两侧，调小更靠中心；设置不当可能从赛道外或错误边缘开始寻线。',
   circle_exit: '进入环岛运行态后，用里程计累计的出环距离阈值，单位m。调大将在环岛逻辑中保持更久，调小会更早进入出环状态；只对环岛流程生效。',
-  gyro: '选择普通方向控制是否请求使用“视觉误差→目标角速度→陀螺仪反馈→轮速差”。关闭时使用视觉PD；开启但MPU6050未就绪时会回退视觉PD。',
   gDbg: '手动目标角速度调试开关。开启后忽略视觉外环，直接用gTar作为目标角速度，并自动请求开启陀螺仪反馈；它不会自动发车。正常行驶应关闭。',
   gTar: '仅在gDbg开启时生效的手动车身目标角速度，单位dps。正负号决定转向方向，绝对值越大要求车身转得越快，并受gTMax限制。',
   gOP: '正常巡线角速度外环P：把视觉误差换成目标角速度dps。调大后同样的道路误差会要求更快转向；过大容易使目标角速度长期顶到gTMax。',
@@ -315,12 +300,10 @@ const TUNING_DESCRIPTIONS = Object.freeze({
   gII: '角速度内环I：累计目标角速度误差并补充轮速差，用于克服长期左右不一致。调大可减小稳态角速度误差，但容易积累后过冲；陀螺仪数据过旧时积分会冻结。',
   gTMax: '正常视觉外环和手动gTar允许输出的最大车身目标角速度，单位dps。调大只放宽“想转多快”，实际能否达到还受gRMax、速度环和电机能力限制。',
   gRMax: '角速度内环可输出的单侧轮速差上限，单位RPS，不是角速度。轮速通常为基准±差速，所以两轮目标差最多约2倍该值；普通PID_control_test还会再限制到±15RPS。',
-  yGuardDps: '正常中线巡线且未丢线时，如果瞄点Y大于等于车体参考点Y，立即锁存原转向方向并请求的救车目标角速度。默认360dps、硬上限500dps；设为0关闭。救车使用独立限幅，不会抬高正常gTMax。',
+  yGuardDps: '正常中线巡线且未丢线时，如果瞄点Y大于等于车体参考点Y，立即锁存原转向方向并请求的救车目标角速度。默认500dps、硬上限700dps，救车前进基准固定为20RPS，专用单侧差速上限为25RPS；设为0关闭。救车使用独立限幅，不会抬高正常gTMax或gRMax。',
   yawHoldRMax: '仅用于停车态“航向保持”测试的额外单侧差速上限，单位RPS，并且仍受gRMax限制。调大回正更有力，但原地拨动车头时动作更猛；不改变正常巡线限幅。',
   gSign: '修正MPU6050实测Z轴角速度的正负方向。若实际向左转时显示符号与控制约定相反，应切换它；设置错误会把负反馈变成错误方向。',
   tSign: '修正角速度内环输出到左右轮差速的方向。若出现“越修越偏”或持续自激旋转，应检查它；它只翻转差速方向，不改变角速度读数。',
-  dbMode: '选择下一次绕行采用的脚本：0为陀螺仪航向角三阶段，1为按dbSideMs瞄准绕行侧边线后再恢复中线。绕行开始后会锁存模式，中途修改从下一次生效。',
-  dbSideMs: '仅对边线定时方案生效，表示左绕瞄准左线或右绕瞄准右线的持续时间，单位ms。调大后沿边线行驶更久、横向绕得更远；范围固定为500至2000ms，默认500ms。',
   dbUseTangent: '仅对三阶段角度方案生效。开启时用目标位置处识别到的赛道切线作为0度参考；关闭时用脚本启动瞬间车头作为0度参考。切线识别不稳时建议关闭。',
   dbNormalSpd: 'K0绕行识别模式下，无目标以及绕行成功交回巡线后的前进基准速度，单位RPS，不是角速度。方向环仍在此基础上叠加左右差速。',
   dbRecSpd: '红块候选触发后、推理和等待制动期间使用的前进基准速度，单位RPS。它不会强制两轮相等，普通方向环仍叠加差速；调低可减少识别期间前冲距离。',
@@ -404,16 +387,6 @@ function loadStoredRoadColumnPercent() {
   return Number.isFinite(stored) && stored >= 30 && stored <= 70 ? stored : 50;
 }
 
-function loadStoredPinnedParameters() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(PINNED_PARAMETERS_STORAGE_KEY) || '[]');
-    if (!Array.isArray(parsed)) return [];
-    return [...new Set(parsed.filter((key) => typeof key === 'string' && key.length > 0))];
-  } catch (_error) {
-    return [];
-  }
-}
-
 const state = {
   mode: 'live',
   liveParams: null,
@@ -427,6 +400,7 @@ const state = {
   displayTuningTime: null,
   lastPacketAt: 0,
   lastRoadAt: 0,
+  lastTuningAt: 0,
   previousRoadSequence: null,
   droppedRoadFrames: 0,
   trend: [],
@@ -435,7 +409,6 @@ const state = {
   recording: { active: false },
   scopeChannels: loadStoredScopeChannels(),
   roadColumnPercent: loadStoredRoadColumnPercent(),
-  pinnedParameters: loadStoredPinnedParameters(),
   driveByTestDirection: 2,
   pendingTuning: new Map(),
   replay: {
@@ -453,8 +426,6 @@ const state = {
 };
 
 let toastTimer = 0;
-let parameterLayoutKey = '';
-let parameterRows = new Map();
 let scopeOptionsKey = '';
 const tuningControlElements = new Map();
 let remoteHoldDirection = 0;
@@ -476,27 +447,6 @@ function formatTime(milliseconds) {
   const seconds = Math.floor((value % 60000) / 1000);
   const ms = Math.floor(value % 1000);
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
-}
-
-function formatValue(key, value) {
-  if (value === null || value === undefined) return '--';
-  if (typeof value === 'boolean') return value ? '是' : '否';
-  if (key === 'run' || key === 'drive_enabled' || key === 'drive_busy' || key === 'have_target' ||
-      key === 'drive_recognizing' || key === 'drive_motion' || key === 'drive_geometry_valid' ||
-      key === 'drive_view_ready' || key === 'red_candidate' || key === 'drive_test_mode' ||
-      key === 'drive_brake_active' || key === 'yaw_hold_enabled' ||
-      key === 'tangent_debug_enabled' || key === 'track_tangent_valid') {
-    return Number(value) ? '是' : '否';
-  }
-  if (key === 'drive_detection_stage') {
-    return ({ 0: '0 / 正常巡线', 1: '1 / 远距接近', 2: '2 / 等待角度',
-      3: '3 / 三帧推理', 4: '4 / 绕行运动' })[Number(value)] || String(value);
-  }
-  if (key === 'item_flag') return `${value} / ${ITEM_NAMES[value] || '未知'}`;
-  if (key === 'udp_mode') return ({ 0: '0 / 关闭', 1: '1 / 仅波形', 2: '2 / 波形和道路' })[Number(value)] || String(value);
-  if (key === 'uptime_ms') return formatTime(value);
-  if (typeof value === 'number' && !Number.isInteger(value)) return value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
-  return String(value);
 }
 
 function parameterDisplayName(key) {
@@ -876,88 +826,6 @@ function buildTuningControls() {
   renderTuningControls();
 }
 
-function savePinnedParameters() {
-  try {
-    localStorage.setItem(PINNED_PARAMETERS_STORAGE_KEY, JSON.stringify(state.pinnedParameters));
-  } catch (_error) {
-    // 本地存储不可用时仍允许本次页面继续使用置顶功能。
-  }
-}
-
-function togglePinnedParameter(key) {
-  const pinned = state.pinnedParameters.includes(key);
-  state.pinnedParameters = pinned
-    ? state.pinnedParameters.filter((item) => item !== key)
-    : [key, ...state.pinnedParameters];
-  savePinnedParameters();
-  parameterLayoutKey = '';
-  renderParameters(state.displayParams || {});
-}
-
-function clearPinnedParameters() {
-  if (!state.pinnedParameters.length) return;
-  state.pinnedParameters = [];
-  savePinnedParameters();
-  parameterLayoutKey = '';
-  renderParameters(state.displayParams || {});
-}
-
-function renderParameters(params) {
-  const filter = elements.parameterFilter.value.trim().toLowerCase();
-  const baseKeys = params
-    ? [...PARAMETER_ORDER.filter((key) => key in params), ...Object.keys(params).filter((key) => !PARAMETER_ORDER.includes(key)).sort()]
-    : [];
-  const pinnedSet = new Set(state.pinnedParameters);
-  const keys = [
-    ...state.pinnedParameters.filter((key) => baseKeys.includes(key)),
-    ...baseKeys.filter((key) => !pinnedSet.has(key)),
-  ];
-
-  const visibleKeys = keys.filter((key) => {
-    const label = PARAMETER_LABELS[key] || key;
-    return !filter || key.toLowerCase().includes(filter) || label.toLowerCase().includes(filter);
-  });
-  const layoutKey = `${filter}\u0000${state.pinnedParameters.join('\u0000')}\u0001${visibleKeys.join('\u0000')}`;
-
-  if (layoutKey !== parameterLayoutKey) {
-    parameterRows = new Map();
-    const rows = visibleKeys.map((key) => {
-      const row = document.createElement('div');
-      row.className = 'parameter-row';
-      const pinned = pinnedSet.has(key);
-      row.classList.toggle('pinned', pinned);
-      const pin = document.createElement('button');
-      pin.type = 'button';
-      pin.className = 'parameter-pin';
-      pin.classList.toggle('pinned', pinned);
-      pin.textContent = pinned ? '★' : '☆';
-      pin.title = pinned ? `取消置顶 ${key}` : `置顶 ${key}`;
-      pin.setAttribute('aria-label', pin.title);
-      pin.setAttribute('aria-pressed', String(pinned));
-      pin.addEventListener('click', () => togglePinnedParameter(key));
-      const label = document.createElement('span');
-      label.className = 'parameter-label';
-      label.textContent = PARAMETER_LABELS[key] || key;
-      label.title = key;
-      const value = document.createElement('strong');
-      row.append(pin, label, value);
-      parameterRows.set(key, value);
-      return row;
-    });
-    elements.parameterList.replaceChildren(...rows);
-    parameterLayoutKey = layoutKey;
-  }
-
-  visibleKeys.forEach((key) => {
-    const value = parameterRows.get(key);
-    if (value) value.textContent = formatValue(key, params[key]);
-  });
-  elements.clearPinnedParameters.disabled = state.pinnedParameters.length === 0;
-  elements.clearPinnedParameters.textContent = state.pinnedParameters.length
-    ? `清除置顶(${state.pinnedParameters.length})`
-    : '清除置顶';
-}
-
 function itemResultText(value) {
   const numeric = Number(value);
   return `${Number.isFinite(numeric) ? numeric : 1} / ${ITEM_NAMES[numeric] || '未知'}`;
@@ -1291,10 +1159,27 @@ function updateSummary() {
   elements.centerCount.textContent = road?.sourceCounts.center ?? params.mid_n ?? 0;
   elements.rightCount.textContent = road?.sourceCounts.right ?? params.right_n ?? 0;
   elements.frameSequence.textContent = road ? `帧 ${road.sequence}` : '帧 --';
+  const timeoutId = Math.trunc(Number(params.to_id ?? 0));
+  const timeoutTotal = Math.max(0, Math.trunc(Number(params.to_total ?? 0)));
+  const timeoutUsed = Number(params.to_used);
+  const timeoutTarget = Number(params.to_target);
+  if (timeoutId > 0 && timeoutTotal > 0 && Number.isFinite(timeoutUsed) &&
+      Number.isFinite(timeoutTarget)) {
+    const sourceName = TIMEOUT_SOURCE_NAMES[timeoutId] || `来源${timeoutId}`;
+    elements.timeoutBadge.textContent =
+      `最近超时：${sourceName} ${timeoutUsed.toFixed(1)}/${timeoutTarget.toFixed(1)}ms 累计${timeoutTotal}`;
+    elements.timeoutBadge.classList.add('metric-alert');
+  } else {
+    elements.timeoutBadge.textContent = '最近超时：无';
+    elements.timeoutBadge.classList.remove('metric-alert');
+  }
   const liveParams = state.liveParams || {};
+  const liveTuning = state.liveTuning || {};
+  const displayedTuning = state.displayTuning || liveTuning;
   const liveRunning = Boolean(Number(liveParams.run ?? 0));
   const driveBusy = Boolean(Number(liveParams.drive_busy ?? 0));
   const driveEnabled = Boolean(Number(liveParams.drive_enabled ?? 0));
+  const displayedDriveEnabled = Boolean(Number(params.drive_enabled ?? driveEnabled));
   const brakeTestEnabled = Boolean(Number(liveParams.drive_brake_test_enabled ?? 0));
   const displayedBrakeTestEnabled = Boolean(Number(
     params.drive_brake_test_enabled ?? liveParams.drive_brake_test_enabled ?? 0));
@@ -1309,8 +1194,11 @@ function updateSummary() {
     ? '车辆停车时不可启动绕行测试'
     : (brakeTestEnabled ? '请先关闭持续刹车测试' :
       (driveBusy ? '绕行脚本正在执行' : '启动绕行脚本测试'));
-  elements.driveEnableCommand.classList.toggle('selected-command', driveEnabled);
-  elements.driveDisableCommand.classList.toggle('selected-command', !driveEnabled);
+  elements.driveToggleCommand.classList.toggle('selected-command', displayedDriveEnabled);
+  elements.driveToggleCommand.textContent = displayedDriveEnabled
+    ? '识别已开启，点击关闭'
+    : '识别已关闭，点击开启';
+  elements.driveToggleCommand.disabled = state.mode !== 'live' || !state.liveParams;
   elements.brakeTestCommand.classList.toggle('selected-command', displayedBrakeTestEnabled);
   elements.brakeTestCommand.textContent = !displayedBrakeTestEnabled
     ? '刹车测试关闭'
@@ -1332,6 +1220,13 @@ function updateSummary() {
   elements.tangentDebugCommand.textContent = tangentDebugEnabled ? '关闭切线显示' : '中线切线显示';
   elements.tangentDebugCommand.disabled = state.mode !== 'live';
   elements.tangentDebugCommand.title = '开启时自动切到UDP+道路三线';
+  const cameraStatsEnabled = Boolean(Number(displayedTuning.camStats ?? params.camStats ?? 0));
+  elements.cameraStatsCommand.classList.toggle('selected-command', cameraStatsEnabled);
+  elements.cameraStatsCommand.textContent = cameraStatsEnabled ? '相机状态开启' : '相机状态关闭';
+  elements.cameraStatsCommand.disabled = state.mode !== 'live' || !state.liveTuning;
+  elements.cameraStatsCommand.title = cameraStatsEnabled
+    ? '点击停止整帧处理耗时统计和低频回传'
+    : '点击开启250ms低频相机状态，不改变红块检测频率';
 
   const remoteEnabled = state.mode === 'live' && Boolean(state.liveParams) &&
     !liveRunning && !yawHoldEnabled && !brakeTestEnabled;
@@ -1345,7 +1240,16 @@ function updateSummary() {
 }
 
 function renderCameraPerformance() {
-  const params = state.displayParams || {};
+  const legacyParams = state.displayParams || {};
+  const tuning = state.displayTuning || {};
+  const params = { ...legacyParams, ...tuning };
+  const hasLegacyStats = 'camera_process_last_ms' in legacyParams ||
+    'camera_process_avg_ms' in legacyParams || 'camera_fps' in legacyParams;
+  const enabled = 'camStats' in tuning
+    ? Boolean(Number(tuning.camStats))
+    : hasLegacyStats;
+  elements.cameraStatsStrip.hidden = !enabled;
+  if (!enabled) return;
   const renderMetric = (element, key, digits, unit) => {
     const value = Number(params[key]);
     element.textContent = Number.isFinite(value) ? `${value.toFixed(digits)} ${unit}` : `-- ${unit}`;
@@ -1361,42 +1265,29 @@ function renderCameraPerformance() {
   renderMetric(elements.cameraProcessAverage, 'camera_process_avg_ms', 2, 'ms');
   renderMetric(elements.cameraProcessMaximum, 'camera_process_max_ms', 2, 'ms');
   renderCount(elements.cameraProcessOverruns, 'camera_process_overrun_count');
-  renderMetric(elements.redPreLast, 'red_pre_last_ms', 2, 'ms');
-  renderMetric(elements.redPreAverage, 'red_pre_avg_ms', 2, 'ms');
-  renderMetric(elements.redPreMaximum, 'red_pre_max_ms', 2, 'ms');
-  renderCount(elements.redPreOverruns, 'red_pre_overrun_count');
-
-  const interval = Number(params.red_pre_every);
-  const everyFrame = interval === 1;
-  const everyTwoFrames = interval === 2;
-  elements.detectFrequencyBadge.textContent = everyFrame
-    ? '当前每帧检测'
-    : (everyTwoFrames ? '当前每2帧检测' : '等待检测频率');
-  elements.detectEveryFrameButton.classList.toggle('selected', everyFrame);
-  elements.detectEveryTwoFramesButton.classList.toggle('selected', everyTwoFrames);
-  elements.detectEveryFrameButton.setAttribute('aria-pressed', String(everyFrame));
-  elements.detectEveryTwoFramesButton.setAttribute('aria-pressed', String(everyTwoFrames));
-  const controlsDisabled = state.mode !== 'live' || !state.liveParams;
-  elements.detectEveryFrameButton.disabled = controlsDisabled;
-  elements.detectEveryTwoFramesButton.disabled = controlsDisabled;
-  const controlTitle = state.mode === 'replay'
-    ? '录像回放只显示当时参数，不能向小车发送命令'
-    : '切换真实红块预检测频率；默认每2帧一次';
-  elements.detectEveryFrameButton.title = controlTitle;
-  elements.detectEveryTwoFramesButton.title = controlTitle;
 }
 
 async function toggleHeadingHold() {
   const enabled = Boolean(Number(state.liveParams?.yaw_hold_enabled ?? 0));
-  if (!enabled && Number(state.liveParams?.udp_mode ?? 0) === 0) {
+  if (!enabled && Number(state.liveTuning?.udp ?? 0) === 0) {
     await sendCommand('#udp=1;', { quiet: true });
   }
   await sendCommand(`#yawHold=${enabled ? 0 : 1};`);
 }
 
+async function toggleDriveRecognition() {
+  const enabled = Boolean(Number(state.liveParams?.drive_enabled ?? 0));
+  await sendCommand(`#drive=${enabled ? 0 : 1};`);
+}
+
+async function toggleCameraStats() {
+  const enabled = Boolean(Number(state.liveTuning?.camStats ?? state.liveParams?.camStats ?? 0));
+  await sendCommand(`#camStats=${enabled ? 0 : 1};`);
+}
+
 async function toggleTangentDebug() {
   const enabled = Boolean(Number(state.liveParams?.tangent_debug_enabled ?? 0));
-  if (!enabled && Number(state.liveParams?.udp_mode ?? 0) < 2) {
+  if (!enabled && Number(state.liveTuning?.udp ?? 0) < 2) {
     await sendCommand('#udp=2;', { quiet: true });
   }
   await sendCommand(`#tangentDbg=${enabled ? 0 : 1};`);
@@ -1464,11 +1355,7 @@ function updateScopeModeText() {
 
 function renderDisplaySnapshot() {
   updateScopeOptions(state.displayParams || {});
-  renderParameters(state.displayParams || {});
   renderTuningControls();
-  elements.parameterTimestamp.textContent = state.mode === 'live'
-    ? '实时'
-    : (state.displayParamTime === null ? '参数 --' : `参数 ${formatTime(state.displayParamTime)}`);
   updateScopeModeText();
   renderCameraPerformance();
   updateSummary();
@@ -1476,8 +1363,14 @@ function renderDisplaySnapshot() {
   drawDetection();
 }
 
+function telemetryMode(tuning, params) {
+  const value = tuning?.udp ?? params?.udp_mode;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 2;
+}
+
 function applyParams(receivedAt, params) {
-  const roadDisabled = 'udp_mode' in params && Number(params.udp_mode) < 2;
+  const roadDisabled = telemetryMode(state.liveTuning, params) < 2;
   state.liveParams = params;
   state.lastPacketAt = receivedAt;
   pushTrend(receivedAt, params);
@@ -1500,7 +1393,6 @@ function applyRoad(receivedAt, road) {
   state.previousRoadSequence = road.sequence;
   if (state.lastRoadAt) elements.frameInterval.textContent = `间隔 ${receivedAt - state.lastRoadAt} ms`;
   state.lastRoadAt = receivedAt;
-  state.lastPacketAt = receivedAt;
   state.liveRoad = road;
   if (state.mode === 'live') {
     state.displayRoad = road;
@@ -1526,23 +1418,21 @@ function applyTuning(receivedAt, tuning) {
   }
 
   state.liveTuning = merged;
-  state.lastPacketAt = receivedAt;
+  state.lastTuningAt = receivedAt;
+  if (telemetryMode(merged, state.liveParams) < 2) {
+    state.liveRoad = null;
+    state.previousRoadSequence = null;
+  }
   if (state.mode === 'live') {
     state.displayTuning = merged;
     state.displayTuningTime = receivedAt;
-    renderTuningControls();
+    if (telemetryMode(merged, state.liveParams) < 2) state.displayRoad = null;
+    renderDisplaySnapshot();
   }
 }
 
 function applyStatus(status) {
   state.serverStatus = status;
-  elements.udpPort.textContent = status.udpPort;
-  elements.localAddress.textContent = status.localAddresses?.map((entry) => entry.address).join(' / ') || '--';
-  elements.remoteAddress.textContent = status.lastRemote || '--';
-  elements.jsonPacketCount.textContent = status.jsonPackets;
-  elements.roadPacketCount.textContent = status.roadPackets;
-  elements.invalidPacketCount.textContent = status.invalidPackets;
-  elements.dropCount.textContent = state.droppedRoadFrames;
   updateRecordingState(status.recording || { active: false });
 }
 
@@ -1568,7 +1458,7 @@ function setMode(mode) {
     state.displayTuning = state.liveTuning;
     state.displayParamTime = state.lastPacketAt || null;
     state.displayRoadTime = state.lastRoadAt || null;
-    state.displayTuningTime = state.liveTuning ? state.lastPacketAt : null;
+    state.displayTuningTime = state.liveTuning ? state.lastTuningAt : null;
     renderDisplaySnapshot();
     drawTrend();
   } else {
@@ -1597,7 +1487,7 @@ function applyReplayTime(time) {
   const paramEvent = paramIndex >= 0 ? state.replay.paramEvents[paramIndex] : null;
   const roadEvent = roadIndex >= 0 ? state.replay.roadEvents[roadIndex] : null;
   const tuningEvent = tuningIndex >= 0 ? state.replay.tuningEvents[tuningIndex] : null;
-  const roadDisabled = paramEvent && 'udp_mode' in paramEvent.data && Number(paramEvent.data.udp_mode) < 2;
+  const roadDisabled = telemetryMode(tuningEvent?.data, paramEvent?.data) < 2;
 
   state.replay.currentTime = clamped;
   state.displayParams = paramEvent?.data || null;
@@ -1721,6 +1611,16 @@ async function sendCommand(command, options = {}) {
   });
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error || '发送失败');
+  const udpMatch = normalized.match(/^#udp=([012]);$/);
+  if (udpMatch) {
+    const udp = Number(udpMatch[1]);
+    state.liveTuning = { ...TUNING_DEFAULTS, ...(state.liveTuning || {}), udp };
+    if (state.mode === 'live') {
+      state.displayTuning = state.liveTuning;
+      if (udp < 2) state.displayRoad = null;
+      renderDisplaySnapshot();
+    }
+  }
   if (!options.silentStatus) {
     elements.commandStatus.textContent = `已发送 ${payload.command} → ${payload.ip}:${payload.port}`;
   }
@@ -1729,8 +1629,6 @@ async function sendCommand(command, options = {}) {
 }
 
 function bindEvents() {
-  elements.parameterFilter.addEventListener('input', () => renderParameters(state.displayParams || {}));
-  elements.clearPinnedParameters.addEventListener('click', clearPinnedParameters);
   elements.addScopeChannel.addEventListener('click', addSelectedScopeChannel);
   elements.scopeChannelSelect.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') addSelectedScopeChannel();
@@ -1776,6 +1674,9 @@ function bindEvents() {
   elements.driveByTestButton.addEventListener('click', () => {
     sendCommand(`#test_driveby=${state.driveByTestDirection};`).catch((error) => showToast(error.message));
   });
+  elements.driveToggleCommand.addEventListener('click', () => {
+    toggleDriveRecognition().catch((error) => showToast(error.message));
+  });
   elements.brakeTestCommand.addEventListener('click', () => {
     const enabled = Boolean(Number(state.liveParams?.drive_brake_test_enabled ?? 0));
     sendCommand(`#test_brake=${enabled ? 0 : 1};`).catch((error) => showToast(error.message));
@@ -1786,11 +1687,8 @@ function bindEvents() {
   elements.tangentDebugCommand.addEventListener('click', () => {
     toggleTangentDebug().catch((error) => showToast(error.message));
   });
-  elements.detectEveryFrameButton.addEventListener('click', () => {
-    sendCommand('#dbDetectEvery=1;').catch((error) => showToast(error.message));
-  });
-  elements.detectEveryTwoFramesButton.addEventListener('click', () => {
-    sendCommand('#dbDetectEvery=2;').catch((error) => showToast(error.message));
+  elements.cameraStatsCommand.addEventListener('click', () => {
+    toggleCameraStats().catch((error) => showToast(error.message));
   });
   elements.remoteButtons.forEach((button) => {
     button.addEventListener('contextmenu', (event) => event.preventDefault());
@@ -1840,19 +1738,39 @@ function connectEvents() {
 }
 
 function updateConnectionAge() {
-  const age = state.lastPacketAt ? Date.now() - state.lastPacketAt : Infinity;
-  elements.packetAge.textContent = Number.isFinite(age) ? `${age} ms` : '-- ms';
-  if (age < 500) {
-    elements.connectionBadge.textContent = 'UDP实时';
+  const now = Date.now();
+  const controlAge = state.lastPacketAt ? now - state.lastPacketAt : Infinity;
+  const roadAge = state.lastRoadAt ? now - state.lastRoadAt : Infinity;
+  const tuningAge = state.lastTuningAt ? now - state.lastTuningAt : Infinity;
+  const mode = telemetryMode(state.liveTuning, state.liveParams);
+  const controlExpected = mode >= 1;
+  const roadExpected = mode >= 2;
+  const tuningExpected = mode >= 1;
+  const ageText = (age) => Number.isFinite(age) ? `${age}` : '--';
+  elements.packetAge.textContent =
+    `控 ${controlExpected ? ageText(controlAge) : '关'} / 路 ${roadExpected ? ageText(roadAge) : '关'} / 状 ${tuningExpected ? ageText(tuningAge) : '关'} ms`;
+  const roadDelayed = roadExpected && roadAge > 150;
+  const tuningDelayed = tuningExpected && tuningAge > 1000;
+  elements.packetAge.classList.toggle('metric-alert', roadDelayed || tuningDelayed);
+  const controlFails = Number(state.liveTuning?.udp_control_send_fail_total ?? 0);
+  const roadFails = Number(state.liveTuning?.udp_road_send_fail_total ?? 0);
+  elements.packetAge.title =
+    `CTL1控制包年龄=${controlExpected ? ageText(controlAge) : '关闭'}ms，RDL1道路包年龄=${roadExpected ? ageText(roadAge) : '关闭'}ms，` +
+    `低频状态年龄=${tuningExpected ? ageText(tuningAge) : '关闭'}ms；控制发送失败=${controlFails}，道路发送失败=${roadFails}`;
+
+  if (!controlExpected) {
+    elements.connectionBadge.textContent = '调试UDP关闭';
+    elements.connectionBadge.className = 'badge badge-offline';
+  } else if (controlAge <= 100) {
+    elements.connectionBadge.textContent = '控制UDP实时';
     elements.connectionBadge.className = 'badge badge-online';
-  } else if (age < 2000) {
-    elements.connectionBadge.textContent = 'UDP延迟';
+  } else if (controlAge <= 500) {
+    elements.connectionBadge.textContent = '控制UDP警告';
     elements.connectionBadge.className = 'badge badge-alert';
   } else if (state.serverStatus) {
-    elements.connectionBadge.textContent = '等待小车UDP';
+    elements.connectionBadge.textContent = '控制UDP离线';
     elements.connectionBadge.className = 'badge badge-offline';
   }
-  elements.dropCount.textContent = state.droppedRoadFrames;
   drawTrend();
 }
 

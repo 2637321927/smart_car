@@ -32,14 +32,104 @@ const runtime = {
   udpPackets: 0,
   jsonPackets: 0,
   tuningPackets: 0,
+  controlPackets: 0,
   roadPackets: 0,
   invalidPackets: 0,
   lastRemote: null,
   lastPacketAt: 0,
+  lastControlAt: 0,
+  lastTuningAt: 0,
+  lastRoadAt: 0,
   recording: null,
 };
 
 const sseClients = new Set();
+
+const CONTROL_STATE_NAMES = [
+  'IDLE', 'APPROACH', 'WAIT_VIEW', 'INFER', 'WAIT_BRAKE',
+  'START_MOTION_PENDING', 'TURN_OUT', 'PASS_SHORT', 'TURN_TO_TRACK',
+  'FOLLOW_SIDE_LINE', 'RECOVER_CENTER_LINE', 'FINISH_PENDING',
+];
+const CONTROL_ABORT_NAMES = [
+  'none', 'view_timeout', 'target_geometry_invalid', 'gyro_not_ready',
+  'gyro_stale', 'phase_timeout', 'brake_timeout',
+];
+const CONTROL_INT_FIELDS = [
+  'gyro_timeout', 'to_id', 'to_total', 'selected_speed', 'drive_state_code',
+  'drive_abort_reason_code', 'drive_brake_pwm', 'drive_brake_elapsed_ms',
+  'drive_infer_valid_count', 'red_candidate_count', 'red_contour_area',
+  'drive_detection_stage', 'circle_type', 'cross_type', 'track_type', 'item_flag',
+];
+const CONTROL_FLOAT_FIELDS = [
+  'encoder1_speed_avg', 'encoder2_speed_avg', 'latest_error', 'ex_rps1', 'ex_rps2',
+  'current_pwm1', 'current_pwm2', 'P1_motor', 'P2_motor', 'D1_motor', 'D2_motor',
+  'gyro_target_dps', 'gyro_dps', 'y_guard_aim_dy_px', 'y_guard_target_dps',
+  'to_used', 'to_target', 'track_tangent_deg', 'drive_yaw_deg',
+  'drive_target_yaw_deg', 'drive_heading_error_deg', 'drive_track_heading_deg',
+  'drive_target_track_heading_deg', 'drive_view_angle_deg', 'drive_target_distance_m',
+  'drive_distance_since_trigger_m', 'drive_phase_distance_m',
+  'drive_target_yaw_rate_dps', 'drive_turn_rps', 'circle_exit_m', 'odom_m', 'AIM',
+  'drive_test_target_distance_m',
+];
+
+function parseControlPacket(buffer) {
+  if (buffer.length < 16 || buffer.toString('ascii', 0, 4) !== 'CTL1') {
+    return null;
+  }
+
+  const version = buffer.readUInt8(4);
+  const headerSize = buffer.readUInt8(5);
+  const packetSize = buffer.readUInt16LE(6);
+  const expectedSize = headerSize + CONTROL_INT_FIELDS.length * 4 +
+    CONTROL_FLOAT_FIELDS.length * 4;
+  if (version !== 1 || headerSize !== 16 || packetSize !== expectedSize ||
+      buffer.length < packetSize) {
+    return null;
+  }
+
+  const flags0 = buffer.readUInt16LE(12);
+  const flags1 = buffer.readUInt16LE(14);
+  let offset = headerSize;
+  const params = {
+    uptime_ms: buffer.readUInt32LE(8),
+  };
+  CONTROL_INT_FIELDS.forEach((name) => {
+    params[name] = buffer.readInt32LE(offset);
+    offset += 4;
+  });
+  CONTROL_FLOAT_FIELDS.forEach((name) => {
+    params[name] = buffer.readFloatLE(offset);
+    offset += 4;
+  });
+
+  params.y_guard_active = Number(Boolean(flags0 & (1 << 0)));
+  params.run = Number(Boolean(flags0 & (1 << 1)));
+  params.yaw_hold_enabled = Number(Boolean(flags0 & (1 << 2)));
+  params.tangent_debug_enabled = Number(Boolean(flags0 & (1 << 3)));
+  params.track_tangent_valid = Number(Boolean(flags0 & (1 << 4)));
+  params.drive_enabled = Number(Boolean(flags0 & (1 << 5)));
+  params.drive_busy = Number(Boolean(flags0 & (1 << 6)));
+  params.drive_recognizing = Number(Boolean(flags0 & (1 << 7)));
+  params.drive_motion = Number(Boolean(flags0 & (1 << 8)));
+  params.drive_test_mode = Number(Boolean(flags0 & (1 << 9)));
+  params.drive_brake_test_enabled = Number(Boolean(flags0 & (1 << 10)));
+  params.drive_brake_test_holding = Number(Boolean(flags0 & (1 << 11)));
+  params.drive_brake_active = Number(Boolean(flags0 & (1 << 12)));
+  params.drive_geometry_valid = Number(Boolean(flags0 & (1 << 13)));
+  params.drive_view_ready = Number(Boolean(flags0 & (1 << 14)));
+  params.red_candidate = Number(Boolean(flags0 & (1 << 15)));
+  params.have_target = Number(Boolean(flags1 & (1 << 0)));
+  params.hwTest = Number(Boolean(flags1 & (1 << 1)));
+  params.camStats = Number(Boolean(flags1 & (1 << 2)));
+  params.remote_active = Number(Boolean(flags1 & (1 << 3)));
+
+  const stateCode = params.drive_state_code;
+  params.drive_state = params.yaw_hold_enabled
+    ? 'HEADING_HOLD'
+    : (CONTROL_STATE_NAMES[stateCode] || 'UNKNOWN');
+  params.drive_abort_reason = CONTROL_ABORT_NAMES[params.drive_abort_reason_code] || 'unknown';
+  return params;
+}
 
 function localIPv4Addresses() {
   const addresses = [];
@@ -246,9 +336,13 @@ function statusPayload() {
     udpPackets: runtime.udpPackets,
     jsonPackets: runtime.jsonPackets,
     tuningPackets: runtime.tuningPackets,
+    controlPackets: runtime.controlPackets,
     roadPackets: runtime.roadPackets,
     invalidPackets: runtime.invalidPackets,
     lastPacketAt: runtime.lastPacketAt,
+    lastControlAt: runtime.lastControlAt,
+    lastTuningAt: runtime.lastTuningAt,
+    lastRoadAt: runtime.lastRoadAt,
     lastRemote: runtime.lastRemote,
     recording: recordingState(),
   };
@@ -328,18 +422,23 @@ function start() {
       try {
         const params = JSON.parse(message.toString('utf8'));
         runtime.jsonPackets += 1;
-        if (params.packet_type === 'tuning') {
+        if (params.packet_type === 'tuning' || params.packet_type === 'camera') {
+          const packetType = params.packet_type;
           const tuning = { ...params };
           delete tuning.packet_type;
-          runtime.latestTuning = tuning;
+          runtime.latestTuning = packetType === 'camera'
+            ? { ...(runtime.latestTuning || {}), ...tuning }
+            : tuning;
+          runtime.lastTuningAt = receivedAt;
           runtime.tuningPackets += 1;
-          const event = { receivedAt, tuning };
+          const event = { receivedAt, tuning: runtime.latestTuning };
           broadcast('tuning', event);
-          recordingEvent('tuning', receivedAt, tuning);
+          recordingEvent('tuning', receivedAt, runtime.latestTuning);
           return;
         }
 
         runtime.latestParams = params;
+        runtime.lastControlAt = receivedAt;
         const event = { receivedAt, params };
         broadcast('params', event);
         recordingEvent('params', receivedAt, params);
@@ -349,9 +448,25 @@ function start() {
       return;
     }
 
+    if (message.toString('ascii', 0, 4) === 'CTL1') {
+      const params = parseControlPacket(message);
+      if (!params) {
+        runtime.invalidPackets += 1;
+        return;
+      }
+      runtime.latestParams = params;
+      runtime.lastControlAt = receivedAt;
+      runtime.controlPackets += 1;
+      const event = { receivedAt, params };
+      broadcast('params', event);
+      recordingEvent('params', receivedAt, params);
+      return;
+    }
+
     const road = parseRoadPacket(message);
     if (road) {
       runtime.latestRoad = road;
+      runtime.lastRoadAt = receivedAt;
       runtime.roadPackets += 1;
       const event = { receivedAt, road };
       broadcast('road', event);
@@ -385,19 +500,19 @@ function start() {
         response.write(`event: status\ndata: ${JSON.stringify(statusPayload())}\n\n`);
         if (runtime.latestParams) {
           response.write(`event: params\ndata: ${JSON.stringify({
-            receivedAt: runtime.lastPacketAt,
+            receivedAt: runtime.lastControlAt,
             params: runtime.latestParams,
           })}\n\n`);
         }
         if (runtime.latestTuning) {
           response.write(`event: tuning\ndata: ${JSON.stringify({
-            receivedAt: runtime.lastPacketAt,
+            receivedAt: runtime.lastTuningAt,
             tuning: runtime.latestTuning,
           })}\n\n`);
         }
         if (runtime.latestRoad) {
           response.write(`event: road\ndata: ${JSON.stringify({
-            receivedAt: runtime.lastPacketAt,
+            receivedAt: runtime.lastRoadAt,
             road: runtime.latestRoad,
           })}\n\n`);
         }
@@ -502,4 +617,4 @@ if (require.main === module) {
   start();
 }
 
-module.exports = { parseRoadPacket, start };
+module.exports = { parseControlPacket, parseRoadPacket, start };
