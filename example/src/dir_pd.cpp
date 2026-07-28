@@ -11,7 +11,7 @@ volatile int spd_slow_ratio = 30;
 
 namespace
 {
-constexpr float kVisionYGuardBaseRps = 20.0f;
+constexpr float kVisionYGuardBaseRps = 15.0f;
 constexpr float kVisionYGuardMaxDps = 700.0f;
 constexpr float kVisionYGuardMaxTurnRps = 25.0f;
 

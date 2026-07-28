@@ -295,6 +295,7 @@ async function main() {
     assert(frontUiSource.includes('constexpr float kRemoteYawRateDps = 160.0f;'));
     assert(dirPdSource.includes('constexpr float kVisionYGuardMaxDps = 700.0f;'));
     assert(dirPdSource.includes('constexpr float kVisionYGuardMaxTurnRps = 25.0f;'));
+    assert(dirPdSource.includes('constexpr float kVisionYGuardBaseRps = 15.0f;'));
     assert.strictEqual((dirPdSource.match(/\[救车\] 触发救车/g) || []).length, 1);
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
