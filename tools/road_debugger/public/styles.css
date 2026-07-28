@@ -112,6 +112,7 @@ h2 { font-size: 1.05rem; }
   grid-template-areas:
     "road scope command"
     "timeline timeline timeline"
+    "camera camera camera"
     "status detection params"
     "tuning tuning tuning";
   gap: 18px;
@@ -126,6 +127,7 @@ h2 { font-size: 1.05rem; }
 .scope-panel { grid-area: scope; }
 .command-panel { grid-area: command; }
 .timeline-row { grid-area: timeline; }
+.camera-performance-panel { grid-area: camera; }
 .status-panel { grid-area: status; }
 .detection-panel { grid-area: detection; }
 .params-panel { grid-area: params; }
@@ -240,6 +242,49 @@ h2 { font-size: 1.05rem; }
 
 .scope-channel-tag::after { content: "×"; color: var(--muted); }
 .scope-empty-label { color: var(--muted); }
+
+.camera-performance-heading { gap: 12px; }
+.detect-frequency-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.detect-frequency-button.selected {
+  color: #071012;
+  border-color: var(--green);
+  background: var(--green);
+  box-shadow: 0 0 16px rgba(114, 224, 152, 0.2);
+}
+.detect-frequency-button:disabled { cursor: not-allowed; opacity: 0.48; }
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: 9px;
+  padding: 14px 18px 10px;
+}
+.performance-grid div {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid rgba(139, 190, 190, 0.1);
+  border-radius: 5px;
+  background: rgba(4, 14, 16, 0.32);
+}
+.performance-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.67rem;
+}
+.performance-grid strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.performance-grid strong.metric-alert { color: var(--red); }
+.performance-note { padding: 0 18px 14px; color: var(--muted); font-size: 0.68rem; }
 
 .status-grid {
   display: grid;
@@ -458,15 +503,34 @@ h2 { font-size: 1.05rem; }
 
 .parameter-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
   padding: 8px 18px;
   border-bottom: 1px solid rgba(139, 190, 190, 0.075);
   font-size: 0.74rem;
 }
 
-.parameter-row span:first-child { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.parameter-row.pinned { background: rgba(245, 223, 116, 0.045); }
+.parameter-label { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .parameter-row strong { color: var(--text); font-weight: 620; font-variant-numeric: tabular-nums; }
+.parameter-pin, .parameter-clear-pins {
+  border: 1px solid rgba(139, 190, 190, 0.2);
+  border-radius: 4px;
+  color: var(--muted);
+  background: rgba(4, 14, 16, 0.45);
+}
+.parameter-pin {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 0.88rem;
+  line-height: 1;
+}
+.parameter-pin:hover, .parameter-clear-pins:hover { color: var(--yellow); border-color: rgba(245, 223, 116, 0.4); }
+.parameter-pin.pinned { color: var(--yellow); border-color: rgba(245, 223, 116, 0.35); background: rgba(245, 223, 116, 0.08); }
+.parameter-clear-pins { min-height: 30px; padding: 4px 8px; font-size: 0.68rem; }
+.parameter-clear-pins:disabled { cursor: not-allowed; opacity: 0.38; }
 
 .tuning-heading { align-items: center; }
 .tuning-heading-status {
@@ -745,6 +809,7 @@ h2 { font-size: 1.05rem; }
       "scope"
       "command"
       "timeline"
+      "camera"
       "status"
       "detection"
       "params"
@@ -758,6 +823,8 @@ h2 { font-size: 1.05rem; }
   .shell { padding: 12px; }
   .topbar, .panel-heading { align-items: flex-start; flex-direction: column; }
   .scope-heading-actions { align-items: flex-start; justify-content: flex-start; }
+  .camera-performance-heading { align-items: flex-start; }
+  .detect-frequency-controls { justify-content: flex-start; }
   .dashboard { gap: 12px; }
   .road-stage { min-height: 280px; }
   .timeline-row { flex-wrap: wrap; }

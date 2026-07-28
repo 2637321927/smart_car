@@ -287,7 +287,7 @@
       <pre><code>35RPS 正常巡线
 → 只执行低负担红色检测
 → 检测到红色后才启动 NCNN
-→ 远距候选成立后主动制动，释放后以 9.5RPS 识别
+→ 远距候选成立后主动制动，释放后以 0RPS 基准识别
 → 三帧投票完成且制动完成后按dbMode进入所选绕行方案
 → dbMode=0：三阶段角度闭环，第二转完成后恢复巡线
 → dbMode=1：按dbSideMs定时瞄准边线，切回中线并在中线恢复后恢复巡线</code></pre>
@@ -323,7 +323,7 @@ K0 开启、没有红色
 
 确认检测到红色
 → 提取目标 ROI
-→ 主动制动释放后把基准速度设置为 9.5RPS
+→ 主动制动释放后把基准速度设置为 0RPS
 → 判断目标板观察角度
 → 观察角度合适时才提交 NCNN</code></pre>
       <p>红色检测只处理有效裁剪区域，不对整幅 <code>320×240</code> 图像执行完整 HSV、形态学和轮廓搜索。</p>
@@ -336,7 +336,7 @@ K0 开启、没有红色
         <li><code>1:1:1</code>、超时或不足 3 帧时按直行处理。</li>
         <li>worker 无任务时通过条件变量休眠。</li>
       </ul>
-      <div class="notice">当前代码采用同步三帧投票；若前两帧有效结果一致，会直接形成多数票并提前结束。识别期间保持9.5RPS基准和普通方向环。</div>
+      <div class="notice">当前代码采用同步三帧投票；若前两帧有效结果一致，会直接形成多数票并提前结束。识别期间保持0RPS基准和普通方向环，因此仍可能通过左右反向差速原地修正车头。</div>
       <p>持续刹车测试使用<code>#test_brake=1;</code>开启、<code>#test_brake=0;</code>关闭。它复用相同的远距候选、严格红块确认和投票流程；制动达到<code>dbBrakeRelease</code>后保持零PWM等待识别结束，随后直接停车，不进入绕行。开关会跨停车保持。主动制动专用PWM范围为0至9000，默认7000；普通反向输出仍限制为4000。</p>
     </section>
 
@@ -479,7 +479,7 @@ distance_since_trigger &gt;= target_distance + dbSafeDist</code></pre>
       <table>
         <thead><tr><th>阶段</th><th>示例持续时间</th><th>基准速度</th><th>航向变化</th><th>距离说明</th></tr></thead>
         <tbody>
-          <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后9.5RPS</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
+          <tr><td>识别与主动制动</td><td>约100ms</td><td>释放后0RPS基准</td><td>普通方向环持续工作</td><td>推理和制动都完成后进入脚本</td></tr>
           <tr><td>TURN_OUT</td><td>180ms</td><td>0RPS</td><td>0°→左42°</td><td>原地完成第一次转向</td></tr>
           <tr><td>PASS_SHORT</td><td>400ms</td><td>10RPS</td><td>保持左42°</td><td>阶段至少行驶0.32m且越过目标距离</td></tr>
           <tr><td>距离判定</td><td>-</td><td>-</td><td>保持左42°</td><td>总里程达到目标距离0.50m后允许第二转</td></tr>

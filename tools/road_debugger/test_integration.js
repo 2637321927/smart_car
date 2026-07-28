@@ -101,6 +101,10 @@ async function main() {
       ex_rps1: 20,
       ex_rps2: 20,
       latest_error: 2.5,
+      camera_process_avg_ms: 16.4,
+      camera_fps: 59.7,
+      red_pre_every: 2,
+      red_pre_avg_ms: 1.8,
       have_target: 1,
       item_flag: 1,
     })));
@@ -145,6 +149,11 @@ async function main() {
     assert(pageResponse.text.includes('brakeTestCommand'));
     assert(pageResponse.text.includes('headingHoldCommand'));
     assert(pageResponse.text.includes('tangentDebugCommand'));
+    assert(pageResponse.text.includes('cameraPerformanceTitle'));
+    assert(pageResponse.text.includes('detectEveryFrameButton'));
+    assert(pageResponse.text.includes('detectEveryTwoFramesButton'));
+    assert(pageResponse.text.includes('cameraProcessAverage'));
+    assert(pageResponse.text.includes('redPreAverage'));
     assert(pageResponse.text.includes('#spd=35;'));
     assert(pageResponse.text.includes('#spd=0;'));
     assert(pageResponse.text.includes('#drive=1;'));
@@ -162,6 +171,7 @@ async function main() {
     assert(!pageResponse.text.includes('转 60dps'));
     assert(pageResponse.text.includes('tuningControls'));
     assert(pageResponse.text.includes('tuningSnapshotTime'));
+    assert(pageResponse.text.includes('clearPinnedParameters'));
 
     const appResponse = await request('GET', '/app.js');
     assert.strictEqual(appResponse.status, 200);
@@ -195,7 +205,7 @@ async function main() {
     assert(appResponse.text.includes("maxLabel.textContent = '上限'"));
     assert(appResponse.text.includes("key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'spd', label: '左右轮前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 0"));
-    assert(appResponse.text.includes("key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 9.5"));
+    assert(appResponse.text.includes("key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 42"));
     assert(appResponse.text.includes("key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.32"));
@@ -214,6 +224,15 @@ async function main() {
     assert(appResponse.text.includes("#yawHold="));
     assert(appResponse.text.includes("#tangentDbg="));
     assert(appResponse.text.includes("#test_brake="));
+    assert(appResponse.text.includes("#dbDetectEvery=1;"));
+    assert(appResponse.text.includes("#dbDetectEvery=2;"));
+    assert(appResponse.text.includes('camera_process_avg_ms'));
+    assert(appResponse.text.includes('red_pre_avg_ms'));
+    assert(appResponse.text.includes('renderCameraPerformance'));
+    assert(appResponse.text.includes("const PINNED_PARAMETERS_STORAGE_KEY = 'pinnedParameters'"));
+    assert(appResponse.text.includes('togglePinnedParameter'));
+    assert(appResponse.text.includes("pin.textContent = pinned ? '★' : '☆'"));
+    assert(appResponse.text.includes('state.pinnedParameters.filter'));
     assert(appResponse.text.includes('params.drive_brake_test_enabled'));
     assert(appResponse.text.includes('sendRemoteHeartbeat'));
 
@@ -243,6 +262,9 @@ async function main() {
       path.join(testRoot, listResponse.json.recordings[0].name),
       'utf8');
     assert(recordingText.includes('"type":"params"'));
+    assert(recordingText.includes('"camera_process_avg_ms":16.4'));
+    assert(recordingText.includes('"red_pre_every":2'));
+    assert(recordingText.includes('"red_pre_avg_ms":1.8'));
     assert(recordingText.includes('"type":"road"'));
     assert(recordingText.includes('"type":"tuning"'));
     assert(recordingText.includes('"dbMode":1'));

@@ -34,6 +34,7 @@ const elements = {
   plateRectText: $('plateRectText'),
   parameterList: $('parameterList'),
   parameterFilter: $('parameterFilter'),
+  clearPinnedParameters: $('clearPinnedParameters'),
   recordButton: $('recordButton'),
   recordingName: $('recordingName'),
   recordingState: $('recordingState'),
@@ -62,6 +63,18 @@ const elements = {
   brakeTestCommand: $('brakeTestCommand'),
   headingHoldCommand: $('headingHoldCommand'),
   tangentDebugCommand: $('tangentDebugCommand'),
+  detectFrequencyBadge: $('detectFrequencyBadge'),
+  detectEveryFrameButton: $('detectEveryFrameButton'),
+  detectEveryTwoFramesButton: $('detectEveryTwoFramesButton'),
+  cameraFps: $('cameraFps'),
+  cameraProcessLast: $('cameraProcessLast'),
+  cameraProcessAverage: $('cameraProcessAverage'),
+  cameraProcessMaximum: $('cameraProcessMaximum'),
+  cameraProcessOverruns: $('cameraProcessOverruns'),
+  redPreLast: $('redPreLast'),
+  redPreAverage: $('redPreAverage'),
+  redPreMaximum: $('redPreMaximum'),
+  redPreOverruns: $('redPreOverruns'),
   remoteButtons: [...document.querySelectorAll('[data-remote]')],
   tuningControls: $('tuningControls'),
   tuningSnapshotTime: $('tuningSnapshotTime'),
@@ -90,6 +103,16 @@ const PARAMETER_LABELS = {
   gyro_dps: '实际角速度',
   gyro_timeout: '陀螺仪超时数',
   gyro_read_ms: '陀螺仪读取耗时',
+  camera_process_last_ms: '当前帧处理耗时',
+  camera_process_avg_ms: '1秒平均帧处理耗时',
+  camera_process_max_ms: '1秒最大帧处理耗时',
+  camera_fps: '相机实际FPS',
+  camera_process_overrun_count: '整帧处理超25ms次数',
+  red_pre_every: '红块预检测间隔帧数',
+  red_pre_last_ms: '当前红块预检测耗时',
+  red_pre_avg_ms: '1秒平均红块预检测耗时',
+  red_pre_max_ms: '1秒最大红块预检测耗时',
+  red_pre_overrun_count: '红块预检测超8ms次数',
   to_id: '最近超时来源',
   to_used: '最近任务耗时',
   to_target: '任务目标周期',
@@ -162,6 +185,7 @@ const SCOPE_PRESETS = {
 const SCOPE_CHANNELS_STORAGE_KEY = 'scopeChannels';
 const ROAD_COLUMN_STORAGE_KEY = 'roadColumnPercent';
 const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes';
+const PINNED_PARAMETERS_STORAGE_KEY = 'pinnedParameters';
 
 // 这里只列出小车端 main.cpp 当前真正支持的在线命令。连续量统一使用
 // “滑块 + 数值框”，离散模式使用开关或分段按钮，避免误发无效指令。
@@ -214,7 +238,7 @@ const TUNING_GROUPS = [
       { key: 'dbSideMs', label: '边线瞄准持续时间', min: 500, max: 2000, step: 50, unit: 'ms', defaultValue: 500, hardMax: true },
       { key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0 },
       { key: 'dbNormalSpd', label: '正常巡线前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
-      { key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 9.5 },
+      { key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 0 },
       { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 42 },
       { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 0 },
       { key: 'dbPassDist', label: '最短斜行距离', min: 0, max: 2, step: 0.01, unit: 'm', defaultValue: 0.32 },
@@ -375,6 +399,16 @@ function loadStoredRoadColumnPercent() {
   return Number.isFinite(stored) && stored >= 30 && stored <= 70 ? stored : 50;
 }
 
+function loadStoredPinnedParameters() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PINNED_PARAMETERS_STORAGE_KEY) || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return [...new Set(parsed.filter((key) => typeof key === 'string' && key.length > 0))];
+  } catch (_error) {
+    return [];
+  }
+}
+
 const state = {
   mode: 'live',
   liveParams: null,
@@ -396,6 +430,7 @@ const state = {
   recording: { active: false },
   scopeChannels: loadStoredScopeChannels(),
   roadColumnPercent: loadStoredRoadColumnPercent(),
+  pinnedParameters: loadStoredPinnedParameters(),
   driveByTestDirection: 2,
   pendingTuning: new Map(),
   replay: {
@@ -836,28 +871,71 @@ function buildTuningControls() {
   renderTuningControls();
 }
 
+function savePinnedParameters() {
+  try {
+    localStorage.setItem(PINNED_PARAMETERS_STORAGE_KEY, JSON.stringify(state.pinnedParameters));
+  } catch (_error) {
+    // 本地存储不可用时仍允许本次页面继续使用置顶功能。
+  }
+}
+
+function togglePinnedParameter(key) {
+  const pinned = state.pinnedParameters.includes(key);
+  state.pinnedParameters = pinned
+    ? state.pinnedParameters.filter((item) => item !== key)
+    : [key, ...state.pinnedParameters];
+  savePinnedParameters();
+  parameterLayoutKey = '';
+  renderParameters(state.displayParams || {});
+}
+
+function clearPinnedParameters() {
+  if (!state.pinnedParameters.length) return;
+  state.pinnedParameters = [];
+  savePinnedParameters();
+  parameterLayoutKey = '';
+  renderParameters(state.displayParams || {});
+}
+
 function renderParameters(params) {
   const filter = elements.parameterFilter.value.trim().toLowerCase();
-  const keys = params
+  const baseKeys = params
     ? [...PARAMETER_ORDER.filter((key) => key in params), ...Object.keys(params).filter((key) => !PARAMETER_ORDER.includes(key)).sort()]
     : [];
+  const pinnedSet = new Set(state.pinnedParameters);
+  const keys = [
+    ...state.pinnedParameters.filter((key) => baseKeys.includes(key)),
+    ...baseKeys.filter((key) => !pinnedSet.has(key)),
+  ];
 
   const visibleKeys = keys.filter((key) => {
     const label = PARAMETER_LABELS[key] || key;
     return !filter || key.toLowerCase().includes(filter) || label.toLowerCase().includes(filter);
   });
-  const layoutKey = `${filter}\u0000${visibleKeys.join('\u0000')}`;
+  const layoutKey = `${filter}\u0000${state.pinnedParameters.join('\u0000')}\u0001${visibleKeys.join('\u0000')}`;
 
   if (layoutKey !== parameterLayoutKey) {
     parameterRows = new Map();
     const rows = visibleKeys.map((key) => {
       const row = document.createElement('div');
       row.className = 'parameter-row';
+      const pinned = pinnedSet.has(key);
+      row.classList.toggle('pinned', pinned);
+      const pin = document.createElement('button');
+      pin.type = 'button';
+      pin.className = 'parameter-pin';
+      pin.classList.toggle('pinned', pinned);
+      pin.textContent = pinned ? '★' : '☆';
+      pin.title = pinned ? `取消置顶 ${key}` : `置顶 ${key}`;
+      pin.setAttribute('aria-label', pin.title);
+      pin.setAttribute('aria-pressed', String(pinned));
+      pin.addEventListener('click', () => togglePinnedParameter(key));
       const label = document.createElement('span');
+      label.className = 'parameter-label';
       label.textContent = PARAMETER_LABELS[key] || key;
       label.title = key;
       const value = document.createElement('strong');
-      row.append(label, value);
+      row.append(pin, label, value);
       parameterRows.set(key, value);
       return row;
     });
@@ -869,6 +947,10 @@ function renderParameters(params) {
     const value = parameterRows.get(key);
     if (value) value.textContent = formatValue(key, params[key]);
   });
+  elements.clearPinnedParameters.disabled = state.pinnedParameters.length === 0;
+  elements.clearPinnedParameters.textContent = state.pinnedParameters.length
+    ? `清除置顶(${state.pinnedParameters.length})`
+    : '清除置顶';
 }
 
 function itemResultText(value) {
@@ -1257,6 +1339,48 @@ function updateSummary() {
   }
 }
 
+function renderCameraPerformance() {
+  const params = state.displayParams || {};
+  const renderMetric = (element, key, digits, unit) => {
+    const value = Number(params[key]);
+    element.textContent = Number.isFinite(value) ? `${value.toFixed(digits)} ${unit}` : `-- ${unit}`;
+  };
+  const renderCount = (element, key) => {
+    const value = Number(params[key]);
+    element.textContent = Number.isFinite(value) ? `${Math.max(0, Math.trunc(value))} 次` : '-- 次';
+    element.classList.toggle('metric-alert', Number.isFinite(value) && value > 0);
+  };
+
+  renderMetric(elements.cameraFps, 'camera_fps', 1, 'FPS');
+  renderMetric(elements.cameraProcessLast, 'camera_process_last_ms', 2, 'ms');
+  renderMetric(elements.cameraProcessAverage, 'camera_process_avg_ms', 2, 'ms');
+  renderMetric(elements.cameraProcessMaximum, 'camera_process_max_ms', 2, 'ms');
+  renderCount(elements.cameraProcessOverruns, 'camera_process_overrun_count');
+  renderMetric(elements.redPreLast, 'red_pre_last_ms', 2, 'ms');
+  renderMetric(elements.redPreAverage, 'red_pre_avg_ms', 2, 'ms');
+  renderMetric(elements.redPreMaximum, 'red_pre_max_ms', 2, 'ms');
+  renderCount(elements.redPreOverruns, 'red_pre_overrun_count');
+
+  const interval = Number(params.red_pre_every);
+  const everyFrame = interval === 1;
+  const everyTwoFrames = interval === 2;
+  elements.detectFrequencyBadge.textContent = everyFrame
+    ? '当前每帧检测'
+    : (everyTwoFrames ? '当前每2帧检测' : '等待检测频率');
+  elements.detectEveryFrameButton.classList.toggle('selected', everyFrame);
+  elements.detectEveryTwoFramesButton.classList.toggle('selected', everyTwoFrames);
+  elements.detectEveryFrameButton.setAttribute('aria-pressed', String(everyFrame));
+  elements.detectEveryTwoFramesButton.setAttribute('aria-pressed', String(everyTwoFrames));
+  const controlsDisabled = state.mode !== 'live' || !state.liveParams;
+  elements.detectEveryFrameButton.disabled = controlsDisabled;
+  elements.detectEveryTwoFramesButton.disabled = controlsDisabled;
+  const controlTitle = state.mode === 'replay'
+    ? '录像回放只显示当时参数，不能向小车发送命令'
+    : '切换真实红块预检测频率；默认每2帧一次';
+  elements.detectEveryFrameButton.title = controlTitle;
+  elements.detectEveryTwoFramesButton.title = controlTitle;
+}
+
 async function toggleHeadingHold() {
   const enabled = Boolean(Number(state.liveParams?.yaw_hold_enabled ?? 0));
   if (!enabled && Number(state.liveParams?.udp_mode ?? 0) === 0) {
@@ -1341,6 +1465,7 @@ function renderDisplaySnapshot() {
     ? '实时'
     : (state.displayParamTime === null ? '参数 --' : `参数 ${formatTime(state.displayParamTime)}`);
   updateScopeModeText();
+  renderCameraPerformance();
   updateSummary();
   drawRoad();
   drawDetection();
@@ -1600,6 +1725,7 @@ async function sendCommand(command, options = {}) {
 
 function bindEvents() {
   elements.parameterFilter.addEventListener('input', () => renderParameters(state.displayParams || {}));
+  elements.clearPinnedParameters.addEventListener('click', clearPinnedParameters);
   elements.addScopeChannel.addEventListener('click', addSelectedScopeChannel);
   elements.scopeChannelSelect.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') addSelectedScopeChannel();
@@ -1654,6 +1780,12 @@ function bindEvents() {
   });
   elements.tangentDebugCommand.addEventListener('click', () => {
     toggleTangentDebug().catch((error) => showToast(error.message));
+  });
+  elements.detectEveryFrameButton.addEventListener('click', () => {
+    sendCommand('#dbDetectEvery=1;').catch((error) => showToast(error.message));
+  });
+  elements.detectEveryTwoFramesButton.addEventListener('click', () => {
+    sendCommand('#dbDetectEvery=2;').catch((error) => showToast(error.message));
   });
   elements.remoteButtons.forEach((button) => {
     button.addEventListener('contextmenu', (event) => event.preventDefault());

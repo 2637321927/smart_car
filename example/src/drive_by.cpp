@@ -18,10 +18,11 @@ using DriveByClock = std::chrono::steady_clock;
 
 // ===================== 高速识别和三阶段绕行调参区 =====================
 // K0 开启但没有目标时按 35RPS 正常巡线；红色触发后只把“基准速度”降到
-// 9.5RPS，普通方向环仍会在该基准上叠加左右差速。
+// 0RPS，普通方向环仍会叠加左右差速，使车头可以原地修正姿态。
 volatile float drive_by_normal_speed_rps = 35.0f;
-volatile float drive_by_recognition_speed_rps = 9.5f;
+volatile float drive_by_recognition_speed_rps = 0.0f;
 volatile float drive_by_rps_to_mps = 0.047f;
+volatile int drive_by_detect_frame_interval = 2;
 volatile int drive_by_mode = 0;
 volatile int drive_by_side_follow_ms = 500;
 volatile int drive_by_use_track_tangent = 0;
@@ -71,7 +72,8 @@ namespace {
 constexpr int kInferFrames = 3;
 constexpr int kBrakePwmMax = 9000;
 constexpr int kSaveSize = 96;
-constexpr int kDetectFrameInterval = 2;
+constexpr float kFarDetectOverrunMs = 8.0f;
+constexpr int kPerformanceWindowMs = 1000;
 constexpr int kHeadingSettleCycles = 3;
 constexpr float kHeadingDeadzoneHysteresisDeg = 1.0f;
 constexpr float kHeadingQuietRateDps = 5.0f;
@@ -250,6 +252,11 @@ float g_brake_test_release_left_rps = 0.0f;
 float g_brake_test_release_right_rps = 0.0f;
 int g_brake_test_elapsed_ms = 0;
 DriveByDebug g_debug = {};
+DriveByDetectionPerformance g_detection_performance = {};
+DriveByClock::time_point g_detection_performance_window_start = DriveByClock::now();
+double g_detection_performance_sum_ms = 0.0;
+float g_detection_performance_window_max_ms = 0.0f;
+int g_detection_performance_sample_count = 0;
 volatile bool g_heading_hold_enabled = false;
 volatile bool g_tangent_debug_enabled = false;
 volatile bool g_heading_hold_quiet = false;
@@ -473,7 +480,7 @@ void command_zero_targets()
 void command_recognition_base_speed()
 {
     if (g_brake_test_holding) {
-        // 刹车测试达到释放阈值后只等待识别结束，绝不能让相机线程重新写回9.5RPS。
+        // 刹车测试达到释放阈值后只等待识别结束，绝不能让相机线程重新写入方向差速。
         command_zero_targets();
         return;
     }
@@ -542,12 +549,43 @@ void clear_active_brake(bool clear_completed)
 
 bool should_detect_this_frame()
 {
+    // 只允许实验需要的1帧/2帧两档。即使收到异常VOFA值，也不会让检测永久停掉。
+    const int frame_interval = drive_by_detect_frame_interval <= 1 ? 1 : 2;
     ++g_detect_frame_counter;
-    if (g_detect_frame_counter < kDetectFrameInterval) {
+    if (g_detect_frame_counter < frame_interval) {
         return false;
     }
     g_detect_frame_counter = 0;
     return true;
+}
+
+void record_far_detection_performance(float used_ms)
+{
+    g_detection_performance.last_ms = used_ms;
+    g_detection_performance_sum_ms += used_ms;
+    g_detection_performance_window_max_ms = std::max(
+        g_detection_performance_window_max_ms, used_ms);
+    ++g_detection_performance_sample_count;
+    if (used_ms > kFarDetectOverrunMs) {
+        ++g_detection_performance.overrun_count;
+    }
+
+    const DriveByClock::time_point now = DriveByClock::now();
+    if (duration_ms(g_detection_performance_window_start, now) <
+        kPerformanceWindowMs) {
+        return;
+    }
+
+    if (g_detection_performance_sample_count > 0) {
+        g_detection_performance.average_ms = static_cast<float>(
+            g_detection_performance_sum_ms /
+            static_cast<double>(g_detection_performance_sample_count));
+        g_detection_performance.max_ms = g_detection_performance_window_max_ms;
+    }
+    g_detection_performance_sum_ms = 0.0;
+    g_detection_performance_window_max_ms = 0.0f;
+    g_detection_performance_sample_count = 0;
+    g_detection_performance_window_start = now;
 }
 
 FarRedCandidate detect_far_red_candidate(const cv::Mat& frame)
@@ -1699,7 +1737,10 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
         return;
     }
 
+    const DriveByClock::time_point detection_start = DriveByClock::now();
     const FarRedCandidate candidate = detect_far_red_candidate(frame);
+    record_far_detection_performance(static_cast<float>(
+        duration_ms(detection_start, DriveByClock::now())));
     g_debug.red_candidate = candidate.found ? 1 : 0;
     g_debug.red_contour_area = candidate.max_contour_area;
     g_debug.detection_stage = 0;
@@ -1743,6 +1784,13 @@ void drive_by_init()
     g_heading_hold_enabled = false;
     g_heading_hold_quiet = false;
     g_tangent_debug_enabled = false;
+    drive_by_detect_frame_interval = 2;
+    g_detect_frame_counter = 0;
+    g_detection_performance = DriveByDetectionPerformance{};
+    g_detection_performance_window_start = DriveByClock::now();
+    g_detection_performance_sum_ms = 0.0;
+    g_detection_performance_window_max_ms = 0.0f;
+    g_detection_performance_sample_count = 0;
     g_heading_hold_debug = DriveByHeadingHoldDebug{};
     g_tangent_debug = DriveByTangentDebug{};
     reset_runtime(false);
@@ -2197,6 +2245,11 @@ const char *drive_by_abort_reason_chinese()
 const DriveByDebug &drive_by_get_debug()
 {
     return g_debug;
+}
+
+const DriveByDetectionPerformance &drive_by_get_detection_performance()
+{
+    return g_detection_performance;
 }
 
 bool drive_by_heading_hold_set_enable(bool enable)

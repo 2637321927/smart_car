@@ -9,6 +9,8 @@
 extern volatile float drive_by_normal_speed_rps;
 extern volatile float drive_by_recognition_speed_rps;
 extern volatile float drive_by_rps_to_mps;
+// 远距离红块预检测间隔：1表示每帧检测，2表示每2帧检测，默认2。
+extern volatile int drive_by_detect_frame_interval;
 // 0：三阶段角度闭环；1：边线瞄准。
 extern volatile int drive_by_mode;
 // 边线瞄准方案保持左线/右线的时间，单位ms，在线调参范围500~2000。
@@ -84,6 +86,16 @@ typedef struct
     float test_target_distance_m;
 } DriveByDebug;
 
+// 远距离红块预检测的低开销性能快照。统计独立于DriveByDebug，避免脚本状态
+// 复位时把实验数据一起清空。avg/max均表示最近一个约1秒统计窗口。
+typedef struct
+{
+    volatile float last_ms;
+    volatile float average_ms;
+    volatile float max_ms;
+    volatile unsigned long long overrun_count;
+} DriveByDetectionPerformance;
+
 typedef struct
 {
     int enabled;
@@ -144,6 +156,7 @@ const char *drive_by_abort_reason();
 // 因为取消脚本会清空本次运行状态。
 const char *drive_by_abort_reason_chinese();
 const DriveByDebug &drive_by_get_debug();
+const DriveByDetectionPerformance &drive_by_get_detection_performance();
 
 // 停车态航向保持测试：开启瞬间定义为0度，随后始终控制车头回到该方向。
 // 仅run=0、无绕行且无停车遥控时允许开启。

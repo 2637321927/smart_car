@@ -8,6 +8,7 @@
 #include "drive_by.hpp"  // 目标板触发后的固定动作脚本
 #include "gyro_yaw_rate_control.hpp"  // MPU6050 角速度环 demo
 #include "odometry.hpp"              // 编码器里程计（环岛出环距离）
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <fcntl.h>
@@ -497,6 +498,14 @@ if (sscanf(buf, "#dbRecSpd=%f;", &ftmp) == 1)
     printf("[VOFA] dbRecSpd = %.2f RPS\n", drive_by_recognition_speed_rps);
 }
 
+if (sscanf(buf, "#dbDetectEvery=%d;", &itmp) == 1)
+{
+    // 实验接口只保留每帧和每2帧两档，避免误输入0后永久关闭红块预检测。
+    drive_by_detect_frame_interval = itmp <= 1 ? 1 : 2;
+    printf("[VOFA] 红块预检测频率=每%d帧一次\n",
+           drive_by_detect_frame_interval);
+}
+
 if (sscanf(buf, "#dbTurnAngle=%f;", &ftmp) == 1)
 {
     if (ftmp < 0.0f) ftmp = -ftmp;
@@ -880,6 +889,63 @@ constexpr int kRoadTelemetryMinIntervalMs = 12;
 // 可调参数变化远慢于控制波形。单独低频发送参数快照，既能让前端和录像
 // 精确还原调参状态，也不会继续膨胀已经较大的 12ms 动态 JSON 数据包。
 constexpr int kTuningTelemetryIntervalMs = 250;
+constexpr float kCameraProcessOverrunMs = 25.0f;
+constexpr int kCameraPerformanceWindowMs = 1000;
+
+struct CameraPerformanceSnapshot
+{
+    volatile float last_ms;
+    volatile float average_ms;
+    volatile float max_ms;
+    volatile float fps;
+    volatile unsigned long long overrun_count;
+};
+
+CameraPerformanceSnapshot g_camera_performance = {};
+steady_clock::time_point g_camera_performance_window_start = steady_clock::now();
+double g_camera_performance_sum_ms = 0.0;
+float g_camera_performance_window_max_ms = 0.0f;
+int g_camera_performance_frame_count = 0;
+bool g_camera_performance_started = false;
+
+void record_camera_frame_performance(steady_clock::time_point frame_start)
+{
+    const steady_clock::time_point now = steady_clock::now();
+    const float used_ms = static_cast<float>(
+        duration<double, std::milli>(now - frame_start).count());
+    g_camera_performance.last_ms = used_ms;
+    g_camera_performance_sum_ms += used_ms;
+    g_camera_performance_window_max_ms = std::max(
+        g_camera_performance_window_max_ms, used_ms);
+    ++g_camera_performance_frame_count;
+    if (used_ms > kCameraProcessOverrunMs) {
+        ++g_camera_performance.overrun_count;
+    }
+
+    if (!g_camera_performance_started) {
+        g_camera_performance_window_start = frame_start;
+        g_camera_performance_started = true;
+    }
+    const double window_ms = duration<double, std::milli>(
+        now - g_camera_performance_window_start).count();
+    if (window_ms < kCameraPerformanceWindowMs) {
+        return;
+    }
+
+    if (g_camera_performance_frame_count > 0) {
+        g_camera_performance.average_ms = static_cast<float>(
+            g_camera_performance_sum_ms /
+            static_cast<double>(g_camera_performance_frame_count));
+        g_camera_performance.max_ms = g_camera_performance_window_max_ms;
+        g_camera_performance.fps = static_cast<float>(
+            static_cast<double>(g_camera_performance_frame_count) * 1000.0 /
+            window_ms);
+    }
+    g_camera_performance_sum_ms = 0.0;
+    g_camera_performance_window_max_ms = 0.0f;
+    g_camera_performance_frame_count = 0;
+    g_camera_performance_window_start = now;
+}
 
 void telemetry_write_u16(uint8_t *&cursor, uint16_t value)
 {
@@ -1041,7 +1107,7 @@ void tuning_telemetry_send()
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
         "\"dbMode\":%d,\"dbUseTangent\":%d,\"dbSideMs\":%d,"
-        "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
+        "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,\"dbDetectEvery\":%d,"
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
         "\"dbSafeDist\":%.3f,\"dbRpsMps\":%.5f,"
         "\"dbViewMax\":%.2f,\"dbViewWait\":%d,"
@@ -1069,6 +1135,7 @@ void tuning_telemetry_send()
         drive_by_mode, drive_by_use_track_tangent, drive_by_side_follow_ms,
         safe_float(drive_by_normal_speed_rps),
         safe_float(drive_by_recognition_speed_rps),
+        drive_by_detect_frame_interval,
         safe_float(drive_by_turn_angle_deg),
         safe_float(drive_by_return_bias_deg),
         safe_float(drive_by_pass_distance_m),
@@ -1101,11 +1168,13 @@ void tuning_telemetry_send()
 } // namespace
 
 void udp_send(void){
-    char encoder_str[2048];
+    char encoder_str[3072];
     static uint32_t udp_sequence = 0;
     static const steady_clock::time_point udp_started_at = steady_clock::now();
     const GyroYawRateDebug &gyro_debug = gyro_yaw_rate_control_get_debug();
     const DriveByDebug &drive_debug = drive_by_get_debug();
+    const DriveByDetectionPerformance &red_detection_performance =
+        drive_by_get_detection_performance();
     const DriveByHeadingHoldDebug &heading_hold_debug =
         drive_by_heading_hold_get_debug();
     const DriveByTangentDebug &tangent_debug = drive_by_tangent_debug_get();
@@ -1140,6 +1209,16 @@ void udp_send(void){
              "\"gyro_dps\":%.2f,"
              "\"gyro_timeout\":%d,"
              "\"gyro_read_ms\":%.2f,"
+             "\"camera_process_last_ms\":%.2f,"
+             "\"camera_process_avg_ms\":%.2f,"
+             "\"camera_process_max_ms\":%.2f,"
+             "\"camera_fps\":%.2f,"
+             "\"camera_process_overrun_count\":%llu,"
+             "\"red_pre_every\":%d,"
+             "\"red_pre_last_ms\":%.2f,"
+             "\"red_pre_avg_ms\":%.2f,"
+             "\"red_pre_max_ms\":%.2f,"
+             "\"red_pre_overrun_count\":%llu,"
              "\"to_id\":%d,"
              "\"to_used\":%.2f,"
              "\"to_target\":%.2f,"
@@ -1210,6 +1289,16 @@ void udp_send(void){
              safe_float(gyro_debug.gyro_z_lpf),
              gyro_debug.gyro_timeout_count,
              safe_float(gyro_debug.gyro_read_last_ms),
+             safe_float(g_camera_performance.last_ms),
+             safe_float(g_camera_performance.average_ms),
+             safe_float(g_camera_performance.max_ms),
+             safe_float(g_camera_performance.fps),
+             (unsigned long long)g_camera_performance.overrun_count,
+             drive_by_detect_frame_interval,
+             safe_float(red_detection_performance.last_ms),
+             safe_float(red_detection_performance.average_ms),
+             safe_float(red_detection_performance.max_ms),
+             (unsigned long long)red_detection_performance.overrun_count,
              timeout_debug.id,
              safe_float(timeout_debug.used_ms),
              safe_float(timeout_debug.target_ms),
@@ -1521,7 +1610,8 @@ gyro_yaw_rate_control_init();
 //std::cout<<"fuck you2"s<<std::endl; 
 while (1)
 {
-     auto start = high_resolution_clock::now();
+     // 统计从本轮主循环开始到全部图像/识别处理结束的真实耗时；1ms主动让步不计入。
+     const steady_clock::time_point camera_frame_start = steady_clock::now();
          if (has_input()) {
             char c = getchar();
             if (c == 'q') {
@@ -1546,6 +1636,7 @@ while (1)
  cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");
+            record_camera_frame_performance(camera_frame_start);
             continue;
         }
        // cv::flip(frame, frame, -1);  
@@ -1939,6 +2030,7 @@ auto p4 = duration_cast<milliseconds>(end - t3).count();
 printf("process=%3d ms |corner=%3d ms| warp=%3d ms | udp=%3d ms | total=%3d ms\n", 
        p1, p2, p3, p4,p1+p2+p3+p4);
        */
+        record_camera_frame_performance(camera_frame_start);
      // std::this_thread::yield(); // 必须加！让定时器能跑
         std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 加这一句
 }

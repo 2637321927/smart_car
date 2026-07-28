@@ -97,6 +97,32 @@
         </select>
       </div>
 
+      <article class="panel camera-performance-panel" aria-labelledby="cameraPerformanceTitle">
+        <div class="panel-heading compact camera-performance-heading">
+          <div>
+            <p class="section-label">CAMERA LOOP / RED PRE-DETECTION</p>
+            <h2 id="cameraPerformanceTitle">相机性能实验窗口</h2>
+          </div>
+          <div class="detect-frequency-controls" role="group" aria-label="红块预检测频率">
+            <span id="detectFrequencyBadge" class="scope-mode">当前每2帧检测</span>
+            <button id="detectEveryFrameButton" class="button ghost detect-frequency-button" type="button">每帧检测</button>
+            <button id="detectEveryTwoFramesButton" class="button ghost detect-frequency-button" type="button">每2帧检测</button>
+          </div>
+        </div>
+        <div class="performance-grid">
+          <div><span>实际帧率</span><strong id="cameraFps">-- FPS</strong></div>
+          <div><span>当前帧处理</span><strong id="cameraProcessLast">-- ms</strong></div>
+          <div><span>1秒平均处理</span><strong id="cameraProcessAverage">-- ms</strong></div>
+          <div><span>1秒最大处理</span><strong id="cameraProcessMaximum">-- ms</strong></div>
+          <div><span>整帧超25ms</span><strong id="cameraProcessOverruns">-- 次</strong></div>
+          <div><span>当前红块预检测</span><strong id="redPreLast">-- ms</strong></div>
+          <div><span>1秒平均预检测</span><strong id="redPreAverage">-- ms</strong></div>
+          <div><span>1秒最大预检测</span><strong id="redPreMaximum">-- ms</strong></div>
+          <div><span>预检测超8ms</span><strong id="redPreOverruns">-- 次</strong></div>
+        </div>
+        <p class="performance-note">整帧处理统计不包含循环末尾主动让出的1ms；平均值和最大值按约1秒窗口刷新，超时次数为开机累计。</p>
+      </article>
+
       <aside class="side-column">
         <article class="panel status-panel">
           <div class="panel-heading compact">
@@ -200,6 +226,7 @@
             </div>
             <div class="parameter-heading-tools">
               <span id="parameterTimestamp" class="parameter-time">实时</span>
+              <button id="clearPinnedParameters" class="parameter-clear-pins" type="button" disabled>清除置顶</button>
               <input id="parameterFilter" class="filter-input" placeholder="筛选">
             </div>
           </div>
