@@ -37,6 +37,12 @@ volatile extern float set_speed_of_motor1_rps;
 volatile extern float set_speed_of_motor2_rps;
 volatile extern float pwm1_duty_rps;
 volatile extern float pwm2_duty_rps;
+// 正常巡线时，瞄点落到车体参考点后方触发的紧急救车状态。
+// 图像线程负责更新状态和方向，8ms方向线程只读取这些轻量缓存。
+volatile extern int vision_y_guard_active;
+volatile extern int vision_y_guard_turn_sign;
+volatile extern float vision_y_guard_target_dps;
+volatile extern float vision_y_guard_aim_dy_px;
 volatile extern int current_pwm1;
 volatile extern int current_pwm2;
 volatile  extern int test_count ;

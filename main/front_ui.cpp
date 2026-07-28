@@ -142,6 +142,9 @@ void stop_car()
     // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
     car_running = false;
     remote_command = FRONT_UI_REMOTE_STOP;
+    vision_y_guard_active = 0;
+    vision_y_guard_turn_sign = 0;
+    vision_y_guard_aim_dy_px = 0.0f;
     gyro_yaw_rate_control_reset();
     set_speed_of_motor1_rps = 0;
     set_speed_of_motor2_rps = 0;
@@ -169,6 +172,9 @@ void start_car()
     // 航向保持属于停车态专用测试，发车前必须先清掉它的对称轮速目标。
     drive_by_heading_hold_set_enable(false);
     remote_command = FRONT_UI_REMOTE_STOP;
+    vision_y_guard_active = 0;
+    vision_y_guard_turn_sign = 0;
+    vision_y_guard_aim_dy_px = 0.0f;
     car_running = true;
     gyro_yaw_rate_control_reset();
     motor_speed_pid_reset();

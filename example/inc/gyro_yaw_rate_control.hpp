@@ -122,6 +122,14 @@ float gyro_yaw_rate_control_update_target_yaw_rate_limited(
     float target_yaw_rate_dps,
     float max_turn_rps);
 
+// 特殊保护状态可同时指定独立的目标角速度和差速上限。
+// 该接口不会抬高普通巡线的gyro_target_max_dps，救车结束后正常参数保持不变。
+// max_turn_rps也不受普通gyro_turn_max_rps影响，只在本次调用生效。
+float gyro_yaw_rate_control_update_target_yaw_rate_with_limits(
+    float target_yaw_rate_dps,
+    float max_target_yaw_rate_dps,
+    float max_turn_rps);
+
 const GyroYawRateDebug &gyro_yaw_rate_control_get_debug(void);
 void gyro_yaw_rate_control_print_debug(int interval_count);
 

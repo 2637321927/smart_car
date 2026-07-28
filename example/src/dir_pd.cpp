@@ -1,6 +1,8 @@
 #include "lq_all_demo.hpp"
 #include "gyro_yaw_rate_control.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 
 volatile float dir_P = 0.128f;
@@ -85,11 +87,22 @@ void PID_control_test(float error)
     const bool gyro_feedback_requested = (gyro_yaw_rate_feedback_enabled != 0);
     const bool gyro_feedback_ready = gyro_yaw_rate_control_is_ready();
     const bool use_gyro_yaw_rate_feedback = gyro_feedback_requested && gyro_feedback_ready;
+    const bool y_guard_active = vision_y_guard_active != 0 &&
+        vision_y_guard_turn_sign != 0 && vision_y_guard_target_dps > 0.0f;
 
     const char *control_mode = "VISUAL_PD";
     const char *control_reason = "gyro_off";
     float diffrential = 0.0f;
-    if (use_gyro_yaw_rate_feedback) {
+    if (y_guard_active && use_gyro_yaw_rate_feedback) {
+        control_mode = "Y_GUARD_GYRO";
+        control_reason = "aim_y_behind_car";
+        const float rescue_target_dps = std::min(
+            500.0f, std::fabs((float)vision_y_guard_target_dps));
+        diffrential = gyro_yaw_rate_control_update_target_yaw_rate_with_limits(
+            vision_y_guard_turn_sign * rescue_target_dps,
+            500.0f,
+            20.0f);
+    } else if (use_gyro_yaw_rate_feedback) {
         control_mode = "GYRO_RATE";
         control_reason = "mpu6050_feedback";
         diffrential = gyro_yaw_rate_control_update(error);
@@ -98,10 +111,17 @@ void PID_control_test(float error)
             control_mode = "VISUAL_PD_FALLBACK";
             control_reason = "mpu6050_not_ready";
         }
-        diffrential = calculate_diffrential(error, 0);
+        const float visual_error = y_guard_active
+            ? vision_y_guard_turn_sign * 100.0f
+            : error;
+        if (y_guard_active) {
+            control_mode = "Y_GUARD_VISUAL";
+            control_reason = "gyro_not_ready";
+        }
+        diffrential = calculate_diffrential(visual_error, 0);
     }
 
-    const float max_dif=15.0f;
+    const float max_dif = y_guard_active ? 20.0f : 15.0f;
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     float target_spd1 = set_speed_of_motor1_rps;
@@ -113,7 +133,7 @@ void PID_control_test(float error)
 
     // spd_slow_ratio 表示最大减速百分比，30 表示 error 达到 max_error 时最多降速 30%。
     // 这里仍保留 0.7 的下限保护，避免基准速度被降得太低。
-    float abs_error = error;
+    float abs_error = y_guard_active ? 100.0f : error;
     if (abs_error < 0) abs_error = -abs_error;
     float slow_ratio = 1.0f - (slow_ratio_percent / 100.0f) * abs_error / max_error;
     if (slow_ratio < 0.5f) slow_ratio = 0.5f;

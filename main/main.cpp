@@ -31,6 +31,10 @@ lq_timer gyro_watchdog_timer;
 volatile  float pwm1_duty_rps=0.0f;
  volatile  float pwm2_duty_rps=0.0f;
  volatile  float latest_error = 0;
+ volatile int vision_y_guard_active = 0;
+ volatile int vision_y_guard_turn_sign = 0;
+ volatile float vision_y_guard_target_dps = 360.0f;
+ volatile float vision_y_guard_aim_dy_px = 0.0f;
  volatile  float encoder_1=0;
  volatile  float encoder_2=0;
  volatile  float P1_motor=0;
@@ -74,6 +78,63 @@ float filter_error(float new_error)
 
     return filtered;
 }
+
+namespace {
+
+constexpr float kVisionYGuardExitMarginPx = 20.0f;
+
+void update_vision_y_guard(float raw_visual_error,
+                           float aim_y,
+                           float car_y,
+                           bool line_lost,
+                           bool center_line_valid,
+                           int selected_aim_line)
+{
+    vision_y_guard_aim_dy_px = aim_y - car_y;
+
+    // 救车只属于普通中线巡线。丢线、十字、环岛和绕行脚本都有自己的控制策略，
+    // 若在这些状态叠加救车角速度，会让两个控制器争抢左右轮目标。
+    const bool eligible = front_ui_is_running() &&
+        selected_aim_line == 0 && center_line_valid && !line_lost &&
+        cross_type == CROSS_NONE && circle_type == CIRCLE_NONE &&
+        !drive_by_is_busy() && gyro_manual_target_enabled == 0 &&
+        vision_y_guard_target_dps > 0.0f;
+    if (!eligible) {
+        vision_y_guard_active = 0;
+        return;
+    }
+
+    if (vision_y_guard_active != 0) {
+        // 进入后增加20px退出迟滞，避免瞄点在车体水平线附近抖动时反复开关。
+        if (aim_y < car_y - kVisionYGuardExitMarginPx) {
+            vision_y_guard_active = 0;
+        }
+        return;
+    }
+
+    if (aim_y < car_y) {
+        // 瞄点仍在车前时持续记录可靠转向方向；一旦瞄点绕到车后，
+        // 不能再用异常dx实时改符号，否则救车方向可能在相邻帧翻转。
+        if (std::fabs(raw_visual_error) >= 1.0f) {
+            vision_y_guard_turn_sign = raw_visual_error > 0.0f ? 1 : -1;
+        }
+        return;
+    }
+
+    int rescue_sign = vision_y_guard_turn_sign;
+    if (rescue_sign == 0 && std::fabs((float)latest_error) >= 1.0f) {
+        rescue_sign = latest_error > 0.0f ? 1 : -1;
+    }
+    if (rescue_sign == 0 && std::fabs(raw_visual_error) >= 1.0f) {
+        rescue_sign = raw_visual_error > 0.0f ? 1 : -1;
+    }
+    if (rescue_sign != 0) {
+        vision_y_guard_turn_sign = rescue_sign;
+        vision_y_guard_active = 1;
+    }
+}
+
+} // namespace
 ls_atim_pwm pwm1(ATIM_PWM1_PIN82 ,17000, 0);
 ls_atim_pwm pwm2(ATIM_PWM0_PIN81, 17000, 0); //2026/7/9teset
 ls_gpio polar_pwm1(PIN_22, GPIO_MODE_OUT);
@@ -813,6 +874,18 @@ if (sscanf(buf, "#gRMax=%f;", &ftmp) == 1 ||
     printf("[VOFA] gyro_turn_max_rps = %.2f\n", gyro_turn_max_rps);
 }
 
+if (sscanf(buf, "#yGuardDps=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    if (ftmp > 500.0f) ftmp = 500.0f;
+    vision_y_guard_target_dps = ftmp;
+    if (vision_y_guard_target_dps <= 0.0f) {
+        vision_y_guard_active = 0;
+    }
+    printf("[VOFA] 瞄点越界救车角速度 = %.2f dps\n",
+           vision_y_guard_target_dps);
+}
+
 if (sscanf(buf, "#gSign=%f;", &ftmp) == 1)
 {
     gyro_z_sign = (ftmp >= 0.0f) ? 1.0f : -1.0f;
@@ -1105,7 +1178,8 @@ void tuning_telemetry_send()
         "\"spd_slow_ratio\":%d,\"begin_x\":%d,"
         "\"gyro\":%d,\"gDbg\":%d,\"gTar\":%.2f,"
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
-        "\"gTMax\":%.2f,\"gRMax\":%.2f,\"gSign\":%.1f,\"tSign\":%.1f,"
+        "\"gTMax\":%.2f,\"gRMax\":%.2f,\"yGuardDps\":%.2f,"
+        "\"gSign\":%.1f,\"tSign\":%.1f,"
         "\"dbMode\":%d,\"dbUseTangent\":%d,\"dbSideMs\":%d,"
         "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,\"dbDetectEvery\":%d,"
         "\"dbTurnAngle\":%.2f,\"dbReturnBias\":%.2f,\"dbPassDist\":%.3f,"
@@ -1131,6 +1205,7 @@ void tuning_telemetry_send()
         safe_float(gyro_outer_kp), safe_float(gyro_outer_kd),
         safe_float(gyro_inner_kp), safe_float(gyro_inner_ki),
         safe_float(gyro_target_max_dps), safe_float(gyro_turn_max_rps),
+        safe_float(vision_y_guard_target_dps),
         safe_float(gyro_z_sign), safe_float(gyro_turn_sign),
         drive_by_mode, drive_by_use_track_tangent, drive_by_side_follow_ms,
         safe_float(drive_by_normal_speed_rps),
@@ -1207,6 +1282,9 @@ void udp_send(void){
              "\"spd_slow_ratio\":%d,"
              "\"gyro_target_dps\":%.2f,"
              "\"gyro_dps\":%.2f,"
+             "\"y_guard_active\":%d,"
+             "\"y_guard_aim_dy_px\":%.2f,"
+             "\"y_guard_target_dps\":%.2f,"
              "\"gyro_timeout\":%d,"
              "\"gyro_read_ms\":%.2f,"
              "\"camera_process_last_ms\":%.2f,"
@@ -1287,6 +1365,9 @@ void udp_send(void){
              spd_slow_ratio,
              safe_float(gyro_debug.target_yaw_rate_dps),
              safe_float(gyro_debug.gyro_z_lpf),
+             vision_y_guard_active,
+             safe_float(vision_y_guard_aim_dy_px),
+             safe_float(vision_y_guard_target_dps),
              gyro_debug.gyro_timeout_count,
              safe_float(gyro_debug.gyro_read_last_ms),
              safe_float(g_camera_performance.last_ms),
@@ -1823,6 +1904,8 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
         // 防止刚出现一小截噪声就误判为“中线恢复”并提前交还巡线。
         const bool drive_by_aim_line_valid = begin_id >= 0 &&
             aim_line_remaining_points >= (drive_by_aim_line == 0 ? 15 : 3);
+        float current_aim_y = cy - kVisionYGuardExitMarginPx - 1.0f;
+        bool current_aim_valid = false;
         if (begin_id >= 0 && rpts_num - begin_id >= 3) {
             // 归一化中线，如果是根据左右track寻仙则需要这么干
             rpts[begin_id][0] = cx;
@@ -1832,6 +1915,8 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
 
             // 远预锚点位置
             int aim_idx = clip(round(aim_distance / sample_dist), 0, rptsn_num - 1);
+            current_aim_y = rptsn[aim_idx][1];
+            current_aim_valid = true;
             // 近预锚点位置
             int aim_idx_near = clip(round(0.25 / sample_dist), 0, rptsn_num - 1);
 
@@ -1854,6 +1939,15 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
 
         }
 // ====================== 误差计算与滤波处理 ======================
+        const bool line_lost_now = check_line_lost();
+        const float raw_visual_error = -error;
+        update_vision_y_guard(
+            raw_visual_error,
+            current_aim_y,
+            cy,
+            line_lost_now,
+            current_aim_valid && drive_by_aim_line_valid,
+            drive_by_aim_line);
         if (cross_type == CROSS_BEGIN) {
             // 单侧丢线 → 保持上一帧误差，不走不可靠的中线
             if (!Lpt0_found || !Lpt1_found) {
@@ -1868,7 +1962,7 @@ if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&
                 }
             }
         } 
-        else if (check_line_lost() && cross_type != CROSS_IN) {
+        else if (line_lost_now && cross_type != CROSS_IN) {
             if (g_avoid_state == AV_GO_RIGHT) {
                 //latest_error = filter_error(-100.0f); // 避障丢线，平滑过渡到最大打角
                 diu++;

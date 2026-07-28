@@ -274,13 +274,14 @@ float calc_target_yaw_rate(float vision_error)
 }
 
 float update_rate_target_yaw_rate(float target_yaw_rate,
+                                  float requested_target_limit,
                                   float requested_turn_limit)
 {
     if (!g_gyro_ready) {
         return 0.0f;
     }
 
-    const float target_limit = std::fabs((float)gyro_target_max_dps);
+    const float target_limit = std::fabs(requested_target_limit);
     target_yaw_rate = clampf(target_yaw_rate, -target_limit, target_limit);
 
     // 绕行脚本和视觉外环最终都走这里，保证两种模式使用同一套角速度内环。
@@ -298,9 +299,7 @@ float update_rate_target_yaw_rate(float target_yaw_rate,
         g_debug.integral_frozen = 1;
     }
 
-    const float turn_limit = std::min(
-        std::fabs((float)gyro_turn_max_rps),
-        std::fabs(requested_turn_limit));
+    const float turn_limit = std::fabs(requested_turn_limit);
     const float inner_ki = gyro_inner_ki;
     if (std::fabs(inner_ki) > 1e-6f) {
         const float integral_limit = turn_limit / std::fabs(inner_ki);
@@ -476,6 +475,7 @@ float gyro_yaw_rate_control_update(float vision_error)
 
     return update_rate_target_yaw_rate(
         target_yaw_rate,
+        std::fabs((float)gyro_target_max_dps),
         std::fabs((float)gyro_turn_max_rps));
 }
 
@@ -483,6 +483,7 @@ float gyro_yaw_rate_control_update_target_yaw_rate(float target_yaw_rate_dps)
 {
     return update_rate_target_yaw_rate(
         target_yaw_rate_dps,
+        std::fabs((float)gyro_target_max_dps),
         std::fabs((float)gyro_turn_max_rps));
 }
 
@@ -490,7 +491,22 @@ float gyro_yaw_rate_control_update_target_yaw_rate_limited(
     float target_yaw_rate_dps,
     float max_turn_rps)
 {
-    return update_rate_target_yaw_rate(target_yaw_rate_dps, max_turn_rps);
+    return update_rate_target_yaw_rate(
+        target_yaw_rate_dps,
+        std::fabs((float)gyro_target_max_dps),
+        std::min(std::fabs((float)gyro_turn_max_rps),
+                 std::fabs(max_turn_rps)));
+}
+
+float gyro_yaw_rate_control_update_target_yaw_rate_with_limits(
+    float target_yaw_rate_dps,
+    float max_target_yaw_rate_dps,
+    float max_turn_rps)
+{
+    return update_rate_target_yaw_rate(
+        target_yaw_rate_dps,
+        max_target_yaw_rate_dps,
+        max_turn_rps);
 }
 
 const GyroYawRateDebug &gyro_yaw_rate_control_get_debug(void)

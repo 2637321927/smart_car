@@ -113,6 +113,7 @@ async function main() {
       P: 454,
       I: 14,
       gyro: 1,
+      yGuardDps: 360,
       dbMode: 1,
       dbSideMs: 850,
       dbUseTangent: 1,
@@ -177,7 +178,7 @@ async function main() {
     assert.strictEqual(appResponse.status, 200);
     const tuningKeys = [
       'P', 'I', 'D', 'spd', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
-      'gyro', 'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax',
+      'gyro', 'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax', 'yGuardDps',
       'gSign', 'tSign', 'dbMode', 'dbSideMs', 'dbUseTangent', 'dbNormalSpd', 'dbRecSpd',
       'dbTurnAngle', 'dbPassDist',
       'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
@@ -200,6 +201,7 @@ async function main() {
     assert(appResponse.text.includes("key: 'dbSideMs', label: '边线瞄准持续时间', min: 500, max: 2000, step: 50, unit: 'ms', defaultValue: 500, hardMax: true"));
     assert(appResponse.text.includes("key: 'dbHKp', label: '航向外环P', min: 0, max: 60, step: 0.1, defaultValue: 31"));
     assert(appResponse.text.includes("key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 505"));
+    assert(appResponse.text.includes("key: 'yGuardDps', label: '瞄点越界救车角速度', min: 0, max: 500, step: 5, unit: 'dps', defaultValue: 360, hardMax: true"));
     assert(appResponse.text.includes("const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes'"));
     assert(appResponse.text.includes("maxEditor.className = 'tuning-max-editor'"));
     assert(appResponse.text.includes("maxLabel.textContent = '上限'"));
