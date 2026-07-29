@@ -293,6 +293,10 @@ async function main() {
     assert(mainSource.includes('vision_y_guard_target_dps = 500.0f;'));
     assert(mainSource.includes('if (ftmp > 700.0f) ftmp = 700.0f;'));
     assert(frontUiSource.includes('constexpr float kRemoteYawRateDps = 160.0f;'));
+    assert(frontUiSource.includes('constexpr auto kPhysicalStartDelay = std::chrono::milliseconds(1000);'));
+    assert(frontUiSource.includes('physical_start_deadline = now + kPhysicalStartDelay;'));
+    assert(frontUiSource.includes('void front_ui_start()'));
+    assert(frontUiSource.includes('physical_start_pending = false;\n    start_car();'));
     assert(dirPdSource.includes('constexpr float kVisionYGuardMaxDps = 700.0f;'));
     assert(dirPdSource.includes('constexpr float kVisionYGuardMaxTurnRps = 25.0f;'));
     assert(dirPdSource.includes('constexpr float kVisionYGuardBaseRps = 15.0f;'));

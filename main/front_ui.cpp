@@ -39,6 +39,10 @@ constexpr gpio_level_t kKeyPressedLevel = GPIO_LOW;
 // 去抖时间：避免一次按键因为机械抖动被识别成多次。
 constexpr auto kDebounceTime = std::chrono::milliseconds(180);
 
+// 仅实体发车按键使用一秒倒计时，给人员留出离开车辆的时间。
+// UDP 的 run=1 仍直接调用公开发车接口，不经过这段延时。
+constexpr auto kPhysicalStartDelay = std::chrono::milliseconds(1000);
+
 // 没有按键动作时，也定时刷新一次屏幕，方便显示当前输出值。
 constexpr auto kRefreshTime = std::chrono::milliseconds(500);
 
@@ -66,6 +70,8 @@ struct ButtonState {
 ButtonState prev_state;
 ButtonState next_state;
 ButtonState start_stop_state;
+bool physical_start_pending = false;
+std::chrono::steady_clock::time_point physical_start_deadline;
 std::chrono::steady_clock::time_point last_refresh =
     std::chrono::steady_clock::now() - kRefreshTime;
 bool tft_ready = false;
@@ -257,6 +263,7 @@ void select_next_strategy()
 
 void front_ui_init()
 {
+    physical_start_pending = false;
     stop_car();
     ui_ready = true;
 
@@ -278,6 +285,7 @@ void front_ui_poll()
     }
 
     bool dirty = false;
+    const auto now = std::chrono::steady_clock::now();
 
     // K0：目标板识别与绕行开关。关闭时完全不检测红色，不影响普通巡线。
     if (pressed_edge(key_prev, prev_state)) {
@@ -299,14 +307,29 @@ void front_ui_poll()
         dirty = true;
     }
 
-    // K2：一键发车/停车。
+    // K2：停车时按下进入一秒非阻塞倒计时，运行时按下仍立即停车。
+    // 倒计时只由主循环轮询，不阻塞相机、控制定时器或 UDP 指令接收。
     if (pressed_edge(key_start_stop, start_stop_state)) {
-        front_ui_set_running(!car_running);
+        if (car_running) {
+            physical_start_pending = false;
+            front_ui_stop();
+        } else if (physical_start_pending) {
+            // 倒计时期间再次按下实体键，取消本次发车。
+            physical_start_pending = false;
+        } else {
+            physical_start_pending = true;
+            physical_start_deadline = now + kPhysicalStartDelay;
+        }
+        dirty = true;
+    }
+
+    if (physical_start_pending && now >= physical_start_deadline) {
+        physical_start_pending = false;
+        start_car();
         dirty = true;
     }
 
     // 有按键动作立即刷新；没动作时也按固定周期刷新，显示最新输出值。
-    const auto now = std::chrono::steady_clock::now();
     if (dirty || now - last_refresh >= kRefreshTime) {
         draw_ui();
         last_refresh = now;
@@ -320,11 +343,14 @@ bool front_ui_is_running()
 
 void front_ui_start()
 {
+    // 公开接口供 UDP run=1 等软件命令使用，必须立即发车，不应用实体键延时。
+    physical_start_pending = false;
     start_car();
 }
 
 void front_ui_stop()
 {
+    physical_start_pending = false;
     stop_car();
 }
 
