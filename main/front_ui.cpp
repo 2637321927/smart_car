@@ -241,40 +241,8 @@ void draw_ui()
     snprintf(line, sizeof(line), "TARGET:%s", drive_by_is_enabled() ? "ON" : "OFF");
     draw_line(5, line, drive_by_is_enabled() ? U16GREEN : U16RED);
 
-    draw_line(6, "K0 TARGET K1 SPD", U16WHITE);
+    draw_line(6, "K0 TARGET K1 PROFILE", U16WHITE);
     draw_line(7, "K2 START/STOP", U16WHITE);
-}
-
-void select_prev_strategy()
-{
-    if (control_profile_is_pro()) {
-        printf("[PROFILE] PRO mode ignores K1 speed selection\n");
-        return;
-    }
-    // 加 kStrategyCount 再取模，可以让 LOW 往前切时回到 MAX。
-    selected_strategy = (selected_strategy + kStrategyCount - 1) % kStrategyCount;
-    control_profile_set_target_speed_rps(
-        static_cast<float>(kStrategies[selected_strategy].speed_rps));
-    if (car_running) {
-        apply_speed_strategy();
-    }
-    printf("target speed=%d RPS\n", kStrategies[selected_strategy].speed_rps);
-}
-
-void select_next_strategy()
-{
-    if (control_profile_is_pro()) {
-        printf("[PROFILE] PRO mode ignores K1 speed selection\n");
-        return;
-    }
-    // 往后切档位，到最后一个档位后再回到第一个档位。
-    selected_strategy = (selected_strategy + 1) % kStrategyCount;
-    control_profile_set_target_speed_rps(
-        static_cast<float>(kStrategies[selected_strategy].speed_rps));
-    if (car_running) {
-        apply_speed_strategy();
-    }
-    printf("target speed=%d RPS\n", kStrategies[selected_strategy].speed_rps);
 }
 
 } // namespace
@@ -312,12 +280,17 @@ void front_ui_poll()
         std::cout << "drive_by_enable:" << drive_by_is_enabled() << '\n';
     }
 
-    // K1：下一个速度策略。
+    // K1：停车时在稳定组和 PRO 提速组之间切换。
     if (pressed_edge(key_next, next_state)) {
-        if (!control_profile_is_pro() && !drive_by_brake_test_is_enabled()) {
-            select_next_strategy();
-        } else if (control_profile_is_pro()) {
-            printf("[PROFILE] PRO mode ignores K1 speed selection\n");
+        const ControlProfileMode requested_mode = control_profile_is_pro()
+            ? CONTROL_PROFILE_STABLE
+            : CONTROL_PROFILE_PRO;
+        if (control_profile_switch(requested_mode)) {
+            printf("[参数组] 已切换为%s模式，目标速度=%.1f RPS\n",
+                   control_profile_is_pro() ? "超载（OVERLOAD）" : "稳定",
+                   control_profile_target_speed_rps());
+        } else {
+            printf("[PROFILE] K1 switch rejected: stop car and exit active tests first\n");
         }
         dirty = true;
     }

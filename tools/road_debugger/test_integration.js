@@ -294,6 +294,15 @@ async function main() {
     const frontUiSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'front_ui.cpp'), 'utf8');
     const profileSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'control_profile.cpp'), 'utf8');
     const dirPdSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'dir_pd.cpp'), 'utf8');
+    const driveBySource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'drive_by.cpp'), 'utf8');
+    const stableDefaultsSource = profileSource.slice(
+      profileSource.indexOf('ControlProfileValues make_stable_defaults()'),
+      profileSource.indexOf('ControlProfileValues make_pro_defaults()'),
+    );
+    const speedControlSource = driveBySource.slice(
+      driveBySource.indexOf('bool drive_by_speed_control_update()'),
+      driveBySource.indexOf('bool drive_by_start_test('),
+    );
     assert(mainSource.includes('constexpr int kRoadTelemetryMinIntervalMs = 20;'));
     assert(mainSource.includes('constexpr int kControlTelemetryPacketSize'));
     assert(mainSource.includes('kControlTelemetryPacketSize < 256'));
@@ -312,12 +321,34 @@ async function main() {
     assert(frontUiSource.includes('physical_start_deadline = now + kPhysicalStartDelay;'));
     assert(frontUiSource.includes('void front_ui_start()'));
     assert(frontUiSource.includes('physical_start_pending = false;\n    start_car();'));
+    assert(frontUiSource.includes('K0 TARGET K1 PROFILE'));
+    assert(frontUiSource.includes('control_profile_switch(requested_mode)'));
+    assert(frontUiSource.includes('已切换为%s模式'));
+    assert(frontUiSource.includes('超载（OVERLOAD）'));
+    assert(!frontUiSource.includes('PRO mode ignores K1 speed selection'));
     assert(dirPdSource.includes('constexpr float kVisionYGuardMaxDps = 700.0f;'));
     assert(dirPdSource.includes('vision_y_guard_turn_max_rps'));
     assert(dirPdSource.includes('vision_y_guard_base_rps'));
     assert(profileSource.includes('ControlProfile stable_profile'));
     assert(profileSource.includes('ControlProfile pro_profile'));
+    ['35.0f', '454.0f', '14.0f', '0.128f', '1.55f', '0.25f'].forEach((value) => {
+      assert(stableDefaultsSource.includes(value));
+    });
     assert(profileSource.includes('values.target_speed_rps = 45.0f;'));
+    assert(profileSource.includes('values.direction_p = 0.231f;'));
+    assert(profileSource.includes('values.direction_d = 3.5f;'));
+    assert(profileSource.includes('values.aim_m = 0.40f;'));
+    assert(profileSource.includes('values.speed_slow_ratio = 40;'));
+    assert(profileSource.includes('values.rescue_target_dps = 650.0f;'));
+    assert(profileSource.includes('values.rescue_turn_max_rps = 30.0f;'));
+    assert(driveBySource.includes('g_pro_candidate_brake_active'));
+    assert(driveBySource.includes('control_profile_is_pro() && candidate.found'));
+    assert(driveBySource.includes('start_pro_candidate_brake();'));
+    assert(driveBySource.includes('if (g_pro_candidate_brake_active && !g_brake_active)'));
+    assert(driveBySource.includes('g_drive_by_busy || g_pro_candidate_brake_active'));
+    assert.strictEqual((driveBySource.match(/control_profile_is_pro\(\)/g) || []).length, 1);
+    assert.strictEqual((driveBySource.match(/g_pro_candidate_brake_active = true;/g) || []).length, 1);
+    assert(!speedControlSource.includes('control_profile_is_pro()'));
     assert(profileSource.includes('!front_ui_is_running()'));
     assert.strictEqual((dirPdSource.match(/\[救车\] 触发救车/g) || []).length, 1);
 

@@ -38,6 +38,13 @@ ControlProfileValues make_pro_defaults()
 {
     ControlProfileValues values = make_stable_defaults();
     values.target_speed_rps = 45.0f;
+    values.direction_p = 0.231f;
+    values.direction_d = 3.5f;
+    values.aim_m = 0.40f;
+    values.speed_slow_ratio = 40;
+    values.rescue_target_dps = 650.0f;
+    values.rescue_base_rps = 15.0f;
+    values.rescue_turn_max_rps = 30.0f;
     return values;
 }
 
