@@ -351,6 +351,8 @@ async function main() {
     assert(mainSource.includes('#dbEarlyBrake=%d;'));
     assert(mainSource.includes('drive_by_stable_early_brake_set_enable(itmp != 0)'));
     assert(mainSource.includes('const bool zebra_detection_armed = car_running &&'));
+    assert(mainSource.includes('constexpr int kZebraDetectionFrameInterval = 3;'));
+    assert(mainSource.includes('++zebra_detection_frame_counter >='));
     assert(mainSource.includes('std::chrono::seconds(5)'));
     assert(mainSource.includes('check_is_zebra(&img_raw, x, y, thres)'));
     assert(mainSource.includes('[斑马线] 检测到斑马线，停车'));

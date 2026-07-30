@@ -86,6 +86,7 @@ float filter_error(float new_error)
 namespace {
 
 constexpr float kVisionYGuardExitMarginPx = 20.0f;
+constexpr int kZebraDetectionFrameInterval = 3;
 void camera_performance_set_enabled(bool enabled);
 
 void update_vision_y_guard(float raw_visual_error,
@@ -1991,11 +1992,16 @@ img0.width = cam.get_camera_width();
 img0.height = cam.get_camera_height();
 img0.step=frame.step;
         // 开始处理摄像头图像
+        static int zebra_detection_frame_counter = 0;
         bool zebra_detected = false;
         const bool zebra_detection_armed = car_running &&
             std::chrono::steady_clock::now() - last_start_time >=
                 std::chrono::seconds(5);
-        if (zebra_detection_armed) {
+        if (!zebra_detection_armed) {
+            zebra_detection_frame_counter = 0;
+        } else if (++zebra_detection_frame_counter >=
+                   kZebraDetectionFrameInterval) {
+            zebra_detection_frame_counter = 0;
             for (int y = 160; y <= 180 && !zebra_detected; ++y) {
                 for (int x = 115; x <= 125; ++x) {
                     if (check_is_zebra(&img_raw, x, y, thres)) {
