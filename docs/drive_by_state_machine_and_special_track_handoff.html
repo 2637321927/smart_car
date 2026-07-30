@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>目标板绕行状态机与十字/环岛交接分析</title>
+  <style>
+    :root {
+      --ink: #17211b;
+      --muted: #5b6960;
+      --paper: #f2eee4;
+      --card: #fffdf7;
+      --line: #d5cebf;
+      --green: #185c45;
+      --green-soft: #e6f0ea;
+      --blue: #28657c;
+      --blue-soft: #e7f2f6;
+      --amber: #9a5a13;
+      --amber-soft: #fff0d5;
+      --red: #a13f35;
+      --red-soft: #f8e5e1;
+      --shadow: 0 14px 34px rgba(44, 49, 42, .10);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(24, 92, 69, .04) 1px, transparent 1px),
+        linear-gradient(rgba(24, 92, 69, .04) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+      font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      line-height: 1.72;
+    }
+
+    .hero {
+      padding: 54px 24px 44px;
+      color: #f8f4e9;
+      background:
+        radial-gradient(circle at 86% 12%, rgba(255, 255, 255, .15), transparent 24%),
+        linear-gradient(135deg, #123b30, #1d6b50 60%, #a96829 145%);
+    }
+
+    .hero-inner,
+    .toc,
+    main,
+    footer {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      letter-spacing: .14em;
+      font-size: .82rem;
+      opacity: .78;
+    }
+
+    h1 {
+      max-width: 920px;
+      margin: 0;
+      font-family: "STKaiti", "KaiTi", serif;
+      font-size: clamp(2rem, 5vw, 3.8rem);
+      line-height: 1.14;
+    }
+
+    .subtitle {
+      max-width: 880px;
+      margin: 18px 0 0;
+      font-size: 1.04rem;
+      opacity: .9;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border: 1px solid rgba(255, 255, 255, .34);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .1);
+      font-size: .88rem;
+    }
+
+    .toc {
+      position: relative;
+      z-index: 2;
+      margin-top: -20px;
+      padding: 20px 24px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 253, 247, .97);
+      box-shadow: var(--shadow);
+    }
+
+    .toc strong { color: var(--green); }
+    .toc-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-top: 8px;
+    }
+
+    a { color: var(--green); }
+    main { padding: 34px 0 70px; }
+
+    section {
+      margin: 26px 0;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--card);
+      box-shadow: 0 8px 24px rgba(45, 50, 42, .06);
+      break-inside: avoid-page;
+    }
+
+    h2, h3 {
+      color: var(--green);
+      line-height: 1.3;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #c9ddcf;
+      font-size: 1.65rem;
+    }
+
+    h3 { margin: 26px 0 12px; font-size: 1.22rem; }
+    p { margin: 12px 0; }
+    code, pre { font-family: Consolas, "Microsoft YaHei", monospace; }
+
+    code {
+      padding: .12em .35em;
+      border-radius: 5px;
+      background: #ece8de;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 16px 0;
+      padding: 17px 19px;
+      border: 1px solid #cad8cf;
+      border-radius: 12px;
+      color: #f3f6f3;
+      background: #17352b;
+      line-height: 1.6;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th, td {
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #f8f4e9;
+      background: var(--green);
+    }
+
+    tbody tr:nth-child(even) { background: #f7f3ea; }
+
+    .notice,
+    .warning,
+    .danger,
+    .proposal {
+      margin: 18px 0;
+      padding: 15px 17px;
+      border-left: 5px solid;
+      border-radius: 10px;
+    }
+
+    .notice { border-color: var(--blue); background: var(--blue-soft); }
+    .warning { border-color: var(--amber); background: var(--amber-soft); }
+    .danger { border-color: var(--red); background: var(--red-soft); }
+    .proposal { border-color: var(--green); background: var(--green-soft); }
+
+    .label {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: white;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    .label-current { background: var(--blue); }
+    .label-risk { background: var(--red); }
+    .label-proposal { background: var(--green); }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .flow-card {
+      position: relative;
+      min-height: 108px;
+      padding: 14px;
+      border: 1px solid #c9d8cf;
+      border-radius: 13px;
+      background: #f4f8f5;
+    }
+
+    .flow-card strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--green);
+    }
+
+    .flow-card:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      top: 38%;
+      right: -19px;
+      z-index: 1;
+      color: var(--amber);
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .formula {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .mini-card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #faf7ef;
+    }
+
+    .mini-card h3 { margin-top: 0; }
+    footer {
+      padding: 0 0 38px;
+      color: var(--muted);
+      text-align: center;
+      font-size: .9rem;
+    }
+
+    @media (max-width: 900px) {
+      .flow { grid-template-columns: 1fr 1fr; }
+      .flow-card::after { display: none; }
+      .two-column { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .hero { padding: 42px 18px 38px; }
+      section { padding: 22px 18px; border-radius: 15px; }
+      .flow { grid-template-columns: 1fr; }
+      .toc { padding: 18px; }
+    }
+
+    @media print {
+      body { background: white; }
+      .hero { padding: 24px; print-color-adjust: exact; }
+      .toc { margin-top: 14px; box-shadow: none; }
+      section { box-shadow: none; break-inside: auto; }
+      .flow-card, th, .notice, .warning, .danger, .proposal {
+        print-color-adjust: exact;
+      }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">SMART CAR / DRIVE-BY CONTROL</p>
+      <h1>目标板绕行状态机与十字、环岛交接分析</h1>
+      <p class="subtitle">
+        面向队内讨论的当前实现说明。重点解释车辆从正常巡线、识别、主动制动到三阶段绕行的完整链路，
+        以及目标板后紧接十字或环岛时，当前方案为什么可能漏判、应如何改造。
+      </p>
+      <div class="badges">
+        <span class="badge">当前代码快照：2026-07-29</span>
+        <span class="badge">检测固定每2帧一次</span>
+        <span class="badge">绕行控制周期：8ms</span>
+        <span class="badge">本文不代表已经完成建议改造</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="目录">
+    <strong>快速目录</strong>
+    <div class="toc-links">
+      <a href="#summary">核心结论</a>
+      <a href="#ownership">控制权优先级</a>
+      <a href="#states">当前状态机</a>
+      <a href="#special">十字与环岛</a>
+      <a href="#risk">紧邻特殊路段风险</a>
+      <a href="#proposal">建议交接方案</a>
+      <a href="#edge-cases">边界情况</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="summary">
+      <h2>一、核心结论</h2>
+      <div class="notice">
+        <span class="label label-current">当前实现</span>
+        目标板绕行拥有高于十字和环岛的优先级。远距离红块候选一旦确认，十字和环岛状态会被清零，直到绕行结束后再等待固定300ms才恢复检测。
+      </div>
+      <div class="danger">
+        <span class="label label-risk">主要风险</span>
+        车辆恢复35RPS后，300ms约前进49cm。如果目标板后紧跟十字或环岛，车辆可能已经越过最明显的入口特征，最终按普通巡线冲入特殊路段。
+      </div>
+      <div class="proposal">
+        <span class="label label-proposal">建议方向</span>
+        不要简单取消300ms保护，而应增加一个低速的交接状态：绕行后先以约15RPS运行，提前观察并锁存十字/环岛候选；候选稳定后直接移交特殊路段状态机，无候选时再恢复35RPS。
+      </div>
+    </section>
+
+    <section id="ownership">
+      <h2>二、当前控制权优先级</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>层级</th><th>周期/线程</th><th>负责内容</th><th>接管条件</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>硬件测试</td><td>3ms速度定时器</td><td>直接控制测试PWM</td><td>硬件测试开启，最高优先级</td></tr>
+            <tr><td>主动制动</td><td>3ms速度定时器</td><td>输出主动制动专用反向PWM</td><td>红块候选确认并进入制动</td></tr>
+            <tr><td>普通速度环</td><td>3ms速度定时器</td><td>根据左右目标RPS输出PWM</td><td>没有硬件测试和主动制动</td></tr>
+            <tr><td>绕行航向闭环</td><td>8ms方向定时器</td><td>角度积分、目标角速度、左右差速</td><td><code>TURN_OUT/PASS_SHORT/TURN_TO_TRACK</code></td></tr>
+            <tr><td>普通方向环</td><td>8ms方向定时器</td><td>视觉误差外环+角速度内环</td><td>普通巡线、识别阶段或视觉找线阶段</td></tr>
+            <tr><td>十字/环岛</td><td>相机主循环</td><td>改变当前瞄准线和道路状态</td><td>目标板状态机没有屏蔽特殊路段</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>十字和环岛目前不是独立的电机控制器。它们主要改变相机线程选择的左线、中线或右线，最终仍由普通方向环执行转向。</p>
+    </section>
+
+    <section id="states">
+      <h2>三、目标板绕行状态机</h2>
+
+      <div class="flow" aria-label="状态机主流程">
+        <div class="flow-card"><strong>IDLE</strong>35RPS普通巡线<br>每2帧检测一次红块</div>
+        <div class="flow-card"><strong>识别与制动</strong>APPROACH<br>WAIT_VIEW<br>INFER<br>WAIT_BRAKE</div>
+        <div class="flow-card"><strong>TURN_OUT</strong>基准0RPS<br>向绕行侧转42°</div>
+        <div class="flow-card"><strong>PASS_SHORT</strong>基准10RPS<br>保持航向斜行0.32m</div>
+        <div class="flow-card"><strong>TURN_TO_TRACK</strong>基准10RPS<br>反转并寻找中线</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>状态</th><th>进入条件</th><th>当前动作</th><th>离开条件</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>IDLE</code></td>
+              <td>没有目标板任务</td>
+              <td>35RPS普通巡线；红块预检测固定每2帧一次</td>
+              <td>最近最多3次检测中命中2次</td>
+            </tr>
+            <tr>
+              <td>候选第1票</td>
+              <td>第一次远距离红块命中</td>
+              <td>基准速度降为0RPS，但保留普通方向环差速；暂不输出反向PWM</td>
+              <td>第二票确认或候选窗口清空</td>
+            </tr>
+            <tr>
+              <td><code>APPROACH</code></td>
+              <td>候选达到2票</td>
+              <td>启动主动制动，同时进行严格红块确认</td>
+              <td>确认成功；或300ms内始终无法确认，按误候选恢复</td>
+            </tr>
+            <tr>
+              <td><code>WAIT_VIEW</code></td>
+              <td>红块已确认但观察角或ROI不合格</td>
+              <td>继续等待合适视角</td>
+              <td>观察角≤46°且ROI有效；最多等待120ms</td>
+            </tr>
+            <tr>
+              <td><code>INFER</code></td>
+              <td>目标板图像可以提交模型</td>
+              <td>最多处理3帧；任一结果获得2票后提前结束</td>
+              <td>获得多数票、处理完3帧或超过500ms</td>
+            </tr>
+            <tr>
+              <td><code>WAIT_BRAKE</code></td>
+              <td>推理结束但制动尚未达到释放条件</td>
+              <td>继续由3ms线程制动</td>
+              <td>两轮连续2次不高于0RPS；超过511ms则停车报错</td>
+            </tr>
+            <tr>
+              <td><code>TURN_OUT</code></td>
+              <td>识别结果为左绕或右绕，且制动完成</td>
+              <td>基准0RPS，以锁定航向为0°，向绕行侧转42°</td>
+              <td>积分航向达到目标角；或在容差内稳定3个周期</td>
+            </tr>
+            <tr>
+              <td><code>PASS_SHORT</code></td>
+              <td>转出角达到要求</td>
+              <td>基准10RPS，保持转出航向斜行</td>
+              <td>阶段距离≥0.32m，并满足目标板通过距离</td>
+            </tr>
+            <tr>
+              <td><code>TURN_TO_TRACK</code></td>
+              <td>斜行距离完成</td>
+              <td>基准10RPS，反向转到赛道内侧预偏30°；持续检查中线</td>
+              <td>回正方向越过原航向10°且中线有效；或达到目标角后进入找线</td>
+            </tr>
+            <tr>
+              <td><code>RECOVER_CENTER_LINE</code></td>
+              <td>角度条件完成但中线仍不可用</td>
+              <td>按固定55dps继续向赛道方向找线</td>
+              <td>中线恢复；或阶段超时/陀螺仪异常后停车</td>
+            </tr>
+            <tr>
+              <td>完成交接</td>
+              <td>中线有效</td>
+              <td>同一个8ms周期清除绕行控制器，立即恢复35RPS和普通方向环</td>
+              <td>回到<code>IDLE</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="special">
+      <h2>四、当前十字与环岛状态</h2>
+      <div class="two-column">
+        <div class="mini-card">
+          <h3>十字状态机</h3>
+          <pre><code>CROSS_NONE
+→ CROSS_BEGIN：同时发现左右L角点
+→ CROSS_IN：角点接近车身或近线不足
+→ CROSS_NONE：远线重新恢复</code></pre>
+          <p>十字进入后使用远线控制。主循环先检查十字，十字成立时会清除环岛状态，因此十字优先级高于环岛。</p>
+        </div>
+        <div class="mini-card">
+          <h3>环岛状态机</h3>
+          <pre><code>CIRCLE_NONE
+→ LEFT/RIGHT_BEGIN
+→ LEFT/RIGHT_IN
+→ LEFT/RIGHT_RUNNING
+→ LEFT/RIGHT_OUT
+→ LEFT/RIGHT_END
+→ CIRCLE_NONE</code></pre>
+          <p>入口判断依赖“单侧L角点+另一侧长直线”；环内阶段通过左右线丢失/恢复和编码器里程切换。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="risk">
+      <h2>五、目标板后紧接十字或环岛的风险</h2>
+      <h3>5.1 当前交接顺序</h3>
+      <pre><code>目标板候选确认
+→ drive_by_busy = true
+→ 每帧清空十字/环岛状态
+→ 完成绕行并立即恢复35RPS
+→ 继续屏蔽特殊路段300ms
+→ 300ms后重新执行十字/环岛检测</code></pre>
+
+      <div class="danger">
+        <p class="formula">35RPS × 0.047m/s/RPS × 0.300s ≈ 0.49m</p>
+        <p>也就是说，恢复特殊路段检测前车辆大约已经前进49cm。这个距离足以让十字L角点或环岛入口角点离开有效识别区域。</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>场景</th><th>可能发生的情况</th><th>后果</th></tr></thead>
+          <tbody>
+            <tr><td>绕行后紧接十字</td><td>左右L角点在300ms屏蔽期内出现并消失</td><td>无法进入<code>CROSS_BEGIN</code>，车辆按普通中线高速通过</td></tr>
+            <tr><td>绕行后紧接环岛</td><td>单侧L角点和对侧长直线入口特征被错过</td><td>无法进入环岛状态机，可能直接切入环内错误路线</td></tr>
+            <tr><td>红块出现时已经进入特殊路段</td><td>目标板状态机清空现有十字/环岛状态</td><td>原特殊路段进度丢失，瞄准线恢复为普通中线</td></tr>
+            <tr><td>绕行残缺边线被立即识别</td><td>如果简单删除300ms屏蔽，残缺边线可能被当成L角点</td><td>误触发十字或环岛</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="proposal">
+      <h2>六、建议增加低速特殊路段交接状态</h2>
+      <p>建议在绕行完成和恢复普通35RPS之间增加：</p>
+      <pre><code>TURN_TO_TRACK / RECOVER_CENTER_LINE
+→ POST_DRIVEBY_HANDOFF
+→ CROSS_BEGIN / CIRCLE_*_BEGIN / IDLE</code></pre>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>项目</th><th>建议初值</th><th>目的</th></tr></thead>
+          <tbody>
+            <tr><td>交接基准速度</td><td>15RPS</td><td>降低漏判后冲入特殊路段的风险</td></tr>
+            <tr><td>最大交接时间</td><td>200ms</td><td>15RPS下约前进14cm，明显小于当前49cm</td></tr>
+            <tr><td>候选确认</td><td>最近3帧中命中2帧</td><td>过滤绕行后残缺边线造成的单帧误判</td></tr>
+            <tr><td>普通巡线恢复</td><td>中线连续有效3帧且无特殊候选</td><td>确保车身已经重新稳定落在道路上</td></tr>
+            <tr><td>检测优先级</td><td>十字优先、环岛其次、普通巡线最后</td><td>保持现有特殊路段判定顺序</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>6.1 被动观察与正式接管必须分离</h3>
+      <p>从<code>TURN_TO_TRACK</code>后半段开始，可以利用每帧已经计算出的左右线和L角点，被动记录以下候选：</p>
+      <ul>
+        <li>左右L角点同时稳定出现：十字候选。</li>
+        <li>左L角点+右侧长直线：左环岛候选。</li>
+        <li>右L角点+左侧长直线：右环岛候选。</li>
+      </ul>
+      <p>此时只保存候选类型、方向和连续次数，不允许特殊路段状态机改写瞄准线。等绕行航向闭环正式结束，再移交控制权。</p>
+
+      <h3>6.2 推荐交接判断</h3>
+      <pre><code>进入 POST_DRIVEBY_HANDOFF
+→ 基准速度保持15RPS
+→ 普通中线方向环继续工作
+
+若十字候选达到2/3帧：
+    进入 CROSS_BEGIN
+
+否则若左/右环岛候选达到2/3帧：
+    进入对应 CIRCLE_LEFT_BEGIN / CIRCLE_RIGHT_BEGIN
+
+否则若中线连续有效3帧且没有特殊候选：
+    恢复35RPS，进入IDLE
+
+若200ms结束仍丢线：
+    不得直接恢复35RPS，继续低速找线或安全停车</code></pre>
+
+      <div class="warning">
+        不建议仅把300ms改成0。绕行刚结束时左右边线通常不完整，直接开放十字/环岛判断会增加误触发。低速交接和多帧确认可以同时解决“漏判”和“误判”。
+      </div>
+    </section>
+
+    <section id="edge-cases">
+      <h2>七、边界情况和优先级建议</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>情况</th><th>建议处理</th><th>原因</th></tr></thead>
+          <tbody>
+            <tr><td>绕行已经开始，随后看到十字/环岛</td><td>绕行继续执行；只被动锁存特殊候选，完成后再交接</td><td>避免两个状态机同时改写瞄准线和左右轮目标</td></tr>
+            <tr><td>十字/环岛已经进入，随后看到红块</td><td>特殊路段优先，暂不触发目标板绕行</td><td>当前绕行脚本以局部固定航向为参考，不能安全继承环岛或十字进度</td></tr>
+            <tr><td>同一帧同时出现红块和特殊路段入口</td><td>已激活的状态优先；都未激活时先降低速度，再根据连续多帧结果仲裁</td><td>单帧无法可靠判断哪个目标在物理位置上更靠前</td></tr>
+            <tr><td>目标板位于环岛内部</td><td>当前版本不建议执行目标板绕行</td><td>需要保留环岛切线、环岛阶段和沿曲线的航向参考，属于组合状态机改造</td></tr>
+            <tr><td>交接阶段陀螺仪异常</td><td>普通视觉中线低速接管；若持续丢线则停车</td><td>不能在航向数据失效时盲目进入转向型特殊路段</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="proposal">
+        <strong>建议实施顺序：</strong>
+        先增加<code>POST_DRIVEBY_HANDOFF</code>和15RPS低速交接；再加入十字/环岛候选锁存；最后用“目标板后紧接十字”和“目标板后紧接左右环岛”三种实车布局验证。不要第一步就设计环岛内部绕障。
+      </div>
+    </section>
+
+    <section>
+      <h2>八、本文状态</h2>
+      <p><strong>当前代码状态：</strong>仍采用“绕行期间清空特殊路段+结束后固定屏蔽300ms”的逻辑。</p>
+      <p><strong>建议改造状态：</strong>本文提出的<code>POST_DRIVEBY_HANDOFF</code>、特殊候选锁存和低速交接尚未写入控制代码，需要讨论确认后再实施。</p>
+    </section>
+  </main>
+
+  <footer>
+    智能车目标板绕行与特殊路段交接说明 · 单文件HTML，可离线浏览和打印
+  </footer>
+</body>
+</html>

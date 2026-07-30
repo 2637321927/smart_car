@@ -42,6 +42,8 @@ volatile extern float pwm2_duty_rps;
 volatile extern int vision_y_guard_active;
 volatile extern int vision_y_guard_turn_sign;
 volatile extern float vision_y_guard_target_dps;
+volatile extern float vision_y_guard_base_rps;
+volatile extern float vision_y_guard_turn_max_rps;
 volatile extern float vision_y_guard_aim_dy_px;
 volatile extern int current_pwm1;
 volatile extern int current_pwm2;

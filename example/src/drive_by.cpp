@@ -1,6 +1,7 @@
 #include "drive_by.hpp"
 
 #include "front_ui.hpp"
+#include "control_profile.hpp"
 #include "gyro_yaw_rate_control.hpp"
 #include "img.hpp"
 #include "lq_all_demo.hpp"
@@ -17,7 +18,7 @@
 using DriveByClock = std::chrono::steady_clock;
 
 // ===================== 高速识别和三阶段绕行调参区 =====================
-// K0 开启但没有目标时按 35RPS 正常巡线；红色触发后只把“基准速度”降到
+// K0 开启但没有目标时按当前控制参数组速度正常巡线；红色触发后只把“基准速度”降到
 // 0RPS，普通方向环仍会叠加左右差速，使车头可以原地修正姿态。
 volatile float drive_by_normal_speed_rps = 35.0f;
 volatile float drive_by_recognition_speed_rps = 0.0f;
@@ -145,13 +146,6 @@ struct SavedControl {
     float set_speed2 = 0.0f;
     float pwm_target1 = 0.0f;
     float pwm_target2 = 0.0f;
-    float p = 0.0f;
-    float i = 0.0f;
-    float d = 0.0f;
-    float dir_p = 0.0f;
-    float dir_d = 0.0f;
-    float aim = 0.0f;
-    int slow_ratio = 0;
     bool valid = false;
 };
 
@@ -431,13 +425,6 @@ void save_control_once()
     g_saved.set_speed2 = set_speed_of_motor2_rps;
     g_saved.pwm_target1 = pwm1_duty_rps;
     g_saved.pwm_target2 = pwm2_duty_rps;
-    g_saved.p = P;
-    g_saved.i = I;
-    g_saved.d = D;
-    g_saved.dir_p = dir_P;
-    g_saved.dir_d = dir_D;
-    g_saved.aim = AIM;
-    g_saved.slow_ratio = spd_slow_ratio;
     g_saved.valid = true;
 }
 
@@ -452,13 +439,6 @@ void restore_control()
     set_speed_of_motor2_rps = g_saved.set_speed2;
     pwm1_duty_rps = g_saved.pwm_target1;
     pwm2_duty_rps = g_saved.pwm_target2;
-    P = g_saved.p;
-    I = g_saved.i;
-    D = g_saved.d;
-    dir_P = g_saved.dir_p;
-    dir_D = g_saved.dir_d;
-    AIM = g_saved.aim;
-    spd_slow_ratio = g_saved.slow_ratio;
     g_saved.valid = false;
 }
 
@@ -2215,9 +2195,11 @@ bool drive_by_brake_test_set_enable(bool enable)
         }
         g_brake_test_enabled = true;
         if (front_ui_is_running()) {
-            // 测试可在车辆已经运行时开启，此时也要立即锁定35RPS；
-            // 停车时开启则由下一次front_ui_start()应用相同策略。
-            front_ui_select_speed(35);
+            // 测试可在车辆已经运行时开启，此时立即使用当前参数组目标速度；
+            // 停车时开启则由下一次front_ui_start()应用当前组的相同速度。
+            const float target_speed_rps = control_profile_target_speed_rps();
+            set_speed_of_motor1_rps = target_speed_rps;
+            set_speed_of_motor2_rps = target_speed_rps;
         }
         return true;
     }

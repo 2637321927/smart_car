@@ -102,10 +102,32 @@ h2 { font-size: 1.05rem; }
 
 .badge-online { color: var(--green); border-color: rgba(114, 224, 152, 0.36); }
 .badge-alert { color: var(--red); border-color: rgba(255, 100, 95, 0.4); }
+.profile-badge.pro-active {
+  color: #fff0ed;
+  border-color: rgba(255, 104, 94, 0.72);
+  background: rgba(188, 28, 31, 0.42);
+  box-shadow: 0 0 18px rgba(255, 58, 54, 0.22);
+}
 .metric-chip.metric-alert {
   color: var(--red);
   border-color: rgba(255, 100, 95, 0.4);
   background: rgba(255, 100, 95, 0.08);
+}
+
+body.pro-profile {
+  --bg: #160607;
+  --panel: rgba(45, 10, 12, 0.94);
+  --panel-strong: #3d1115;
+  --line: rgba(255, 124, 116, 0.24);
+  --cyan: #ff8b82;
+  background:
+    radial-gradient(circle at 14% 4%, rgba(218, 48, 48, 0.30), transparent 34rem),
+    radial-gradient(circle at 86% 22%, rgba(255, 129, 70, 0.16), transparent 28rem),
+    linear-gradient(145deg, #170607 0%, #250a0d 54%, #120506 100%);
+}
+
+body.pro-profile .panel {
+  background: linear-gradient(145deg, rgba(57, 13, 17, 0.97), rgba(27, 7, 9, 0.97));
 }
 
 .dashboard {
@@ -116,8 +138,8 @@ h2 { font-size: 1.05rem; }
     minmax(320px, 390px);
   grid-template-areas:
     "road scope command"
-    "tuning tuning tuning"
-    "timeline timeline timeline";
+    "timeline timeline timeline"
+    "tuning tuning tuning";
   gap: 18px;
   align-items: start;
 }
@@ -450,6 +472,24 @@ h2 { font-size: 1.05rem; }
 
 .command-address, .command-entry { padding: 12px 18px 0; }
 .quick-commands { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; padding: 12px 18px; }
+.profile-switch {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.quick-commands .profile-switch button { grid-column: auto; min-height: 40px; font-size: 0.82rem; }
+.profile-switch .profile-command.selected {
+  color: #06110e;
+  border-color: rgba(114, 224, 152, 0.72);
+  background: linear-gradient(135deg, #72e098, #51d8d0);
+}
+.profile-switch .pro-command.selected {
+  color: #fff7f5;
+  border-color: rgba(255, 122, 113, 0.82);
+  background: linear-gradient(135deg, #8f111b, #df3737);
+  box-shadow: 0 0 18px rgba(223, 55, 55, 0.28);
+}
 .quick-commands button { grid-column: span 2; min-height: 30px; font-size: 0.72rem; }
 .quick-commands .run-command {
   grid-column: span 3;
@@ -623,6 +663,8 @@ h2 { font-size: 1.05rem; }
 }
 
 .tuning-control.has-preview .tuning-label-row span { color: var(--yellow); }
+.tuning-control.profile-pro .tuning-label-row span { color: #ff9a91; }
+.tuning-control.profile-fixed-range .tuning-max-editor { visibility: hidden; }
 .tuning-control.replay-locked { opacity: 0.72; }
 
 .tuning-label-row {
@@ -838,8 +880,8 @@ h2 { font-size: 1.05rem; }
       "road"
       "scope"
       "command"
-      "tuning"
-      "timeline";
+      "timeline"
+      "tuning";
   }
   .scope-toolbar { grid-template-columns: 1fr; }
   .tuning-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }

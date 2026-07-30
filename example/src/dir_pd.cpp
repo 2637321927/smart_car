@@ -11,9 +11,7 @@ volatile int spd_slow_ratio = 30;
 
 namespace
 {
-constexpr float kVisionYGuardBaseRps = 15.0f;
 constexpr float kVisionYGuardMaxDps = 700.0f;
-constexpr float kVisionYGuardMaxTurnRps = 25.0f;
 
 void print_direction_control_status(const char *mode,
                                     const char *reason,
@@ -125,7 +123,7 @@ void PID_control_test(float error)
         diffrential = gyro_yaw_rate_control_update_target_yaw_rate_with_limits(
             vision_y_guard_turn_sign * rescue_target_dps,
             kVisionYGuardMaxDps,
-            kVisionYGuardMaxTurnRps);
+            vision_y_guard_turn_max_rps);
     } else if (use_gyro_yaw_rate_feedback) {
         control_mode = "GYRO_RATE";
         control_reason = "mpu6050_feedback";
@@ -145,7 +143,7 @@ void PID_control_test(float error)
         diffrential = calculate_diffrential(visual_error, 0);
     }
 
-    const float max_dif = y_guard_active ? kVisionYGuardMaxTurnRps : 15.0f;
+    const float max_dif = y_guard_active ? vision_y_guard_turn_max_rps : 15.0f;
     if(diffrential>max_dif) diffrential=max_dif;
     if(diffrential<-max_dif) diffrential=-max_dif;
     float target_spd1 = set_speed_of_motor1_rps;
@@ -157,7 +155,7 @@ void PID_control_test(float error)
 
     // spd_slow_ratio 表示最大减速百分比，30 表示 error 达到 max_error 时最多降速 30%。
     // 这里仍保留 0.7 的下限保护，避免基准速度被降得太低。
-    float set_spd1 = kVisionYGuardBaseRps;
+    float set_spd1 = vision_y_guard_base_rps;
     if (!y_guard_active) {
         float abs_error = error;
         if (abs_error < 0) abs_error = -abs_error;

@@ -6,6 +6,7 @@ const elements = {
   dashboard: $('dashboard'),
   connectionBadge: $('connectionBadge'),
   modeBadge: $('modeBadge'),
+  profileBadge: $('profileBadge'),
   packetAge: $('packetAge'),
   timeoutBadge: $('timeoutBadge'),
   leftCount: $('leftCount'),
@@ -53,6 +54,8 @@ const elements = {
   headingHoldCommand: $('headingHoldCommand'),
   tangentDebugCommand: $('tangentDebugCommand'),
   cameraStatsCommand: $('cameraStatsCommand'),
+  stableProfileCommand: $('stableProfileCommand'),
+  proProfileCommand: $('proProfileCommand'),
   cameraStatsStrip: $('cameraStatsStrip'),
   cameraFps: $('cameraFps'),
   cameraProcessLast: $('cameraProcessLast'),
@@ -158,6 +161,8 @@ const PARAMETER_LABELS = {
   cross_type: '十字状态',
   track_type: '赛道类型',
   AIM: '前瞻距离',
+  carProfile: '控制参数组',
+  profileSpd: '参数组目标速度',
 };
 
 const PARAMETER_ORDER = Object.keys(PARAMETER_LABELS);
@@ -188,6 +193,7 @@ const TUNING_GROUPS = [
     title: '速度环',
     subtitle: '车轮转速增量式PID与左右轮前进基准速度',
     controls: [
+      { key: 'profileSpd', label: '巡线目标速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
       { key: 'P', label: '速度P', min: 0, max: 1000, step: 1, defaultValue: 454 },
       { key: 'I', label: '速度I', min: 0, max: 100, step: 0.1, defaultValue: 14 },
       { key: 'D', label: '速度D', min: 0, max: 200, step: 0.1, defaultValue: 0 },
@@ -218,6 +224,8 @@ const TUNING_GROUPS = [
       { key: 'gTMax', label: '目标角速度上限', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 360 },
       { key: 'gRMax', label: '差速上限', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 20 },
       { key: 'yGuardDps', label: '瞄点越界救车角速度', min: 0, max: 700, step: 5, unit: 'dps', defaultValue: 500, hardMax: true },
+      { key: 'yGuardBase', label: '救车前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 15 },
+      { key: 'yGuardRMax', label: '救车差速上限', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 25 },
       { key: 'yawHoldRMax', label: '航向保持差速上限', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 10 },
       { key: 'gSign', label: '陀螺仪符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: -1 },
       { key: 'tSign', label: '差速输出符号', kind: 'segment', options: [[-1, '-1'], [1, '+1']], defaultValue: 1 },
@@ -228,7 +236,6 @@ const TUNING_GROUPS = [
     subtitle: '固定三阶段脚本的识别速度、距离与航向角外环',
     controls: [
       { key: 'dbUseTangent', label: '目标处切线参考', kind: 'toggle', defaultValue: 0 },
-      { key: 'dbNormalSpd', label: '正常巡线前进基准速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35 },
       { key: 'dbRecSpd', label: '识别阶段前进基准速度', min: 0, max: 40, step: 0.5, unit: 'RPS', defaultValue: 0 },
       { key: 'dbTurnAngle', label: '向外转角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 42 },
       { key: 'dbReturnBias', label: '回赛道预偏角', min: 0, max: 91, step: 1, unit: 'deg', defaultValue: 30 },
@@ -283,6 +290,7 @@ const TUNING_UNIT_GUIDE =
   '右轮目标=前进基准RPS-差速RPS”。deg表示角度，PWM表示直接电机输出。';
 
 const TUNING_DESCRIPTIONS = Object.freeze({
+  profileSpd: '当前参数组的正常巡线目标速度。稳定组默认35RPS；PRO组默认45RPS且滑块固定为40至55RPS。它会随参数组独立保存到本次开机会话，绕行完成后也恢复到该值；#spd仍只是临时速度，不会改写本参数。',
   P: '速度环系数，无直接物理单位。它按本次与上次轮速误差之差增加PWM；调大通常响应更快，过大时轮速容易过冲和振荡。普通速度闭环生效，主动制动和硬件测试时不使用。',
   I: '速度环系数，无直接物理单位。它按当前“目标RPS-实际RPS”持续增加PWM，用来消除稳态速度差；调大能更快追上目标，过大容易过冲。',
   D: '速度环系数，无直接物理单位。它根据连续三次轮速误差的变化修正PWM增量，用于抑制快速变化；调大可能增加阻尼，也会放大编码器噪声。',
@@ -300,7 +308,9 @@ const TUNING_DESCRIPTIONS = Object.freeze({
   gII: '角速度内环I：累计目标角速度误差并补充轮速差，用于克服长期左右不一致。调大可减小稳态角速度误差，但容易积累后过冲；陀螺仪数据过旧时积分会冻结。',
   gTMax: '正常视觉外环和手动gTar允许输出的最大车身目标角速度，单位dps。调大只放宽“想转多快”，实际能否达到还受gRMax、速度环和电机能力限制。',
   gRMax: '角速度内环可输出的单侧轮速差上限，单位RPS，不是角速度。轮速通常为基准±差速，所以两轮目标差最多约2倍该值；普通PID_control_test还会再限制到±15RPS。',
-  yGuardDps: '正常中线巡线且未丢线时，如果瞄点Y大于等于车体参考点Y，立即锁存原转向方向并请求的救车目标角速度。默认500dps、硬上限700dps，救车前进基准固定为15RPS，专用单侧差速上限为25RPS；设为0关闭。救车使用独立限幅，不会抬高正常gTMax或gRMax。',
+  yGuardDps: '正常中线巡线且未丢线时，如果瞄点Y大于等于车体参考点Y，立即锁存原转向方向并请求的救车目标角速度。默认500dps、硬上限700dps；设为0关闭。救车使用独立限幅，不会抬高正常gTMax或gRMax。',
+  yGuardBase: '救车触发期间使用的前进基准速度，单位RPS。调大能保留更多前进动量，调小更利于急转回赛道；该值属于当前参数组，稳定组和PRO组互不覆盖。',
+  yGuardRMax: '救车角速度内环允许输出的单侧轮速差上限，单位RPS。调大救车转向更强，但左右轮速度差和冲击也更大；该值只用于救车专用路径并按参数组隔离。',
   yawHoldRMax: '仅用于停车态“航向保持”测试的额外单侧差速上限，单位RPS，并且仍受gRMax限制。调大回正更有力，但原地拨动车头时动作更猛；不改变正常巡线限幅。',
   gSign: '修正MPU6050实测Z轴角速度的正负方向。若实际向左转时显示符号与控制约定相反，应切换它；设置错误会把负反馈变成错误方向。',
   tSign: '修正角速度内环输出到左右轮差速的方向。若出现“越修越偏”或持续自激旋转，应检查它；它只翻转差速方向，不改变角速度读数。',
@@ -335,8 +345,15 @@ const TUNING_DESCRIPTIONS = Object.freeze({
 });
 
 const TUNING_CONFIGS = TUNING_GROUPS.flatMap((group) => group.controls);
-const TUNING_DEFAULTS = Object.fromEntries(
-  TUNING_CONFIGS.map((config) => [config.key, config.defaultValue]));
+const TUNING_DEFAULTS = {
+  carProfile: 0,
+  ...Object.fromEntries(TUNING_CONFIGS.map((config) => [config.key, config.defaultValue])),
+};
+const PROFILE_SCOPED_KEYS = new Set([
+  'profileSpd', 'P', 'I', 'D', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio',
+  'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax',
+  'yGuardDps', 'yGuardBase', 'yGuardRMax',
+]);
 
 function loadStoredTuningMaxes() {
   try {
@@ -351,8 +368,32 @@ function loadStoredTuningMaxes() {
 
 const tuningSliderMaxes = loadStoredTuningMaxes();
 
+function displayedProfileMode() {
+  const value = state.mode === 'replay'
+    ? state.displayTuning?.carProfile
+    : (state.displayTuning?.carProfile ?? state.liveTuning?.carProfile);
+  return Number(value ?? 0) === 1 ? 1 : 0;
+}
+
+function tuningSliderMinimum(config) {
+  return config.key === 'profileSpd' && displayedProfileMode() === 1
+    ? 40
+    : Number(config.min);
+}
+
+function tuningMaxStorageKey(config) {
+  if (!PROFILE_SCOPED_KEYS.has(config.key)) return config.key;
+  return `${config.key}:${displayedProfileMode() === 1 ? 'pro' : 'stable'}`;
+}
+
 function tuningSliderMaximum(config, currentValue) {
-  const stored = Number(tuningSliderMaxes[config.key]);
+  if (config.key === 'profileSpd' && displayedProfileMode() === 1) return 55;
+  const storageKey = tuningMaxStorageKey(config);
+  let stored = Number(tuningSliderMaxes[storageKey]);
+  if (!Number.isFinite(stored) && PROFILE_SCOPED_KEYS.has(config.key) &&
+      displayedProfileMode() === 0) {
+    stored = Number(tuningSliderMaxes[config.key]);
+  }
   const configured = Number(config.max);
   if (config.hardMax) return configured;
   const minimum = Number(config.min) + Number(config.step);
@@ -558,10 +599,11 @@ function normalizeTuningValue(config, rawValue, maximum = tuningSliderMaximum(co
       ? value
       : Number(config.defaultValue);
   }
-  value = Math.max(config.min, Math.min(maximum, value));
+  const minimum = tuningSliderMinimum(config);
+  value = Math.max(minimum, Math.min(maximum, value));
   const decimals = tuningStepDecimals(config.step);
-  const steps = Math.round((value - config.min) / config.step);
-  return Number((config.min + steps * config.step).toFixed(decimals));
+  const steps = Math.round((value - minimum) / config.step);
+  return Number((minimum + steps * config.step).toFixed(decimals));
 }
 
 function commandTuningValue(config, value) {
@@ -573,11 +615,47 @@ function tuningValuesForDisplay() {
   return { ...TUNING_DEFAULTS, ...(state.displayTuning || {}) };
 }
 
+function applyProfilePresentation() {
+  const proMode = displayedProfileMode() === 1;
+  const targetSpeed = Number((state.displayTuning || {}).profileSpd);
+  document.body.classList.toggle('pro-profile', proMode);
+  elements.profileBadge.classList.toggle('pro-active', proMode);
+  elements.profileBadge.textContent = proMode
+    ? `PRO提速模式 / ${Number.isFinite(targetSpeed) ? targetSpeed.toFixed(1) : '--'}RPS`
+    : `稳定组 / ${Number.isFinite(targetSpeed) ? targetSpeed.toFixed(1) : '35.0'}RPS`;
+  elements.stableProfileCommand.classList.toggle('selected', !proMode);
+  elements.proProfileCommand.classList.toggle('selected', proMode);
+
+  const liveParams = state.liveParams || {};
+  const liveTuning = state.liveTuning || {};
+  const switchBlocked = state.mode !== 'live' || !state.liveTuning ||
+    Boolean(Number(liveParams.run ?? 0)) ||
+    Boolean(Number(liveParams.drive_busy ?? 0)) ||
+    Boolean(Number(liveParams.yaw_hold_enabled ?? 0)) ||
+    Boolean(Number(liveTuning.hwTest ?? liveParams.hwTest ?? 0)) ||
+    remoteHoldDirection !== 0;
+  elements.stableProfileCommand.disabled = switchBlocked || !proMode;
+  elements.proProfileCommand.disabled = switchBlocked || proMode;
+  elements.stableProfileCommand.title = switchBlocked
+    ? '仅停车且绕行、硬件测试、航向保持和遥控均空闲时可切换'
+    : '切换到稳定组并保留PRO组本次开机参数';
+  elements.proProfileCommand.title = elements.stableProfileCommand.title;
+
+  for (const [key, control] of tuningControlElements) {
+    const profileScoped = PROFILE_SCOPED_KEYS.has(key);
+    control.root.classList.toggle('profile-scoped', profileScoped);
+    control.root.classList.toggle('profile-pro', profileScoped && proMode);
+    control.label.textContent = `${control.config.label}${profileScoped && proMode ? '-pro' : ''}`;
+  }
+}
+
 function renderTuningControls() {
   const values = tuningValuesForDisplay();
   const replaying = state.mode === 'replay';
+  applyProfilePresentation();
 
   for (const [key, control] of tuningControlElements) {
+    const minimum = tuningSliderMinimum(control.config);
     const maximum = tuningSliderMaximum(control.config, values[key]);
     const value = normalizeTuningValue(control.config, values[key], maximum);
     const editing = document.activeElement === control.range ||
@@ -586,10 +664,15 @@ function renderTuningControls() {
     control.root.classList.toggle('replay-locked', replaying);
 
     if (control.range) {
+      control.range.min = String(minimum);
       control.range.max = String(maximum);
+      control.number.min = String(minimum);
       control.number.max = String(maximum);
       control.range.disabled = replaying;
       control.number.disabled = replaying;
+      const fixedProfileRange = control.config.key === 'profileSpd' && displayedProfileMode() === 1;
+      control.maxInput.disabled = replaying || fixedProfileRange;
+      control.root.classList.toggle('profile-fixed-range', fixedProfileRange);
       if (document.activeElement !== control.maxInput) {
         control.maxInput.value = commandTuningValue(control.config, maximum);
       }
@@ -695,7 +778,7 @@ function buildTuningControls() {
       description.textContent = descriptionText;
       root.append(description);
 
-      const control = { config, root };
+      const control = { config, root, label };
       if (config.kind === 'toggle') {
         const toggleLabel = document.createElement('label');
         toggleLabel.className = 'tuning-toggle';
@@ -766,6 +849,7 @@ function buildTuningControls() {
         control.range = range;
         control.number = number;
         control.maxInput = maxInput;
+        control.maxEditor = maxEditor;
 
         range.addEventListener('input', () => {
           number.value = range.value;
@@ -805,7 +889,7 @@ function buildTuningControls() {
           const steps = Math.ceil((maximum - Number(config.min)) / Number(config.step));
           maximum = Number((Number(config.min) + steps * Number(config.step))
             .toFixed(tuningStepDecimals(config.step)));
-          tuningSliderMaxes[config.key] = maximum;
+          tuningSliderMaxes[tuningMaxStorageKey(config)] = maximum;
           saveTuningSliderMaxes();
           range.max = String(maximum);
           number.max = String(maximum);
@@ -1285,6 +1369,15 @@ async function toggleCameraStats() {
   await sendCommand(`#camStats=${enabled ? 0 : 1};`);
 }
 
+async function switchControlProfile(mode) {
+  const normalizedMode = Number(mode) === 1 ? 1 : 0;
+  const button = normalizedMode === 1
+    ? elements.proProfileCommand
+    : elements.stableProfileCommand;
+  if (button.disabled) throw new Error('当前状态不允许切换参数组');
+  await sendCommand(`#carProfile=${normalizedMode};`);
+}
+
 async function toggleTangentDebug() {
   const enabled = Boolean(Number(state.liveParams?.tangent_debug_enabled ?? 0));
   if (!enabled && Number(state.liveTuning?.udp ?? 0) < 2) {
@@ -1321,6 +1414,7 @@ function startRemoteHold(direction, button) {
   remoteHoldToken += 1;
   const token = remoteHoldToken;
   elements.commandStatus.textContent = `停车遥控中：${button.textContent.trim()}`;
+  applyProfilePresentation();
   sendRemoteHeartbeat(token);
   remoteHoldTimer = window.setInterval(() => sendRemoteHeartbeat(token), 100);
 }
@@ -1332,6 +1426,7 @@ function stopRemoteHold(sendStop = true) {
   remoteHoldToken += 1;
   if (remoteHoldButton) remoteHoldButton.classList.remove('remote-active');
   remoteHoldButton = null;
+  applyProfilePresentation();
   if (sendStop) {
     sendCommand('#remote=0;', { quiet: true, silentStatus: true }).catch(() => {});
     elements.commandStatus.textContent = '停车遥控已停止';
@@ -1689,6 +1784,12 @@ function bindEvents() {
   });
   elements.cameraStatsCommand.addEventListener('click', () => {
     toggleCameraStats().catch((error) => showToast(error.message));
+  });
+  elements.stableProfileCommand.addEventListener('click', () => {
+    switchControlProfile(0).catch((error) => showToast(error.message));
+  });
+  elements.proProfileCommand.addEventListener('click', () => {
+    switchControlProfile(1).catch((error) => showToast(error.message));
   });
   elements.remoteButtons.forEach((button) => {
     button.addEventListener('contextmenu', (event) => event.preventDefault());

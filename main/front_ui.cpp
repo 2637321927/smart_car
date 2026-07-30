@@ -1,4 +1,5 @@
 #include "front_ui.hpp"
+#include "control_profile.hpp"
 #include "circle.hpp"
 #include "drive_by.hpp"
 #include "lq_all_demo.hpp"
@@ -116,18 +117,24 @@ bool pressed_edge(ls_gpio &key, ButtonState &state)
 void apply_speed_strategy()
 {
     // 发车状态下，把当前档位速度同步给左右两个电机目标速度。
-    set_speed_of_motor1_rps = kStrategies[selected_strategy].speed_rps;
-    set_speed_of_motor2_rps = kStrategies[selected_strategy].speed_rps;
+    const float target_speed_rps = control_profile_target_speed_rps();
+    set_speed_of_motor1_rps = target_speed_rps;
+    set_speed_of_motor2_rps = target_speed_rps;
 }
 
 void select_speed_strategy(int speed_rps)
 {
+    if (control_profile_is_pro()) {
+        return;
+    }
     for (int index = 0; index < kStrategyCount; ++index) {
         if (kStrategies[index].speed_rps != speed_rps) {
             continue;
         }
 
         selected_strategy = index;
+        control_profile_set_target_speed_rps(
+            static_cast<float>(kStrategies[selected_strategy].speed_rps));
         if (car_running) {
             apply_speed_strategy();
         }
@@ -186,9 +193,6 @@ void start_car()
     motor_speed_pid_reset();
     pwm1.atim_pwm_set_duty(0);
     pwm2.atim_pwm_set_duty(0);
-    if (drive_by_brake_test_is_enabled()) {
-        select_speed_strategy(35);
-    }
     apply_speed_strategy();
     std::cout << "run\n";
 
@@ -222,10 +226,12 @@ void draw_ui()
     lq_tft18_drv_p8x16_str(0, 0, car_running ? "RUNNING" : "STOPPED", U16BLACK, state_color);
 
     // MODE 是当前策略名，SPD 是策略目标速度，OUT 是实际写给左右电机的目标速度。
-    snprintf(line, sizeof(line), "MODE : %s", kStrategies[selected_strategy].name);
+    snprintf(line, sizeof(line), "MODE : %s",
+             control_profile_is_pro() ? "PRO" : "STABLE");
     draw_line(2, line, U16CYAN);
 
-    snprintf(line, sizeof(line), "SPD  : %02d RPS", kStrategies[selected_strategy].speed_rps);
+    snprintf(line, sizeof(line), "SPD  : %04.1f RPS",
+             control_profile_target_speed_rps());
     draw_line(3, line, U16YELLOW);
 
     snprintf(line, sizeof(line), "OUT  : %04.1f/%04.1f",
@@ -241,8 +247,14 @@ void draw_ui()
 
 void select_prev_strategy()
 {
+    if (control_profile_is_pro()) {
+        printf("[PROFILE] PRO mode ignores K1 speed selection\n");
+        return;
+    }
     // 加 kStrategyCount 再取模，可以让 LOW 往前切时回到 MAX。
     selected_strategy = (selected_strategy + kStrategyCount - 1) % kStrategyCount;
+    control_profile_set_target_speed_rps(
+        static_cast<float>(kStrategies[selected_strategy].speed_rps));
     if (car_running) {
         apply_speed_strategy();
     }
@@ -251,8 +263,14 @@ void select_prev_strategy()
 
 void select_next_strategy()
 {
+    if (control_profile_is_pro()) {
+        printf("[PROFILE] PRO mode ignores K1 speed selection\n");
+        return;
+    }
     // 往后切档位，到最后一个档位后再回到第一个档位。
     selected_strategy = (selected_strategy + 1) % kStrategyCount;
+    control_profile_set_target_speed_rps(
+        static_cast<float>(kStrategies[selected_strategy].speed_rps));
     if (car_running) {
         apply_speed_strategy();
     }
@@ -290,19 +308,16 @@ void front_ui_poll()
     // K0：目标板识别与绕行开关。关闭时完全不检测红色，不影响普通巡线。
     if (pressed_edge(key_prev, prev_state)) {
         drive_by_toggle_enable();
-        if (drive_by_is_enabled()) {
-            // 目标板模式正常阶段固定35RPS，红色触发后由drive_by主动制动并把识别基准降到0RPS。
-            select_speed_strategy(35);
-        }
         dirty = true;
         std::cout << "drive_by_enable:" << drive_by_is_enabled() << '\n';
     }
 
     // K1：下一个速度策略。
     if (pressed_edge(key_next, next_state)) {
-        // 目标板模式的正常速度固定35RPS，因此K0开启期间忽略K1切档。
-        if (!drive_by_is_enabled() && !drive_by_brake_test_is_enabled()) {
+        if (!control_profile_is_pro() && !drive_by_brake_test_is_enabled()) {
             select_next_strategy();
+        } else if (control_profile_is_pro()) {
+            printf("[PROFILE] PRO mode ignores K1 speed selection\n");
         }
         dirty = true;
     }
@@ -477,11 +492,14 @@ void front_ui_hold_stop()
 
 int front_ui_selected_speed()
 {
-    return kStrategies[selected_strategy].speed_rps;
+    return static_cast<int>(control_profile_target_speed_rps() + 0.5f);
 }
 
 bool front_ui_select_speed(int speed_rps)
 {
+    if (control_profile_is_pro()) {
+        return false;
+    }
     const int previous_strategy = selected_strategy;
     select_speed_strategy(speed_rps);
     return selected_strategy != previous_strategy ||

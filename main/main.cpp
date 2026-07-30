@@ -3,6 +3,7 @@
 #include <math.h>
 #include "img.hpp"
 #include "circle.hpp"
+#include "control_profile.hpp"
 #include "front_ui.hpp"  // TFT18 屏幕 + 实体按键前端
 #include "hardware_test.hpp"  // 停车态PWM1单通道硬件测试
 #include "drive_by.hpp"  // 目标板触发后的固定动作脚本
@@ -35,6 +36,8 @@ volatile  float pwm1_duty_rps=0.0f;
  volatile int vision_y_guard_active = 0;
  volatile int vision_y_guard_turn_sign = 0;
  volatile float vision_y_guard_target_dps = 500.0f;
+ volatile float vision_y_guard_base_rps = 15.0f;
+ volatile float vision_y_guard_turn_max_rps = 25.0f;
  volatile float vision_y_guard_aim_dy_px = 0.0f;
  volatile  float encoder_1=0;
  volatile  float encoder_2=0;
@@ -440,33 +443,63 @@ void vofa_recv_cmd(void)
     float ftmp = 0;
     int itmp = 0;
 
+if (sscanf(buf, "#carProfile=%d;", &itmp) == 1)
+{
+    const ControlProfileMode requested = itmp == 1
+        ? CONTROL_PROFILE_PRO
+        : CONTROL_PROFILE_STABLE;
+    const bool accepted = (itmp == 0 || itmp == 1) &&
+        control_profile_switch(requested);
+    printf("[VOFA] carProfile request=%d result=%s current=%d speed=%.2f RPS\n",
+           requested == CONTROL_PROFILE_PRO ? 1 : 0,
+           accepted ? "accepted" : "rejected: car must be stopped and tests idle",
+           control_profile_mode() == CONTROL_PROFILE_PRO ? 1 : 0,
+           control_profile_target_speed_rps());
+}
+
+if (sscanf(buf, "#profileSpd=%f;", &ftmp) == 1)
+{
+    const float applied = control_profile_set_target_speed_rps(ftmp);
+    if (front_ui_is_running() && !drive_by_is_busy()) {
+        set_speed_of_motor1_rps = applied;
+        set_speed_of_motor2_rps = applied;
+    }
+    printf("[VOFA] profileSpd = %.2f RPS, profile=%d\n",
+           applied, control_profile_mode() == CONTROL_PROFILE_PRO ? 1 : 0);
+}
+
    if (sscanf(buf, "#P=%f;", &ftmp) == 1)
 {
     P = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] P = %.3f\n", P);
 }
 
 if (sscanf(buf, "#I=%f;", &ftmp) == 1)
 {
     I = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] I = %.3f\n", I);
 }
 
 if (sscanf(buf, "#D=%f;", &ftmp) == 1)
 {
     D = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] D = %.3f\n", D);
 }
 
 if (sscanf(buf, "#dirP=%f;", &ftmp) == 1)
 {
     dir_P = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] dirP = %.3f\n", dir_P);
 }
 
 if (sscanf(buf, "#dirD=%f;", &ftmp) == 1)
 {
     dir_D = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] dirD = %.3f\n", dir_D);
 }
 
@@ -551,7 +584,11 @@ if (sscanf(buf, "#dbUseTangent=%d;", &itmp) == 1)
 
 if (sscanf(buf, "#dbNormalSpd=%f;", &ftmp) == 1)
 {
-    drive_by_normal_speed_rps = ftmp < 0.0f ? 0.0f : ftmp;
+    drive_by_normal_speed_rps = control_profile_set_target_speed_rps(ftmp);
+    if (front_ui_is_running() && !drive_by_is_busy()) {
+        set_speed_of_motor1_rps = drive_by_normal_speed_rps;
+        set_speed_of_motor2_rps = drive_by_normal_speed_rps;
+    }
     printf("[VOFA] dbNormalSpd = %.2f RPS\n", drive_by_normal_speed_rps);
 }
 
@@ -771,6 +808,7 @@ if (sscanf(buf, "#circle_exit=%f;", &ftmp) == 1)
 if (sscanf(buf, "#AIM=%f;", &ftmp) == 1)
 {
     AIM = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] AIM = %.3f m\n", AIM);
 }
 
@@ -778,6 +816,7 @@ if (sscanf(buf, "#spd_slow_ratio=%f;", &ftmp) == 1)
 {
     
     spd_slow_ratio = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] spd_slow_ratio = %d\n", spd_slow_ratio);
 }
 
@@ -833,24 +872,28 @@ if (sscanf(buf, "#gTar=%f;", &ftmp) == 1)
 if (sscanf(buf, "#gOP=%f;", &ftmp) == 1)
 {
     gyro_outer_kp = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] gyro_outer_kp = %.3f\n", gyro_outer_kp);
 }
 
 if (sscanf(buf, "#gOD=%f;", &ftmp) == 1)
 {
     gyro_outer_kd = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] gyro_outer_kd = %.3f\n", gyro_outer_kd);
 }
 
 if (sscanf(buf, "#gIP=%f;", &ftmp) == 1)
 {
     gyro_inner_kp = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] gyro_inner_kp = %.3f\n", gyro_inner_kp);
 }
 
 if (sscanf(buf, "#gII=%f;", &ftmp) == 1)
 {
     gyro_inner_ki = ftmp;
+    control_profile_capture_active();
     gyro_yaw_rate_control_reset();
     printf("[VOFA] gyro_inner_ki = %.3f\n", gyro_inner_ki);
 }
@@ -860,6 +903,7 @@ if (sscanf(buf, "#gTMax=%f;", &ftmp) == 1 ||
 {
     if (ftmp < 0.0f) ftmp = -ftmp;
     gyro_target_max_dps = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] gyro_target_max_dps = %.2f\n", gyro_target_max_dps);
 }
 
@@ -868,6 +912,7 @@ if (sscanf(buf, "#gRMax=%f;", &ftmp) == 1 ||
 {
     if (ftmp < 0.0f) ftmp = -ftmp;
     gyro_turn_max_rps = ftmp;
+    control_profile_capture_active();
     printf("[VOFA] gyro_turn_max_rps = %.2f\n", gyro_turn_max_rps);
 }
 
@@ -879,8 +924,27 @@ if (sscanf(buf, "#yGuardDps=%f;", &ftmp) == 1)
     if (vision_y_guard_target_dps <= 0.0f) {
         vision_y_guard_active = 0;
     }
+    control_profile_capture_active();
     printf("[VOFA] 瞄点越界救车角速度 = %.2f dps\n",
            vision_y_guard_target_dps);
+}
+
+if (sscanf(buf, "#yGuardBase=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = 0.0f;
+    if (ftmp > 100.0f) ftmp = 100.0f;
+    vision_y_guard_base_rps = ftmp;
+    control_profile_capture_active();
+    printf("[VOFA] yGuardBase = %.2f RPS\n", vision_y_guard_base_rps);
+}
+
+if (sscanf(buf, "#yGuardRMax=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = -ftmp;
+    if (ftmp > 60.0f) ftmp = 60.0f;
+    vision_y_guard_turn_max_rps = ftmp;
+    control_profile_capture_active();
+    printf("[VOFA] yGuardRMax = %.2f RPS\n", vision_y_guard_turn_max_rps);
 }
 
 if (sscanf(buf, "#gSign=%f;", &ftmp) == 1)
@@ -1206,12 +1270,14 @@ void tuning_telemetry_send()
         sizeof(tuning_str),
         "{"
         "\"packet_type\":\"tuning\","
+        "\"carProfile\":%d,\"profileSpd\":%.2f,"
         "\"P\":%.3f,\"I\":%.3f,\"D\":%.3f,"
         "\"dirP\":%.4f,\"dirD\":%.4f,\"AIM\":%.3f,"
         "\"spd_slow_ratio\":%d,\"begin_x\":%d,"
         "\"gDbg\":%d,\"gTar\":%.2f,"
         "\"gOP\":%.4f,\"gOD\":%.4f,\"gIP\":%.4f,\"gII\":%.4f,"
         "\"gTMax\":%.2f,\"gRMax\":%.2f,\"yGuardDps\":%.2f,"
+        "\"yGuardBase\":%.2f,\"yGuardRMax\":%.2f,"
         "\"gSign\":%.1f,\"tSign\":%.1f,"
         "\"dbUseTangent\":%d,"
         "\"dbNormalSpd\":%.2f,\"dbRecSpd\":%.2f,"
@@ -1230,6 +1296,8 @@ void tuning_telemetry_send()
         "\"camStats\":%d,"
         "\"udp_control_send_fail_total\":%llu,"
         "\"udp_road_send_fail_total\":%llu",
+        control_profile_mode() == CONTROL_PROFILE_PRO ? 1 : 0,
+        safe_float(drive_by_normal_speed_rps),
         safe_float(P), safe_float(I), safe_float(D),
         safe_float(dir_P), safe_float(dir_D), safe_float(AIM),
         spd_slow_ratio, begin_x,
@@ -1239,6 +1307,8 @@ void tuning_telemetry_send()
         safe_float(gyro_inner_kp), safe_float(gyro_inner_ki),
         safe_float(gyro_target_max_dps), safe_float(gyro_turn_max_rps),
         safe_float(vision_y_guard_target_dps),
+        safe_float(vision_y_guard_base_rps),
+        safe_float(vision_y_guard_turn_max_rps),
         safe_float(gyro_z_sign), safe_float(gyro_turn_sign),
         drive_by_use_track_tangent,
         safe_float(drive_by_normal_speed_rps),
@@ -1737,6 +1807,7 @@ void detectRedPlate(cv::Mat& frame)
 }
 int main()
 {
+control_profile_init();
    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等线程就绪
 drive_by_init();  // 初始化目标板脚本状态，默认 K0 目标板模式关闭
 front_ui_init();  // 初始化前端，并默认保持停车，等待 K2 发车

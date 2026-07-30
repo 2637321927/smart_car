@@ -133,6 +133,8 @@ async function main() {
     await sendUdp(makeControlPacket());
     await sendUdp(Buffer.from(JSON.stringify({
       packet_type: 'tuning',
+      carProfile: 1,
+      profileSpd: 45,
       P: 454,
       I: 14,
       yGuardDps: 500,
@@ -201,6 +203,9 @@ async function main() {
     assert(!pageResponse.text.includes('转 60dps'));
     assert(pageResponse.text.includes('tuningControls'));
     assert(pageResponse.text.includes('tuningSnapshotTime'));
+    assert(pageResponse.text.includes('stableProfileCommand'));
+    assert(pageResponse.text.includes('proProfileCommand'));
+    assert(pageResponse.text.includes('profileBadge'));
     assert(pageResponse.text.includes('timeoutBadge'));
     assert(!pageResponse.text.includes('parameterList'));
     assert(!pageResponse.text.includes('detectEveryFrameButton'));
@@ -215,9 +220,9 @@ async function main() {
       .filter((id) => !htmlIds.has(id));
     assert.deepStrictEqual([...new Set(missingDomIds)], []);
     const tuningKeys = [
-      'P', 'I', 'D', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
+      'profileSpd', 'P', 'I', 'D', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio', 'begin_x',
       'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax', 'yGuardDps',
-      'gSign', 'tSign', 'dbUseTangent', 'dbNormalSpd', 'dbRecSpd',
+      'yGuardBase', 'yGuardRMax', 'gSign', 'tSign', 'dbUseTangent', 'dbRecSpd',
       'dbTurnAngle', 'dbPassDist',
       'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
       'dbHKd', 'dbHMax', 'dbHTol', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
@@ -239,6 +244,12 @@ async function main() {
     assert(appResponse.text.includes("key: 'dbHKp', label: '航向外环P', min: 0, max: 60, step: 0.1, defaultValue: 31"));
     assert(appResponse.text.includes("key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 505"));
     assert(appResponse.text.includes("key: 'yGuardDps', label: '瞄点越界救车角速度', min: 0, max: 700, step: 5, unit: 'dps', defaultValue: 500, hardMax: true"));
+    assert(appResponse.text.includes("key: 'profileSpd', label: '巡线目标速度', min: 0, max: 60, step: 0.5, unit: 'RPS', defaultValue: 35"));
+    assert(appResponse.text.includes("key: 'yGuardBase', label: '救车前进基准速度'"));
+    assert(appResponse.text.includes("key: 'yGuardRMax', label: '救车差速上限'"));
+    assert(appResponse.text.includes("'profileSpd', 'P', 'I', 'D'"));
+    assert(appResponse.text.includes("control.label.textContent = `${control.config.label}${profileScoped && proMode ? '-pro' : ''}`"));
+    assert(appResponse.text.includes("#carProfile=${normalizedMode};"));
     assert(appResponse.text.includes("const TUNING_MAXES_STORAGE_KEY = 'tuningSliderMaxes'"));
     assert(appResponse.text.includes("maxEditor.className = 'tuning-max-editor'"));
     assert(appResponse.text.includes("maxLabel.textContent = '上限'"));
@@ -281,6 +292,7 @@ async function main() {
 
     const mainSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'main.cpp'), 'utf8');
     const frontUiSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'front_ui.cpp'), 'utf8');
+    const profileSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'control_profile.cpp'), 'utf8');
     const dirPdSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'dir_pd.cpp'), 'utf8');
     assert(mainSource.includes('constexpr int kRoadTelemetryMinIntervalMs = 20;'));
     assert(mainSource.includes('constexpr int kControlTelemetryPacketSize'));
@@ -292,14 +304,21 @@ async function main() {
     assert(!mainSource.includes('red_pre_avg_ms'));
     assert(mainSource.includes('vision_y_guard_target_dps = 500.0f;'));
     assert(mainSource.includes('if (ftmp > 700.0f) ftmp = 700.0f;'));
+    assert(mainSource.includes('\\"carProfile\\":%d,\\"profileSpd\\":%.2f'));
+    assert(mainSource.includes('#carProfile=%d;'));
+    assert(mainSource.includes('#profileSpd=%f;'));
     assert(frontUiSource.includes('constexpr float kRemoteYawRateDps = 160.0f;'));
     assert(frontUiSource.includes('constexpr auto kPhysicalStartDelay = std::chrono::milliseconds(1000);'));
     assert(frontUiSource.includes('physical_start_deadline = now + kPhysicalStartDelay;'));
     assert(frontUiSource.includes('void front_ui_start()'));
     assert(frontUiSource.includes('physical_start_pending = false;\n    start_car();'));
     assert(dirPdSource.includes('constexpr float kVisionYGuardMaxDps = 700.0f;'));
-    assert(dirPdSource.includes('constexpr float kVisionYGuardMaxTurnRps = 25.0f;'));
-    assert(dirPdSource.includes('constexpr float kVisionYGuardBaseRps = 15.0f;'));
+    assert(dirPdSource.includes('vision_y_guard_turn_max_rps'));
+    assert(dirPdSource.includes('vision_y_guard_base_rps'));
+    assert(profileSource.includes('ControlProfile stable_profile'));
+    assert(profileSource.includes('ControlProfile pro_profile'));
+    assert(profileSource.includes('values.target_speed_rps = 45.0f;'));
+    assert(profileSource.includes('!front_ui_is_running()'));
     assert.strictEqual((dirPdSource.match(/\[救车\] 触发救车/g) || []).length, 1);
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
@@ -333,6 +352,8 @@ async function main() {
     assert(recordingText.includes('"to_used":10.199999809265137'));
     assert(recordingText.includes('"type":"road"'));
     assert(recordingText.includes('"type":"tuning"'));
+    assert(recordingText.includes('"carProfile":1'));
+    assert(recordingText.includes('"profileSpd":45'));
     assert(recordingText.includes('"dbUseTangent":1'));
     assert(recordingText.includes('"dbHTol":2'));
     assert(recordingText.includes('"yawHoldRMax":10'));

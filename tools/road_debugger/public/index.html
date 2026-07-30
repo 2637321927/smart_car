@@ -16,6 +16,7 @@
       <div class="top-status">
         <span id="connectionBadge" class="badge badge-offline">等待UDP</span>
         <span id="modeBadge" class="badge">实时模式</span>
+        <span id="profileBadge" class="badge profile-badge">稳定组 / 35RPS</span>
         <span id="packetAge" class="metric-chip">-- ms</span>
         <span id="timeoutBadge" class="metric-chip">最近超时：无</span>
       </div>
@@ -130,6 +131,10 @@
             </div>
           </div>
           <div class="quick-commands">
+            <div class="profile-switch" role="group" aria-label="控制参数组">
+              <button id="stableProfileCommand" class="profile-command selected" type="button">稳定组</button>
+              <button id="proProfileCommand" class="profile-command pro-command" type="button">PRO提速组</button>
+            </div>
             <button class="run-command start-command" type="button" data-command="#run=1;">发车</button>
             <button class="run-command stop-command" type="button" data-command="#run=0;">停车</button>
             <button type="button" data-command="#spd=35;">35RPS</button>
