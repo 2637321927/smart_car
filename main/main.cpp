@@ -741,6 +741,13 @@ if (sscanf(buf, "#dbBrakeTimeout=%d;", &itmp) == 1)
     printf("[VOFA] dbBrakeTimeout = %d ms\n", drive_by_brake_timeout_ms);
 }
 
+if (sscanf(buf, "#dbEarlyBrake=%d;", &itmp) == 1)
+{
+    drive_by_stable_early_brake_set_enable(itmp != 0);
+    printf("[VOFA] 稳定组首次候选立即制动=%s（PRO模式始终开启）\n",
+           drive_by_stable_early_brake_is_enabled() ? "开启" : "关闭");
+}
+
 if (sscanf(buf, "#dbTestDist=%f;", &ftmp) == 1)
 {
     if (ftmp < 0.0f) ftmp = 0.0f;
@@ -1984,29 +1991,24 @@ img0.width = cam.get_camera_width();
 img0.height = cam.get_camera_height();
 img0.step=frame.step;
         // 开始处理摄像头图像
-if(std::chrono::steady_clock::now() - last_start_time >=std::chrono::seconds(3)&&car_running==1){
-/*
-    for (int y = 160; y <= 180; y++) {    // 车前方区域
-        for (int x = 115; x <=125; x++) { // 画面中间，不贴左右边
-        if (check_is_zebra(&img_raw, x, y, thres)) {
-            // 找到斑马线
-                // 停车不仅清目标速度，也清方向环输出和当前 PWM，避免定时器残留输出。
-                usleep(80000);
-             car_running = false;
-             set_speed_of_motor1_rps = 0;
-            set_speed_of_motor2_rps = 0;
-             pwm1_duty_rps = 0;
-             pwm2_duty_rps = 0;
-             current_pwm1 = 0;
-            current_pwm2 = 0;
-            pwm1.atim_pwm_set_duty(0);
-            pwm2.atim_pwm_set_duty(0);
-            printf("stop\n");
+        bool zebra_detected = false;
+        const bool zebra_detection_armed = car_running &&
+            std::chrono::steady_clock::now() - last_start_time >=
+                std::chrono::seconds(5);
+        if (zebra_detection_armed) {
+            for (int y = 160; y <= 180 && !zebra_detected; ++y) {
+                for (int x = 115; x <= 125; ++x) {
+                    if (check_is_zebra(&img_raw, x, y, thres)) {
+                        zebra_detected = true;
+                        break;
+                    }
+                }
+            }
         }
-    }
-}
-*/
-}
+        if (zebra_detected) {
+            printf("[斑马线] 检测到斑马线，停车\n");
+            front_ui_stop();
+        }
         process_image();    // 边线提取&处理
         find_corners();     // 角点提取&筛选
         // 预瞄距离,动态效果更佳

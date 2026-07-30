@@ -204,7 +204,8 @@ bool g_track_reference_valid = false;
 bool g_current_track_heading_valid = false;
 volatile bool g_brake_active = false;
 volatile bool g_brake_completed = false;
-volatile bool g_pro_candidate_brake_active = false;
+volatile bool g_candidate_brake_active = false;
+volatile bool g_stable_early_brake_enabled = false;
 volatile bool g_inference_complete = false;
 volatile bool g_test_mode = false;
 volatile bool g_brake_test_enabled = false;
@@ -481,7 +482,7 @@ void command_recognition_base_speed()
 
 void command_idle_candidate_speed()
 {
-    if (g_pro_candidate_brake_active) {
+    if (g_candidate_brake_active) {
         save_control_once();
         command_zero_targets();
         return;
@@ -550,25 +551,25 @@ void clear_active_brake(bool clear_completed)
     g_debug.brake_elapsed_ms = 0;
 }
 
-void start_pro_candidate_brake()
+void start_candidate_brake()
 {
-    if (g_pro_candidate_brake_active) {
+    if (g_candidate_brake_active) {
         return;
     }
 
     save_control_once();
-    g_pro_candidate_brake_active = true;
+    g_candidate_brake_active = true;
     command_zero_targets();
     start_active_brake();
 }
 
-void stop_pro_candidate_brake()
+void stop_candidate_brake()
 {
-    if (!g_pro_candidate_brake_active) {
+    if (!g_candidate_brake_active) {
         return;
     }
 
-    g_pro_candidate_brake_active = false;
+    g_candidate_brake_active = false;
     clear_active_brake(true);
     motor_speed_pid_reset();
 }
@@ -1045,7 +1046,7 @@ void enter_state(DriveByState next)
 
 void reset_runtime(bool restore_outputs)
 {
-    g_pro_candidate_brake_active = false;
+    g_candidate_brake_active = false;
     clear_active_brake(true);
     motor_speed_pid_reset();
     if (restore_outputs) {
@@ -1178,7 +1179,7 @@ void finish_brake_test_stop(DriveByAbortReason reason)
 
 void start_approach_session(const FarRedCandidate& candidate)
 {
-    g_pro_candidate_brake_active = false;
+    g_candidate_brake_active = false;
     save_control_once();
     g_drive_by_busy = true;
     g_seen_lock = true;
@@ -1784,7 +1785,7 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
     red_contour_area = 0;
 
     if (DriveByClock::now() < g_candidate_retry_after) {
-        stop_pro_candidate_brake();
+        stop_candidate_brake();
         reset_far_candidate_window();
         g_debug.red_candidate_count = 0;
         command_idle_candidate_speed();
@@ -1792,7 +1793,7 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
     }
 
     if (g_seen_lock) {
-        stop_pro_candidate_brake();
+        stop_candidate_brake();
         reset_far_candidate_window();
         g_debug.red_candidate_count = 0;
         command_idle_candidate_speed();
@@ -1809,10 +1810,12 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
         start_approach_session(candidate);
         return;
     }
-    if (control_profile_is_pro() && candidate.found) {
-        start_pro_candidate_brake();
-    } else if (g_pro_candidate_brake_active) {
-        stop_pro_candidate_brake();
+    const bool early_brake_enabled = control_profile_is_pro() ||
+        g_stable_early_brake_enabled;
+    if (early_brake_enabled && candidate.found) {
+        start_candidate_brake();
+    } else if (g_candidate_brake_active) {
+        stop_candidate_brake();
     }
     command_idle_candidate_speed();
 }
@@ -1822,6 +1825,7 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
 void drive_by_init()
 {
     g_drive_by_enable = false;
+    g_stable_early_brake_enabled = false;
     g_brake_test_enabled = false;
     g_brake_test_report = BrakeTestReport{};
     g_brake_test_report_pending = false;
@@ -1851,7 +1855,7 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
     const bool real_detection_enabled = g_drive_by_enable ||
         (g_brake_test_enabled && front_ui_is_running());
     if (!real_detection_enabled && !g_test_mode && !g_brake_test_active) {
-        if (g_drive_by_busy || g_pro_candidate_brake_active) {
+        if (g_drive_by_busy || g_candidate_brake_active) {
             reset_runtime(true);
         }
         return;
@@ -1918,7 +1922,7 @@ bool drive_by_speed_control_update()
         return true;
     }
 
-    if (g_pro_candidate_brake_active && !g_brake_active) {
+    if (g_candidate_brake_active && !g_brake_active) {
         command_zero_targets();
         motor_speed_force_pwm(0, 0);
         return true;
@@ -1950,7 +1954,7 @@ bool drive_by_speed_control_update()
         clear_active_brake(false);
         g_brake_completed = true;
         motor_speed_pid_reset();
-        if (g_pro_candidate_brake_active) {
+        if (g_candidate_brake_active) {
             command_zero_targets();
             motor_speed_force_pwm(0, 0);
             return true;
@@ -2271,6 +2275,19 @@ bool drive_by_brake_test_is_enabled()
 bool drive_by_brake_test_is_holding()
 {
     return g_brake_test_holding;
+}
+
+void drive_by_stable_early_brake_set_enable(bool enable)
+{
+    g_stable_early_brake_enabled = enable;
+    if (!enable && !control_profile_is_pro()) {
+        stop_candidate_brake();
+    }
+}
+
+bool drive_by_stable_early_brake_is_enabled()
+{
+    return g_stable_early_brake_enabled;
 }
 
 bool drive_by_cancel()

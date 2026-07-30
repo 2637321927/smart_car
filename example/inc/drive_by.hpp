@@ -120,6 +120,9 @@ bool drive_by_start_test(int simulated_item_flag,
 bool drive_by_brake_test_set_enable(bool enable);
 bool drive_by_brake_test_is_enabled();
 bool drive_by_brake_test_is_holding();
+// 稳定组首次远距候选立即制动开关；默认关闭，PRO 模式始终使用首次候选制动。
+void drive_by_stable_early_brake_set_enable(bool enable);
+bool drive_by_stable_early_brake_is_enabled();
 bool drive_by_is_busy();
 bool drive_by_is_recognizing();
 bool drive_by_is_motion_phase();
