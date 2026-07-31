@@ -50,6 +50,7 @@ const elements = {
   driveByRight: $('driveByRight'),
   driveByTestButton: $('driveByTestButton'),
   driveToggleCommand: $('driveToggleCommand'),
+  earlyBrakeCommand: $('earlyBrakeCommand'),
   brakeTestCommand: $('brakeTestCommand'),
   headingHoldCommand: $('headingHoldCommand'),
   tangentDebugCommand: $('tangentDebugCommand'),
@@ -279,7 +280,7 @@ const TUNING_GROUPS = [
     subtitle: '仅限run=0：PWM1正向输出，PWM2固定失能',
     controls: [
       { key: 'hwTest', label: 'PWM1硬件测试', kind: 'toggle', defaultValue: 0 },
-      { key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 5000, step: 50, defaultValue: 0, hardMax: true },
+      { key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 7000, step: 50, defaultValue: 0, hardMax: true },
     ],
   },
 ];
@@ -341,12 +342,13 @@ const TUNING_DESCRIPTIONS = Object.freeze({
   vofa: '控制传统VOFA波形是否回传到192.168.43.146:8080。关闭可减少网络和序列化负担，但仍可从146向小车8082发送调参命令。',
   is_udp_img: '控制额外JPEG调试图像：0关闭，1发送鸟瞰图，2发送原始图。图像编码和网络开销明显高于参数UDP，正常高速行驶建议关闭。',
   hwTest: '仅run=0且绕行、遥控、航向保持都关闭时可开启。开启后只允许PWM1正向测试、PWM2固定为0，并把测试PWM从0开始；关闭状态不会改动正常行车控制。',
-  hwPwm: '硬件测试模式下PWM1的正向输出值，范围0至5000，无RPS闭环。关闭测试时修改不会驱动电机，重新开启hwTest仍会先清零，需确认架空车轮后再调。',
+  hwPwm: '硬件测试模式下PWM1的正向输出值，范围0至7000，无RPS闭环。关闭测试时修改不会驱动电机，重新开启hwTest仍会先清零，需确认架空车轮后再调。',
 });
 
 const TUNING_CONFIGS = TUNING_GROUPS.flatMap((group) => group.controls);
 const TUNING_DEFAULTS = {
   carProfile: 0,
+  dbEarlyBrake: 0,
   ...Object.fromEntries(TUNING_CONFIGS.map((config) => [config.key, config.defaultValue])),
 };
 const PROFILE_SCOPED_KEYS = new Set([
@@ -1283,6 +1285,17 @@ function updateSummary() {
     ? '识别已开启，点击关闭'
     : '识别已关闭，点击开启';
   elements.driveToggleCommand.disabled = state.mode !== 'live' || !state.liveParams;
+  const proMode = displayedProfileMode() === 1;
+  const stableEarlyBrakeEnabled = Boolean(Number(displayedTuning.dbEarlyBrake ?? 0));
+  elements.earlyBrakeCommand.classList.toggle(
+    'selected-command', proMode || stableEarlyBrakeEnabled);
+  elements.earlyBrakeCommand.textContent = proMode
+    ? 'PRO首次候选刹车：固定开启'
+    : `稳定组首次候选刹车：${stableEarlyBrakeEnabled ? '开启' : '关闭'}`;
+  elements.earlyBrakeCommand.disabled = state.mode !== 'live' || !state.liveTuning || proMode;
+  elements.earlyBrakeCommand.title = proMode
+    ? 'PRO模式固定在第一次候选时主动制动，不能关闭'
+    : '控制稳定组是否在第一次远距候选时立即输出主动制动PWM';
   elements.brakeTestCommand.classList.toggle('selected-command', displayedBrakeTestEnabled);
   elements.brakeTestCommand.textContent = !displayedBrakeTestEnabled
     ? '刹车测试关闭'
@@ -1362,6 +1375,14 @@ async function toggleHeadingHold() {
 async function toggleDriveRecognition() {
   const enabled = Boolean(Number(state.liveParams?.drive_enabled ?? 0));
   await sendCommand(`#drive=${enabled ? 0 : 1};`);
+}
+
+async function toggleStableEarlyBrake() {
+  if (displayedProfileMode() === 1) {
+    throw new Error('PRO模式首次候选刹车固定开启');
+  }
+  const enabled = Boolean(Number(state.liveTuning?.dbEarlyBrake ?? 0));
+  await sendCommand(`#dbEarlyBrake=${enabled ? 0 : 1};`);
 }
 
 async function toggleCameraStats() {
@@ -1716,6 +1737,19 @@ async function sendCommand(command, options = {}) {
       renderDisplaySnapshot();
     }
   }
+  const earlyBrakeMatch = normalized.match(/^#dbEarlyBrake=([01]);$/);
+  if (earlyBrakeMatch) {
+    const dbEarlyBrake = Number(earlyBrakeMatch[1]);
+    state.liveTuning = {
+      ...TUNING_DEFAULTS,
+      ...(state.liveTuning || {}),
+      dbEarlyBrake,
+    };
+    if (state.mode === 'live') {
+      state.displayTuning = state.liveTuning;
+      renderDisplaySnapshot();
+    }
+  }
   if (!options.silentStatus) {
     elements.commandStatus.textContent = `已发送 ${payload.command} → ${payload.ip}:${payload.port}`;
   }
@@ -1771,6 +1805,9 @@ function bindEvents() {
   });
   elements.driveToggleCommand.addEventListener('click', () => {
     toggleDriveRecognition().catch((error) => showToast(error.message));
+  });
+  elements.earlyBrakeCommand.addEventListener('click', () => {
+    toggleStableEarlyBrake().catch((error) => showToast(error.message));
   });
   elements.brakeTestCommand.addEventListener('click', () => {
     const enabled = Boolean(Number(state.liveParams?.drive_brake_test_enabled ?? 0));

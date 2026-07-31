@@ -146,6 +146,7 @@ async function main() {
       dbHTol: 2,
       dbRecoverDps: 55,
       dbBrakePwm: 6000,
+      dbEarlyBrake: 1,
       yawHoldRMax: 10,
       udp: 2,
       vofa: 0,
@@ -182,6 +183,7 @@ async function main() {
     assert(pageResponse.text.includes('driveByLeft'));
     assert(pageResponse.text.includes('driveByRight'));
     assert(pageResponse.text.includes('driveByTestButton'));
+    assert(pageResponse.text.includes('earlyBrakeCommand'));
     assert(pageResponse.text.includes('brakeTestCommand'));
     assert(pageResponse.text.includes('headingHoldCommand'));
     assert(pageResponse.text.includes('tangentDebugCommand'));
@@ -268,11 +270,13 @@ async function main() {
     assert(appResponse.text.includes("key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbBrakeTimeout', label: '制动超时', min: 1, max: 2000, step: 10, unit: 'ms', defaultValue: 511"));
     assert(appResponse.text.includes("key: 'hwTest', label: 'PWM1硬件测试', kind: 'toggle', defaultValue: 0"));
-    assert(appResponse.text.includes("key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 5000, step: 50, defaultValue: 0, hardMax: true"));
+    assert(appResponse.text.includes("key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 7000, step: 50, defaultValue: 0, hardMax: true"));
     assert(appResponse.text.includes("#remote=0;"));
     assert(appResponse.text.includes("#yawHold="));
     assert(appResponse.text.includes("#tangentDbg="));
     assert(appResponse.text.includes("#test_brake="));
+    assert(appResponse.text.includes('#dbEarlyBrake=${enabled ? 0 : 1};'));
+    assert(appResponse.text.includes('PRO首次候选刹车：固定开启'));
     assert(appResponse.text.includes("#drive=${enabled ? 0 : 1};"));
     assert(appResponse.text.includes("#camStats=${enabled ? 0 : 1};"));
     assert(appResponse.text.includes('camera_process_avg_ms'));
@@ -291,6 +295,7 @@ async function main() {
     assert(appResponse.text.includes('sendRemoteHeartbeat'));
 
     const mainSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'main.cpp'), 'utf8');
+    const hardwareTestSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'hardware_test.cpp'), 'utf8');
     const frontUiSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'front_ui.cpp'), 'utf8');
     const profileSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'control_profile.cpp'), 'utf8');
     const dirPdSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'dir_pd.cpp'), 'utf8');
@@ -316,6 +321,7 @@ async function main() {
     assert(mainSource.includes('\\"carProfile\\":%d,\\"profileSpd\\":%.2f'));
     assert(mainSource.includes('#carProfile=%d;'));
     assert(mainSource.includes('#profileSpd=%f;'));
+    assert(hardwareTestSource.includes('constexpr int kHardwareTestMaxPwm = 7000;'));
     assert(frontUiSource.includes('constexpr float kRemoteYawRateDps = 160.0f;'));
     assert(frontUiSource.includes('constexpr auto kPhysicalStartDelay = std::chrono::milliseconds(1000);'));
     assert(frontUiSource.includes('physical_start_deadline = now + kPhysicalStartDelay;'));
@@ -349,6 +355,7 @@ async function main() {
     assert(driveBySource.includes('if (g_candidate_brake_active && !g_brake_active)'));
     assert(driveBySource.includes('g_drive_by_busy || g_candidate_brake_active'));
     assert(mainSource.includes('#dbEarlyBrake=%d;'));
+    assert(mainSource.includes('\\\"dbEarlyBrake\\\":%d'));
     assert(mainSource.includes('drive_by_stable_early_brake_set_enable(itmp != 0)'));
     assert(mainSource.includes('const bool zebra_detection_armed = car_running &&'));
     assert(mainSource.includes('constexpr int kZebraDetectionFrameInterval = 3;'));
@@ -398,6 +405,7 @@ async function main() {
     assert(recordingText.includes('"carProfile":1'));
     assert(recordingText.includes('"profileSpd":45'));
     assert(recordingText.includes('"dbUseTangent":1'));
+    assert(recordingText.includes('"dbEarlyBrake":1'));
     assert(recordingText.includes('"dbHTol":2'));
     assert(recordingText.includes('"yawHoldRMax":10'));
     assert(recordingText.includes('"hwTest":0'));

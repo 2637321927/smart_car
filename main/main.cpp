@@ -557,7 +557,7 @@ if (sscanf(buf, "#hwTest=%d;", &itmp) == 1)
 if (sscanf(buf, "#hwPwm=%d;", &itmp) == 1)
 {
     hardware_test_set_pwm(itmp);
-    printf("[硬件测试] PWM1正向占空比=%d（范围0-5000，PWM2=0，当前%s）\n",
+    printf("[硬件测试] PWM1正向占空比=%d（范围0-7000，PWM2=0，当前%s）\n",
            hardware_test_get_pwm(),
            hardware_test_is_enabled() ? "已输出" : "仅保存未输出");
 }
@@ -1298,7 +1298,7 @@ void tuning_telemetry_send()
         "\"yawHoldRMax\":%.2f,"
         "\"dbTurnRps\":%d,\"dbForwardRps\":%d,\"dbExitRps\":%d,"
         "\"dbBrakePwm\":%d,\"dbBrakeRelease\":%.2f,"
-        "\"dbBrakeTimeout\":%d,\"dbTestDist\":%.3f,"
+        "\"dbBrakeTimeout\":%d,\"dbEarlyBrake\":%d,\"dbTestDist\":%.3f,"
         "\"circle_exit\":%.3f,\"udp\":%d,\"vofa\":%d,\"is_udp_img\":%d,"
         "\"hwTest\":%d,\"hwPwm\":%d,"
         "\"camStats\":%d,"
@@ -1338,6 +1338,7 @@ void tuning_telemetry_send()
         drive_by_exit_speed_rps, drive_by_brake_pwm,
         safe_float(drive_by_brake_release_rps),
         drive_by_brake_timeout_ms,
+        drive_by_stable_early_brake_is_enabled() ? 1 : 0,
         safe_float(drive_by_test_target_distance_m),
         safe_float(circle_exit_distance_m),
         udp_debug_mode, vofa_telemetry_enabled, is_udp_img,

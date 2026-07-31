@@ -6,7 +6,7 @@
 bool hardware_test_set_enabled(bool enabled);
 bool hardware_test_is_enabled();
 
-// 设置PWM1正向占空比，范围固定为0~5000。关闭模式下只保存调试值，
+// 设置PWM1正向占空比，范围固定为0~7000。关闭模式下只保存调试值，
 // 不访问PWM硬件；每次重新开启测试都会先把该值复位为0。
 void hardware_test_set_pwm(int pwm);
 int hardware_test_get_pwm();
