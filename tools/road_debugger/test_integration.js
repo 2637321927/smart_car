@@ -290,11 +290,13 @@ async function main() {
     assert(appResponse.text.includes('params.drive_brake_test_enabled'));
     assert(appResponse.text.includes('sendRemoteHeartbeat'));
 
-    const mainSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'main.cpp'), 'utf8');
-    const frontUiSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'front_ui.cpp'), 'utf8');
-    const profileSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'control_profile.cpp'), 'utf8');
-    const dirPdSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'dir_pd.cpp'), 'utf8');
-    const driveBySource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'drive_by.cpp'), 'utf8');
+    const readSource = (...segments) => fs.readFileSync(
+      path.join(__dirname, '..', '..', ...segments), 'utf8').replace(/\r\n/g, '\n');
+    const mainSource = readSource('main', 'main.cpp');
+    const frontUiSource = readSource('main', 'front_ui.cpp');
+    const profileSource = readSource('main', 'control_profile.cpp');
+    const dirPdSource = readSource('example', 'src', 'dir_pd.cpp');
+    const driveBySource = readSource('example', 'src', 'drive_by.cpp');
     const stableDefaultsSource = profileSource.slice(
       profileSource.indexOf('ControlProfileValues make_stable_defaults()'),
       profileSource.indexOf('ControlProfileValues make_pro_defaults()'),
@@ -321,6 +323,8 @@ async function main() {
     assert(frontUiSource.includes('physical_start_deadline = now + kPhysicalStartDelay;'));
     assert(frontUiSource.includes('void front_ui_start()'));
     assert(frontUiSource.includes('physical_start_pending = false;\n    start_car();'));
+    assert(frontUiSource.includes('drive_by_on_start();'));
+    assert(frontUiSource.includes('printf("[车辆] 已停车\\n");'));
     assert(frontUiSource.includes('K0 TARGET K1 PROFILE'));
     assert(frontUiSource.includes('control_profile_switch(requested_mode)'));
     assert(frontUiSource.includes('已切换为%s模式'));
@@ -344,7 +348,10 @@ async function main() {
     assert(driveBySource.includes('g_candidate_brake_active'));
     assert(driveBySource.includes('g_stable_early_brake_enabled = false'));
     assert(driveBySource.includes('control_profile_is_pro() ||'));
-    assert(driveBySource.includes('g_stable_early_brake_enabled;'));
+    assert(driveBySource.includes('g_stable_early_brake_enabled ||'));
+    assert(driveBySource.includes('g_stop_at_next_target_armed'));
+    assert(driveBySource.includes('g_stop_after_current_recognition'));
+    assert(driveBySource.includes('print_target_result_line(display_result);'));
     assert(driveBySource.includes('start_candidate_brake();'));
     assert(driveBySource.includes('if (g_candidate_brake_active && !g_brake_active)'));
     assert(driveBySource.includes('g_drive_by_busy || g_candidate_brake_active'));
@@ -356,7 +363,9 @@ async function main() {
     assert(mainSource.includes('std::chrono::seconds(5)'));
     assert(mainSource.includes('check_is_zebra(&img_raw, x, y, thres)'));
     assert(mainSource.includes('[斑马线] 检测到斑马线，停车'));
-    assert(mainSource.includes('if (zebra_detected) {\n            printf'));
+    assert(mainSource.includes(
+      'if (zebra_detected) {\n            if (!drive_by_on_zebra_detected())'));
+    assert(mainSource.includes('drive_by_has_pending_report()'));
     assert(!mainSource.includes('std::chrono::seconds(3)&&car_running==1'));
     assert.strictEqual((driveBySource.match(/control_profile_is_pro\(\)/g) || []).length, 2);
     assert.strictEqual((driveBySource.match(/g_candidate_brake_active = true;/g) || []).length, 1);

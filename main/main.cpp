@@ -1972,7 +1972,8 @@ while (1)
  cv::Mat frame = cam.get_frame_raw();
        cv::flip(frame, frame, -1); //颠倒上下左右
  // 目标板逻辑统一交给 drive_by 状态机；没发车时不检测，避免停车待命也触发脚本。
- if (front_ui_is_running() || drive_by_is_busy()) {
+ if (front_ui_is_running() || drive_by_is_busy() ||
+     drive_by_has_pending_report()) {
     drive_by_update(frame, ncnn);
  }
  cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
@@ -2012,8 +2013,10 @@ img0.step=frame.step;
             }
         }
         if (zebra_detected) {
-            printf("[斑马线] 检测到斑马线，停车\n");
-            front_ui_stop();
+            if (!drive_by_on_zebra_detected()) {
+                printf("[斑马线] 检测到斑马线，停车\n");
+                front_ui_stop();
+            }
         }
         process_image();    // 边线提取&处理
         find_corners();     // 角点提取&筛选

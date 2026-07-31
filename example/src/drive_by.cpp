@@ -7,6 +7,7 @@
 #include "lq_all_demo.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -206,6 +207,8 @@ volatile bool g_brake_active = false;
 volatile bool g_brake_completed = false;
 volatile bool g_candidate_brake_active = false;
 volatile bool g_stable_early_brake_enabled = false;
+std::atomic<bool> g_stop_at_next_target_armed{false};
+std::atomic<bool> g_stop_after_current_recognition{false};
 volatile bool g_inference_complete = false;
 volatile bool g_test_mode = false;
 volatile bool g_brake_test_enabled = false;
@@ -214,6 +217,9 @@ volatile bool g_brake_test_holding = false;
 volatile bool g_stop_requested = false;
 volatile bool g_report_pending = false;
 volatile bool g_brake_test_report_pending = false;
+std::atomic<bool> g_target_stop_report_pending{false};
+std::atomic<int> g_completed_target_result{-1};
+std::atomic<int> g_pending_target_result{-1};
 volatile bool g_visual_aim_line_valid = false;
 // 运行入口固定为三阶段脚本。保留该字段只为隔离尚未删除的历史边线实现，
 // 任何在线命令都不能把当前绕行切换到边线状态机。
@@ -415,6 +421,69 @@ const char *result_action_name(int result)
     if (result == 0) return "左绕";
     if (result == 2) return "右绕";
     return "直行";
+}
+
+const char *result_label_name(int result)
+{
+    if (result == 0) return "weapon";
+    if (result == 2) return "supplies";
+    return "vehicle";
+}
+
+const char *result_label_chinese_name(int result)
+{
+    if (result == 0) return "武器";
+    if (result == 2) return "物资";
+    return "车辆";
+}
+
+bool recognition_result_is_valid(const RecognitionReport& report, int result)
+{
+    if (result < 0 || result > 2 || report.valid_count <= 0 ||
+        report.votes[result] < 2) {
+        return false;
+    }
+    for (int index = 0; index < 3; ++index) {
+        if (index != result && report.votes[index] >= report.votes[result]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int recognition_display_result(const RecognitionReport& report, int final_result)
+{
+    if (recognition_result_is_valid(report, final_result)) {
+        return final_result;
+    }
+    for (int index = report.frame_count - 1; index >= 0; --index) {
+        const RecognitionFrameRecord& frame = report.frames[index];
+        if (frame.status == RECOG_FRAME_OK &&
+            frame.mapped_result >= 0 && frame.mapped_result <= 2) {
+            return frame.mapped_result;
+        }
+    }
+    return -1;
+}
+
+void print_target_result_line(int result)
+{
+    if (result < 0 || result > 2) {
+        printf("[目标板] 类型=未知\n");
+    } else {
+        printf("[目标板] 类型=%s（%s）\n",
+               result_label_chinese_name(result),
+               result_label_name(result));
+    }
+    fflush(stdout);
+}
+
+void queue_target_stop_report()
+{
+    g_pending_target_result.store(
+        g_completed_target_result.load(std::memory_order_acquire),
+        std::memory_order_relaxed);
+    g_target_stop_report_pending.store(true, std::memory_order_release);
 }
 
 void save_control_once()
@@ -1047,6 +1116,8 @@ void enter_state(DriveByState next)
 void reset_runtime(bool restore_outputs)
 {
     g_candidate_brake_active = false;
+    g_stop_after_current_recognition.store(false, std::memory_order_relaxed);
+    g_completed_target_result.store(-1, std::memory_order_relaxed);
     clear_active_brake(true);
     motor_speed_pid_reset();
     if (restore_outputs) {
@@ -1091,6 +1162,7 @@ void reset_runtime(bool restore_outputs)
 
 void finish_session(DriveByAbortReason reason)
 {
+    g_stop_after_current_recognition.store(false, std::memory_order_relaxed);
     clear_active_brake(true);
     motor_speed_pid_reset();
     g_abort_reason = reason;
@@ -1180,6 +1252,10 @@ void finish_brake_test_stop(DriveByAbortReason reason)
 void start_approach_session(const FarRedCandidate& candidate)
 {
     g_candidate_brake_active = false;
+    g_stop_after_current_recognition.store(
+        g_stop_at_next_target_armed.load(std::memory_order_acquire),
+        std::memory_order_relaxed);
+    g_completed_target_result.store(-1, std::memory_order_relaxed);
     save_control_once();
     g_drive_by_busy = true;
     g_seen_lock = true;
@@ -1228,6 +1304,14 @@ void mark_recognition_trigger(double trigger_detect_ms)
         return;
     }
     g_recognition_triggered = true;
+    // 远距候选可能早于斑马线开始；严格确认时重新读取布防状态，
+    // 保证过线后识别到的第一块目标板进入停车链路。
+    if (g_stop_at_next_target_armed.load(std::memory_order_acquire)) {
+        g_stop_after_current_recognition.store(true, std::memory_order_relaxed);
+    }
+    if (g_stop_after_current_recognition.load(std::memory_order_relaxed)) {
+        g_stop_at_next_target_armed.store(false, std::memory_order_release);
+    }
     g_recognition_start = DriveByClock::now();
     g_report.trigger_detect_ms = trigger_detect_ms;
     g_report.trigger_left_rps = encoder1_speed_avg;
@@ -1243,6 +1327,8 @@ void cancel_false_candidate()
     restore_control();
     gyro_yaw_rate_control_reset_controller();
     g_drive_by_busy = false;
+    g_stop_after_current_recognition.store(false, std::memory_order_relaxed);
+    g_completed_target_result.store(-1, std::memory_order_relaxed);
     g_state = DB_IDLE;
     g_debug.state_code = (int)DB_IDLE;
     g_cooldown_start = DriveByClock::now();
@@ -1652,11 +1738,20 @@ void complete_inference()
     g_report.finish_left_rps = encoder1_speed_avg;
     g_report.finish_right_rps = encoder2_speed_avg;
     item_flag = choose_vote_result();
+    g_completed_target_result.store(
+        recognition_display_result(g_report, item_flag),
+        std::memory_order_release);
 
     g_pending_result = item_flag;
     g_inference_complete = true;
     if (g_brake_test_active) {
         complete_brake_test_recognition(DB_ABORT_NONE);
+        return;
+    }
+    if (g_stop_after_current_recognition.load(std::memory_order_acquire)) {
+        enter_state((g_brake_completed && !g_brake_active)
+            ? DB_FINISH_PENDING
+            : DB_WAIT_BRAKE);
         return;
     }
     if (!g_brake_completed || g_brake_active) {
@@ -1717,6 +1812,18 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
                 item_flag = 1;
                 if (g_brake_test_active) {
                     complete_brake_test_recognition(DB_ABORT_VIEW_TIMEOUT);
+                } else if (g_stop_after_current_recognition.load(
+                               std::memory_order_acquire)) {
+                    g_completed_target_result.store(
+                        recognition_display_result(g_report, item_flag),
+                        std::memory_order_release);
+                    g_pending_result = item_flag;
+                    g_inference_complete = true;
+                    g_abort_reason = DB_ABORT_VIEW_TIMEOUT;
+                    g_debug.abort_reason = (int)DB_ABORT_VIEW_TIMEOUT;
+                    enter_state((g_brake_completed && !g_brake_active)
+                        ? DB_FINISH_PENDING
+                        : DB_WAIT_BRAKE);
                 } else {
                     finish_session(DB_ABORT_VIEW_TIMEOUT);
                 }
@@ -1733,6 +1840,18 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
             item_flag = 1;
             if (g_brake_test_active) {
                 complete_brake_test_recognition(DB_ABORT_VIEW_TIMEOUT);
+            } else if (g_stop_after_current_recognition.load(
+                           std::memory_order_acquire)) {
+                g_completed_target_result.store(
+                    recognition_display_result(g_report, item_flag),
+                    std::memory_order_release);
+                g_pending_result = item_flag;
+                g_inference_complete = true;
+                g_abort_reason = DB_ABORT_VIEW_TIMEOUT;
+                g_debug.abort_reason = (int)DB_ABORT_VIEW_TIMEOUT;
+                enter_state((g_brake_completed && !g_brake_active)
+                    ? DB_FINISH_PENDING
+                    : DB_WAIT_BRAKE);
             } else {
                 finish_session(DB_ABORT_VIEW_TIMEOUT);
             }
@@ -1759,7 +1878,19 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
         break;
 
     case DB_FINISH_PENDING:
-        finish_session(g_abort_reason);
+        if (g_stop_after_current_recognition.load(std::memory_order_acquire)) {
+            const int display_result =
+                g_completed_target_result.load(std::memory_order_acquire);
+            g_drive_by_busy = false;
+            g_stop_after_current_recognition.store(false,
+                                                   std::memory_order_release);
+            command_zero_targets();
+            motor_speed_force_pwm(0, 0);
+            front_ui_stop();
+            print_target_result_line(display_result);
+        } else {
+            finish_session(g_abort_reason);
+        }
         break;
 
     default:
@@ -1811,7 +1942,8 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
         return;
     }
     const bool early_brake_enabled = control_profile_is_pro() ||
-        g_stable_early_brake_enabled;
+        g_stable_early_brake_enabled ||
+        g_stop_at_next_target_armed.load(std::memory_order_acquire);
     if (early_brake_enabled && candidate.found) {
         start_candidate_brake();
     } else if (g_candidate_brake_active) {
@@ -1826,6 +1958,11 @@ void drive_by_init()
 {
     g_drive_by_enable = false;
     g_stable_early_brake_enabled = false;
+    g_stop_at_next_target_armed.store(false, std::memory_order_relaxed);
+    g_stop_after_current_recognition.store(false, std::memory_order_relaxed);
+    g_target_stop_report_pending.store(false, std::memory_order_relaxed);
+    g_completed_target_result.store(-1, std::memory_order_relaxed);
+    g_pending_target_result.store(-1, std::memory_order_relaxed);
     g_brake_test_enabled = false;
     g_brake_test_report = BrakeTestReport{};
     g_brake_test_report_pending = false;
@@ -1841,6 +1978,11 @@ void drive_by_init()
 
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
 {
+    if (g_target_stop_report_pending.exchange(false,
+                                              std::memory_order_acq_rel)) {
+        print_target_result_line(
+            g_pending_target_result.load(std::memory_order_acquire));
+    }
     if (g_brake_test_report_pending) {
         print_brake_test_report();
     }
@@ -1848,6 +1990,9 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
         // 8ms控制回调已经恢复普通巡线，这里只补做不会影响转向的报告输出。
         g_report_pending = false;
         print_recognition_report(item_flag);
+    }
+    if (!front_ui_is_running() && !g_drive_by_busy) {
+        return;
     }
 
     // 刹车测试开关可以在停车时预先开启，但只有run=1才启动真实红块检测。
@@ -1871,6 +2016,37 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
         command_idle_candidate_speed();
         update_idle_detection(frame, ncnn);
     }
+}
+
+void drive_by_on_start()
+{
+    g_stop_at_next_target_armed.store(false, std::memory_order_release);
+    g_stop_after_current_recognition.store(false, std::memory_order_release);
+    g_completed_target_result.store(-1, std::memory_order_relaxed);
+}
+
+bool drive_by_on_zebra_detected()
+{
+    if (!g_drive_by_enable) {
+        return false;
+    }
+
+    const bool already_armed =
+        g_stop_at_next_target_armed.load(std::memory_order_acquire);
+    const bool stopping_current =
+        g_stop_after_current_recognition.load(std::memory_order_acquire);
+    if (!already_armed && !stopping_current) {
+        g_stop_at_next_target_armed.store(true, std::memory_order_release);
+        printf("[目标板识别] 已通过斑马线，下一目标板识别后停车\n");
+        fflush(stdout);
+    }
+    return true;
+}
+
+bool drive_by_has_pending_report()
+{
+    return g_report_pending || g_brake_test_report_pending ||
+        g_target_stop_report_pending.load(std::memory_order_acquire);
 }
 
 void drive_by_control_update()
@@ -1918,6 +2094,16 @@ bool drive_by_speed_control_update()
         g_debug.brake_test_holding = 1;
         if (g_inference_complete) {
             finish_brake_test_stop(g_abort_reason);
+        }
+        return true;
+    }
+
+    if (g_stop_after_current_recognition.load(std::memory_order_acquire) &&
+        g_brake_completed && !g_brake_active) {
+        command_zero_targets();
+        motor_speed_force_pwm(0, 0);
+        if (g_inference_complete && g_state == DB_WAIT_BRAKE) {
+            enter_state(DB_FINISH_PENDING);
         }
         return true;
     }
@@ -1973,7 +2159,13 @@ bool drive_by_speed_control_update()
         }
         command_recognition_base_speed();
         if (g_inference_complete && g_state == DB_WAIT_BRAKE) {
-            if (g_pending_result == 0 || g_pending_result == 2) {
+            if (g_stop_after_current_recognition.load(
+                    std::memory_order_acquire)) {
+                command_zero_targets();
+                motor_speed_force_pwm(0, 0);
+                enter_state(DB_FINISH_PENDING);
+                return true;
+            } else if (g_pending_result == 0 || g_pending_result == 2) {
                 enter_state(DB_START_MOTION_PENDING);
             } else {
                 // 报告打印与参数恢复交给相机线程，3ms速度线程只提交结束状态。
@@ -1991,6 +2183,13 @@ bool drive_by_speed_control_update()
             g_brake_test_elapsed_ms = brake_elapsed_ms;
             finish_brake_test_stop(reason);
             return true;
+        }
+        if (g_stop_after_current_recognition.load(
+                std::memory_order_acquire)) {
+            queue_target_stop_report();
+            g_drive_by_busy = false;
+            g_stop_after_current_recognition.store(false,
+                                                   std::memory_order_release);
         }
         clear_active_brake(true);
         motor_speed_pid_reset();
@@ -2226,6 +2425,8 @@ void drive_by_set_enable(bool enable)
         return;
     }
     g_drive_by_enable = enable;
+    g_stop_at_next_target_armed.store(false, std::memory_order_release);
+    g_stop_after_current_recognition.store(false, std::memory_order_release);
     if (!enable && !g_brake_test_enabled) {
         reset_runtime(true);
     }

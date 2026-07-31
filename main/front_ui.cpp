@@ -193,6 +193,7 @@ void start_car()
     motor_speed_pid_reset();
     pwm1.atim_pwm_set_duty(0);
     pwm2.atim_pwm_set_duty(0);
+    drive_by_on_start();
     apply_speed_strategy();
     std::cout << "run\n";
 
@@ -340,6 +341,8 @@ void front_ui_stop()
 {
     physical_start_pending = false;
     stop_car();
+    printf("[车辆] 已停车\n");
+    fflush(stdout);
 }
 
 void front_ui_set_running(bool running)
