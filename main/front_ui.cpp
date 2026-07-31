@@ -186,6 +186,9 @@ void start_car()
     pwm2.atim_pwm_set_duty(0);
     drive_by_on_start();
     apply_speed_strategy();
+    printf("[车辆] 已发车，当前模式=%s，目标速度=%.1f RPS\n",
+           control_profile_is_pro() ? "超载（OVERLOAD）" : "稳定",
+           control_profile_target_speed_rps());
     last_start_time = std::chrono::steady_clock::now();
 
 

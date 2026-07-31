@@ -2391,6 +2391,7 @@ void drive_by_set_enable(bool enable)
     if (!enable && !g_brake_test_enabled) {
         reset_runtime(true);
     }
+    printf("[目标板识别] 状态=%s\n", enable ? "开启" : "关闭");
 }
 
 void drive_by_toggle_enable()
