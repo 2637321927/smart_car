@@ -3,66 +3,27 @@
 
 namespace
 {
-std::mutex g_timeout_log_mutex;
+std::mutex g_timeout_snapshot_mutex;
 uint64_t g_timeout_total_count = 0;
 int g_timeout_last_id = 0;
 uint64_t g_timeout_last_used_ns = 0;
 uint64_t g_timeout_last_target_ns = 0;
-std::chrono::steady_clock::time_point g_timeout_last_log_time = std::chrono::steady_clock::now();
-std::chrono::steady_clock::time_point g_timeout_start_time = std::chrono::steady_clock::now();
 
 float ns_to_ms(uint64_t ns)
 {
     return ns / 1000000.0f;
 }
 
-uint64_t elapsed_ms_since_start(std::chrono::steady_clock::time_point now)
-{
-    return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
-        now - g_timeout_start_time).count();
-}
 } // namespace
 
 void lq_timer_timeout_report(int id, const char *name_cn, uint64_t used_ns, uint64_t target_ns)
 {
-    if (name_cn == nullptr) {
-        name_cn = "unknown";
-    }
-
-    const auto now = std::chrono::steady_clock::now();
-    uint64_t total = 0;
-    bool should_log = false;
-
-    {
-        std::lock_guard<std::mutex> lock(g_timeout_log_mutex);
-
-        ++g_timeout_total_count;
-        g_timeout_last_id = id;
-        g_timeout_last_used_ns = used_ns;
-        g_timeout_last_target_ns = target_ns;
-        total = g_timeout_total_count;
-
-        const int elapsed_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - g_timeout_last_log_time).count();
-        if (g_timeout_total_count == 1 || elapsed_ms >= 1000) {
-            // Timer callbacks run in realtime-ish threads. Printing every timeout
-            // can make the timeout worse, so keep one summary per second.
-            g_timeout_last_log_time = now;
-            should_log = true;
-        }
-    }
-
-    if (should_log) {
-        const uint64_t over_ns = used_ns > target_ns ? used_ns - target_ns : 0;
-        lq_log_warn("[超时] 时间=%llums 来源=%s(id=%d) 实际=%.2fms 目标=%.2fms 超出=%.2fms 累计=%llu",
-                    (unsigned long long)elapsed_ms_since_start(now),
-                    name_cn,
-                    id,
-                    ns_to_ms(used_ns),
-                    ns_to_ms(target_ns),
-                    ns_to_ms(over_ns),
-                    (unsigned long long)total);
-    }
+    (void)name_cn;
+    std::lock_guard<std::mutex> lock(g_timeout_snapshot_mutex);
+    ++g_timeout_total_count;
+    g_timeout_last_id = id;
+    g_timeout_last_used_ns = used_ns;
+    g_timeout_last_target_ns = target_ns;
 }
 
 void lq_timer_timeout_get_snapshot(lq_timer_timeout_snapshot *snapshot)
@@ -71,7 +32,7 @@ void lq_timer_timeout_get_snapshot(lq_timer_timeout_snapshot *snapshot)
         return;
     }
 
-    std::lock_guard<std::mutex> lock(g_timeout_log_mutex);
+    std::lock_guard<std::mutex> lock(g_timeout_snapshot_mutex);
 
     snapshot->id = g_timeout_last_id;
     snapshot->total = g_timeout_total_count;

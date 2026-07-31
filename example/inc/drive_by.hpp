@@ -108,6 +108,12 @@ typedef struct
 } DriveByTangentDebug;
 
 void drive_by_init();
+// 每次发车时重置“完整跑完一圈后停首个目标板”的单次运行状态。
+void drive_by_on_start();
+// 返回true表示当前斑马线事件已由目标板识别模式消费，不应执行普通斑马线停车。
+bool drive_by_on_zebra_detected();
+// 速度线程只提交停车报告，主循环据此保证停车后仍会执行一次低优先级打印。
+bool drive_by_has_pending_report();
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn);
 // 由8ms方向定时器调用：只读取缓存并更新绕行闭环，不做图像、推理、打印或硬件I/O。
 void drive_by_control_update();

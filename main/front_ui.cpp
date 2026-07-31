@@ -193,6 +193,7 @@ void start_car()
     motor_speed_pid_reset();
     pwm1.atim_pwm_set_duty(0);
     pwm2.atim_pwm_set_duty(0);
+    drive_by_on_start();
     apply_speed_strategy();
     std::cout << "run\n";
 

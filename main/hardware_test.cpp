@@ -7,7 +7,7 @@
 
 namespace {
 
-constexpr int kHardwareTestMaxPwm = 7500;
+constexpr int kHardwareTestMaxPwm = 9900;
 
 // 工程当前的定时器和主循环普遍通过volatile共享简单状态。这里保持同样
 // 的兼容方式，不引入std::atomic，也不让关闭状态承担互斥锁开销。
@@ -99,8 +99,8 @@ bool hardware_test_update()
     }
 
     // motor_speed_force_pwm统一处理电机方向脚：正数保证PWM1正向输出，
-    // PWM2固定写0表示失能。该路径仍受本模块专用的7000上限保护。
-    motor_speed_force_pwm(requested_pwm, 0);
+    // PWM2固定写0表示失能。该路径仅受硬件测试专用的9900上限保护。
+    motor_speed_force_hardware_test_pwm(requested_pwm);
 
     // 若关闭命令恰好与本周期并发，关闭方和这里都会再写一次0，避免旧的
     // requested_pwm在关闭之后成为最后一次硬件输出。

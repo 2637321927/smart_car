@@ -270,7 +270,7 @@ async function main() {
     assert(appResponse.text.includes("key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 0"));
     assert(appResponse.text.includes("key: 'dbBrakeTimeout', label: '制动超时', min: 1, max: 2000, step: 10, unit: 'ms', defaultValue: 511"));
     assert(appResponse.text.includes("key: 'hwTest', label: 'PWM1硬件测试', kind: 'toggle', defaultValue: 0"));
-    assert(appResponse.text.includes("key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 7000, step: 50, defaultValue: 0, hardMax: true"));
+    assert(appResponse.text.includes("key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 9900, step: 50, defaultValue: 0, hardMax: true"));
     assert(appResponse.text.includes("#remote=0;"));
     assert(appResponse.text.includes("#yawHold="));
     assert(appResponse.text.includes("#tangentDbg="));
@@ -298,6 +298,8 @@ async function main() {
     const hardwareTestSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'hardware_test.cpp'), 'utf8');
     const frontUiSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'front_ui.cpp'), 'utf8');
     const profileSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'control_profile.cpp'), 'utf8');
+    const motorSpeedSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'spd_circle.cpp'), 'utf8');
+    const timerSource = fs.readFileSync(path.join(__dirname, '..', '..', 'libraries', 'drv', 'src', 'lq_timer.cpp'), 'utf8');
     const dirPdSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'dir_pd.cpp'), 'utf8');
     const driveBySource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'drive_by.cpp'), 'utf8');
     const stableDefaultsSource = profileSource.slice(
@@ -321,7 +323,13 @@ async function main() {
     assert(mainSource.includes('\\"carProfile\\":%d,\\"profileSpd\\":%.2f'));
     assert(mainSource.includes('#carProfile=%d;'));
     assert(mainSource.includes('#profileSpd=%f;'));
-    assert(hardwareTestSource.includes('constexpr int kHardwareTestMaxPwm = 7000;'));
+    assert(hardwareTestSource.includes('constexpr int kHardwareTestMaxPwm = 9900;'));
+    assert(hardwareTestSource.includes('motor_speed_force_hardware_test_pwm(requested_pwm);'));
+    assert(motorSpeedSource.includes('constexpr int kMaxForwardPwm = 8000;'));
+    assert(motorSpeedSource.includes('constexpr int kMaxHardwareTestForwardPwm = 9900;'));
+    assert(timerSource.includes('++g_timeout_total_count;'));
+    assert(timerSource.includes('snapshot->used_ms = ns_to_ms(g_timeout_last_used_ns);'));
+    assert(!timerSource.includes('lq_log_warn("[超时]'));
     assert(frontUiSource.includes('constexpr float kRemoteYawRateDps = 160.0f;'));
     assert(frontUiSource.includes('constexpr auto kPhysicalStartDelay = std::chrono::milliseconds(1000);'));
     assert(frontUiSource.includes('physical_start_deadline = now + kPhysicalStartDelay;'));
@@ -363,11 +371,22 @@ async function main() {
     assert(mainSource.includes('std::chrono::seconds(5)'));
     assert(mainSource.includes('check_is_zebra(&img_raw, x, y, thres)'));
     assert(mainSource.includes('[斑马线] 检测到斑马线，停车'));
-    assert(mainSource.includes('if (zebra_detected) {\n            printf'));
+    assert(mainSource.includes(
+      'if (zebra_detected) {\n            if (!drive_by_on_zebra_detected())'));
+    assert(mainSource.includes('drive_by_on_zebra_detected()'));
+    assert(mainSource.includes('drive_by_has_pending_report()'));
     assert(!mainSource.includes('std::chrono::seconds(3)&&car_running==1'));
     assert.strictEqual((driveBySource.match(/control_profile_is_pro\(\)/g) || []).length, 2);
     assert.strictEqual((driveBySource.match(/g_candidate_brake_active = true;/g) || []).length, 1);
     assert(!speedControlSource.includes('control_profile_is_pro()'));
+    assert(frontUiSource.includes('drive_by_on_start();'));
+    assert(driveBySource.includes('g_stop_at_next_target_armed'));
+    assert(driveBySource.includes('g_stop_after_current_recognition'));
+    assert(driveBySource.includes('已完整跑完一圈，再次通过起跑线'));
+    assert(driveBySource.includes('已停在完整一圈后的第一个目标板前'));
+    assert(driveBySource.includes('识别未形成多数，最后一帧='));
+    assert(driveBySource.includes('识别失败，最后一帧='));
+    assert(driveBySource.includes('bool drive_by_has_pending_report()'));
     assert(profileSource.includes('!front_ui_is_running()'));
     assert.strictEqual((dirPdSource.match(/\[救车\] 触发救车/g) || []).length, 1);
 

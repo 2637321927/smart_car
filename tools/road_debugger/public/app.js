@@ -280,7 +280,7 @@ const TUNING_GROUPS = [
     subtitle: '仅限run=0：PWM1正向输出，PWM2固定失能',
     controls: [
       { key: 'hwTest', label: 'PWM1硬件测试', kind: 'toggle', defaultValue: 0 },
-      { key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 7000, step: 50, defaultValue: 0, hardMax: true },
+      { key: 'hwPwm', label: 'PWM1正向占空比', min: 0, max: 9900, step: 50, defaultValue: 0, hardMax: true },
     ],
   },
 ];
@@ -342,7 +342,7 @@ const TUNING_DESCRIPTIONS = Object.freeze({
   vofa: '控制传统VOFA波形是否回传到192.168.43.146:8080。关闭可减少网络和序列化负担，但仍可从146向小车8082发送调参命令。',
   is_udp_img: '控制额外JPEG调试图像：0关闭，1发送鸟瞰图，2发送原始图。图像编码和网络开销明显高于参数UDP，正常高速行驶建议关闭。',
   hwTest: '仅run=0且绕行、遥控、航向保持都关闭时可开启。开启后只允许PWM1正向测试、PWM2固定为0，并把测试PWM从0开始；关闭状态不会改动正常行车控制。',
-  hwPwm: '硬件测试模式下PWM1的正向输出值，范围0至7000，无RPS闭环。关闭测试时修改不会驱动电机，重新开启hwTest仍会先清零，需确认架空车轮后再调。',
+  hwPwm: '硬件测试模式下PWM1的正向输出值，范围0至9900，无RPS闭环。关闭测试时修改不会驱动电机，重新开启hwTest仍会先清零，需确认架空车轮后再调。',
 });
 
 const TUNING_CONFIGS = TUNING_GROUPS.flatMap((group) => group.controls);

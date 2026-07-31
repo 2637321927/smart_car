@@ -14,6 +14,7 @@ namespace {
 constexpr int kMaxForwardPwm = 8000;
 constexpr int kMaxReversePwm = 4000;
 constexpr int kMaxBrakeReversePwm = 9000;
+constexpr int kMaxHardwareTestForwardPwm = 9900;
 
 // 增量式PID不仅依赖当前PWM，还依赖前两次误差。主动制动结束或停车时，
 // 两类状态必须一起清零，否则下一次闭环会把制动前后的误差突变再次叠加到PWM。
@@ -35,6 +36,13 @@ int clamp_brake_pwm(int pwm)
     // This path is braking-only: forward PWM is rejected rather than clamped.
     if (pwm > 0) return 0;
     if (pwm < -kMaxBrakeReversePwm) return -kMaxBrakeReversePwm;
+    return pwm;
+}
+
+int clamp_hardware_test_pwm(int pwm)
+{
+    if (pwm < 0) return 0;
+    if (pwm > kMaxHardwareTestForwardPwm) return kMaxHardwareTestForwardPwm;
     return pwm;
 }
 
@@ -152,6 +160,12 @@ void motor_speed_force_pwm(int motor1_pwm, int motor2_pwm)
     // 可避免绕行脚本绕过软件的正反向PWM限幅。
     std::lock_guard<std::mutex> lock(g_motor_speed_mutex);
     apply_motor_pwm(motor1_pwm, motor2_pwm);
+}
+
+void motor_speed_force_hardware_test_pwm(int motor1_pwm)
+{
+    std::lock_guard<std::mutex> lock(g_motor_speed_mutex);
+    write_motor_pwm(clamp_hardware_test_pwm(motor1_pwm), 0);
 }
 
 void motor_speed_force_brake_pwm(int motor1_pwm, int motor2_pwm)

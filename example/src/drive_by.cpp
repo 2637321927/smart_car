@@ -189,6 +189,13 @@ struct BrakeTestReport {
     DriveByAbortReason reason = DB_ABORT_NONE;
 };
 
+struct TargetStopReport {
+    bool result_valid = false;
+    int result = 1;
+    RecognitionFrameStatus last_frame_status = RECOG_FRAME_NOT_PROCESSED;
+    int last_frame_result = 1;
+};
+
 struct FarRedCandidate {
     bool found = false;
     int max_contour_area = 0;
@@ -206,6 +213,8 @@ volatile bool g_brake_active = false;
 volatile bool g_brake_completed = false;
 volatile bool g_candidate_brake_active = false;
 volatile bool g_stable_early_brake_enabled = false;
+volatile bool g_stop_at_next_target_armed = false;
+bool g_stop_after_current_recognition = false;
 volatile bool g_inference_complete = false;
 volatile bool g_test_mode = false;
 volatile bool g_brake_test_enabled = false;
@@ -214,6 +223,7 @@ volatile bool g_brake_test_holding = false;
 volatile bool g_stop_requested = false;
 volatile bool g_report_pending = false;
 volatile bool g_brake_test_report_pending = false;
+volatile bool g_target_stop_report_pending = false;
 volatile bool g_visual_aim_line_valid = false;
 // 运行入口固定为三阶段脚本。保留该字段只为隔离尚未删除的历史边线实现，
 // 任何在线命令都不能把当前绕行切换到边线状态机。
@@ -246,6 +256,7 @@ float g_target_distance_at_trigger_m = 0.0f;
 SavedControl g_saved;
 RecognitionReport g_report;
 BrakeTestReport g_brake_test_report;
+TargetStopReport g_target_stop_report;
 float g_brake_test_start_left_rps = 0.0f;
 float g_brake_test_start_right_rps = 0.0f;
 float g_brake_test_release_left_rps = 0.0f;
@@ -415,6 +426,49 @@ const char *result_action_name(int result)
     if (result == 0) return "左绕";
     if (result == 2) return "右绕";
     return "直行";
+}
+
+const char *result_label_name(int result)
+{
+    if (result == 0) return "weapon";
+    if (result == 2) return "supplies";
+    return "vehicle";
+}
+
+const char *result_label_chinese_name(int result)
+{
+    if (result == 0) return "武器";
+    if (result == 2) return "物资";
+    return "车辆";
+}
+
+bool recognition_result_is_valid(const RecognitionReport& report, int result)
+{
+    if (result < 0 || result > 2 || report.valid_count <= 0 ||
+        report.votes[result] < 2) {
+        return false;
+    }
+    for (int index = 0; index < 3; ++index) {
+        if (index != result && report.votes[index] >= report.votes[result]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+TargetStopReport make_target_stop_report(const RecognitionReport& report,
+                                         int result)
+{
+    TargetStopReport target_report;
+    target_report.result = result;
+    target_report.result_valid = recognition_result_is_valid(report, result);
+    if (report.frame_count > 0) {
+        const RecognitionFrameRecord& last_frame =
+            report.frames[report.frame_count - 1];
+        target_report.last_frame_status = last_frame.status;
+        target_report.last_frame_result = last_frame.mapped_result;
+    }
+    return target_report;
 }
 
 void save_control_once()
@@ -803,15 +857,17 @@ void process_inference_frame(cv::Mat& frame,
     finish_frame_record(record, frame_start);
 }
 
-void print_recognition_report(int final_result)
+void print_recognition_report(const RecognitionReport& report,
+                              int final_result,
+                              DriveByAbortReason abort_reason)
 {
     printf("[识别测试] 检测到红色：检测耗时=%.2f毫秒，左轮=%.2fRPS，右轮=%.2fRPS\n",
-           g_report.trigger_detect_ms,
-           g_report.trigger_left_rps,
-           g_report.trigger_right_rps);
+           report.trigger_detect_ms,
+           report.trigger_left_rps,
+           report.trigger_right_rps);
 
-    for (int index = 0; index < g_report.frame_count; ++index) {
-        const RecognitionFrameRecord& record = g_report.frames[index];
+    for (int index = 0; index < report.frame_count; ++index) {
+        const RecognitionFrameRecord& record = report.frames[index];
         printf("[识别测试] 第%d/%d帧：%s\n",
                index + 1,
                kInferFrames,
@@ -830,26 +886,31 @@ void print_recognition_report(int final_result)
                record.since_trigger_ms);
     }
 
-    const char *decision_mode = g_report.early_decision
+    const char *decision_mode = report.early_decision
         ? "前两帧一致，提前结束"
-        : (g_report.frame_count >= kInferFrames ? "完成三帧投票" : "流程提前退出");
+        : (report.frame_count >= kInferFrames ? "完成三帧投票" : "流程提前退出");
     printf("[识别测试] 最终结果=%d（%s），投票：左绕=%d，直行=%d，右绕=%d，有效帧=%d/%d，判定=%s\n",
            final_result,
            result_action_name(final_result),
-           g_report.votes[0],
-           g_report.votes[1],
-           g_report.votes[2],
-           g_report.valid_count,
-           g_report.frame_count,
+           report.votes[0],
+           report.votes[1],
+           report.votes[2],
+           report.valid_count,
+           report.frame_count,
            decision_mode);
     printf("[识别测试] 识别总时间=%.2f毫秒，推理合计=%.2f毫秒，结束轮速=(%.2f, %.2f)RPS\n",
-           g_report.total_ms,
-           g_report.infer_sum_ms,
-           g_report.finish_left_rps,
-           g_report.finish_right_rps);
-    if (g_abort_reason != DB_ABORT_NONE) {
-        printf("[绕行脚本] 已退出：原因=%s\n", abort_reason_name(g_abort_reason));
+           report.total_ms,
+           report.infer_sum_ms,
+           report.finish_left_rps,
+           report.finish_right_rps);
+    if (abort_reason != DB_ABORT_NONE) {
+        printf("[绕行脚本] 已退出：原因=%s\n", abort_reason_name(abort_reason));
     }
+}
+
+void print_recognition_report(int final_result)
+{
+    print_recognition_report(g_report, final_result, g_abort_reason);
 }
 
 void print_brake_test_report()
@@ -885,6 +946,29 @@ void print_brake_test_report()
                abort_reason_chinese_name(report.reason),
                abort_reason_name(report.reason));
     }
+}
+
+void print_target_stop_report(const TargetStopReport& report)
+{
+    if (report.result_valid) {
+        printf("[目标板识别] 已停在完整一圈后的第一个目标板前：类型=%s（%s）\n",
+               result_label_chinese_name(report.result),
+               result_label_name(report.result));
+    } else if (report.last_frame_status == RECOG_FRAME_OK) {
+        printf("[目标板识别] 已停在完整一圈后的第一个目标板前：识别未形成多数，最后一帧=%s（%s）\n",
+               result_label_chinese_name(report.last_frame_result),
+               result_label_name(report.last_frame_result));
+    } else {
+        printf("[目标板识别] 已停在完整一圈后的第一个目标板前：识别失败，最后一帧=%s\n",
+               frame_status_name(report.last_frame_status));
+    }
+}
+
+void print_target_stop_report()
+{
+    const TargetStopReport report = g_target_stop_report;
+    g_target_stop_report_pending = false;
+    print_target_stop_report(report);
 }
 
 bool compute_heading_from_line(int center_index, float *heading_deg)
@@ -1047,6 +1131,7 @@ void enter_state(DriveByState next)
 void reset_runtime(bool restore_outputs)
 {
     g_candidate_brake_active = false;
+    g_stop_after_current_recognition = false;
     clear_active_brake(true);
     motor_speed_pid_reset();
     if (restore_outputs) {
@@ -1180,6 +1265,7 @@ void finish_brake_test_stop(DriveByAbortReason reason)
 void start_approach_session(const FarRedCandidate& candidate)
 {
     g_candidate_brake_active = false;
+    g_stop_after_current_recognition = g_stop_at_next_target_armed;
     save_control_once();
     g_drive_by_busy = true;
     g_seen_lock = true;
@@ -1228,6 +1314,9 @@ void mark_recognition_trigger(double trigger_detect_ms)
         return;
     }
     g_recognition_triggered = true;
+    if (g_stop_after_current_recognition) {
+        g_stop_at_next_target_armed = false;
+    }
     g_recognition_start = DriveByClock::now();
     g_report.trigger_detect_ms = trigger_detect_ms;
     g_report.trigger_left_rps = encoder1_speed_avg;
@@ -1243,6 +1332,7 @@ void cancel_false_candidate()
     restore_control();
     gyro_yaw_rate_control_reset_controller();
     g_drive_by_busy = false;
+    g_stop_after_current_recognition = false;
     g_state = DB_IDLE;
     g_debug.state_code = (int)DB_IDLE;
     g_cooldown_start = DriveByClock::now();
@@ -1659,6 +1749,15 @@ void complete_inference()
         complete_brake_test_recognition(DB_ABORT_NONE);
         return;
     }
+    if (g_stop_after_current_recognition) {
+        if (!g_brake_completed || g_brake_active) {
+            enter_state(DB_WAIT_BRAKE);
+        } else {
+            command_zero_targets();
+            enter_state(DB_FINISH_PENDING);
+        }
+        return;
+    }
     if (!g_brake_completed || g_brake_active) {
         // 无论投票结果是否需要左右绕行，都先等主动制动完整结束。
         // 这样“直行”结果不会在仍高于释放速度时突然恢复35RPS。
@@ -1717,6 +1816,14 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
                 item_flag = 1;
                 if (g_brake_test_active) {
                     complete_brake_test_recognition(DB_ABORT_VIEW_TIMEOUT);
+                } else if (g_stop_after_current_recognition) {
+                    g_pending_result = item_flag;
+                    g_inference_complete = true;
+                    g_abort_reason = DB_ABORT_VIEW_TIMEOUT;
+                    g_debug.abort_reason = (int)DB_ABORT_VIEW_TIMEOUT;
+                    enter_state(g_brake_completed && !g_brake_active
+                        ? DB_FINISH_PENDING
+                        : DB_WAIT_BRAKE);
                 } else {
                     finish_session(DB_ABORT_VIEW_TIMEOUT);
                 }
@@ -1733,6 +1840,14 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
             item_flag = 1;
             if (g_brake_test_active) {
                 complete_brake_test_recognition(DB_ABORT_VIEW_TIMEOUT);
+            } else if (g_stop_after_current_recognition) {
+                g_pending_result = item_flag;
+                g_inference_complete = true;
+                g_abort_reason = DB_ABORT_VIEW_TIMEOUT;
+                g_debug.abort_reason = (int)DB_ABORT_VIEW_TIMEOUT;
+                enter_state(g_brake_completed && !g_brake_active
+                    ? DB_FINISH_PENDING
+                    : DB_WAIT_BRAKE);
             } else {
                 finish_session(DB_ABORT_VIEW_TIMEOUT);
             }
@@ -1759,7 +1874,23 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
         break;
 
     case DB_FINISH_PENDING:
-        finish_session(g_abort_reason);
+        if (g_stop_after_current_recognition) {
+            const RecognitionReport report = g_report;
+            const int final_result = item_flag;
+            const TargetStopReport target_report =
+                make_target_stop_report(report, final_result);
+
+            g_drive_by_busy = false;
+            g_stop_after_current_recognition = false;
+            command_zero_targets();
+            motor_speed_force_pwm(0, 0);
+            front_ui_stop();
+
+            print_target_stop_report(target_report);
+            print_recognition_report(report, final_result, DB_ABORT_NONE);
+        } else {
+            finish_session(g_abort_reason);
+        }
         break;
 
     default:
@@ -1811,7 +1942,7 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
         return;
     }
     const bool early_brake_enabled = control_profile_is_pro() ||
-        g_stable_early_brake_enabled;
+        g_stable_early_brake_enabled || g_stop_at_next_target_armed;
     if (early_brake_enabled && candidate.found) {
         start_candidate_brake();
     } else if (g_candidate_brake_active) {
@@ -1826,9 +1957,13 @@ void drive_by_init()
 {
     g_drive_by_enable = false;
     g_stable_early_brake_enabled = false;
+    g_stop_at_next_target_armed = false;
+    g_stop_after_current_recognition = false;
     g_brake_test_enabled = false;
     g_brake_test_report = BrakeTestReport{};
     g_brake_test_report_pending = false;
+    g_target_stop_report = TargetStopReport{};
+    g_target_stop_report_pending = false;
     g_heading_hold_enabled = false;
     g_heading_hold_quiet = false;
     g_tangent_debug_enabled = false;
@@ -1841,6 +1976,9 @@ void drive_by_init()
 
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
 {
+    if (g_target_stop_report_pending) {
+        print_target_stop_report();
+    }
     if (g_brake_test_report_pending) {
         print_brake_test_report();
     }
@@ -1848,6 +1986,9 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
         // 8ms控制回调已经恢复普通巡线，这里只补做不会影响转向的报告输出。
         g_report_pending = false;
         print_recognition_report(item_flag);
+    }
+    if (!front_ui_is_running() && !g_drive_by_busy) {
+        return;
     }
 
     // 刹车测试开关可以在停车时预先开启，但只有run=1才启动真实红块检测。
@@ -1871,6 +2012,30 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
         command_idle_candidate_speed();
         update_idle_detection(frame, ncnn);
     }
+}
+
+void drive_by_on_start()
+{
+    g_stop_at_next_target_armed = false;
+    g_stop_after_current_recognition = false;
+}
+
+bool drive_by_on_zebra_detected()
+{
+    if (!g_drive_by_enable) {
+        return false;
+    }
+    if (!g_stop_at_next_target_armed && !g_stop_after_current_recognition) {
+        g_stop_at_next_target_armed = true;
+        printf("[目标板识别] 已完整跑完一圈，再次通过起跑线；下一块目标板将识别后停车\n");
+    }
+    return true;
+}
+
+bool drive_by_has_pending_report()
+{
+    return g_report_pending || g_brake_test_report_pending ||
+        g_target_stop_report_pending;
 }
 
 void drive_by_control_update()
@@ -1918,6 +2083,16 @@ bool drive_by_speed_control_update()
         g_debug.brake_test_holding = 1;
         if (g_inference_complete) {
             finish_brake_test_stop(g_abort_reason);
+        }
+        return true;
+    }
+
+    if (g_stop_after_current_recognition && g_brake_completed &&
+        !g_brake_active) {
+        command_zero_targets();
+        motor_speed_force_pwm(0, 0);
+        if (g_inference_complete && g_state == DB_WAIT_BRAKE) {
+            enter_state(DB_FINISH_PENDING);
         }
         return true;
     }
@@ -1973,7 +2148,12 @@ bool drive_by_speed_control_update()
         }
         command_recognition_base_speed();
         if (g_inference_complete && g_state == DB_WAIT_BRAKE) {
-            if (g_pending_result == 0 || g_pending_result == 2) {
+            if (g_stop_after_current_recognition) {
+                command_zero_targets();
+                motor_speed_force_pwm(0, 0);
+                enter_state(DB_FINISH_PENDING);
+                return true;
+            } else if (g_pending_result == 0 || g_pending_result == 2) {
                 enter_state(DB_START_MOTION_PENDING);
             } else {
                 // 报告打印与参数恢复交给相机线程，3ms速度线程只提交结束状态。
@@ -1991,6 +2171,12 @@ bool drive_by_speed_control_update()
             g_brake_test_elapsed_ms = brake_elapsed_ms;
             finish_brake_test_stop(reason);
             return true;
+        }
+        if (g_stop_after_current_recognition) {
+            g_target_stop_report = make_target_stop_report(g_report, item_flag);
+            g_target_stop_report_pending = true;
+            g_drive_by_busy = false;
+            g_stop_after_current_recognition = false;
         }
         clear_active_brake(true);
         motor_speed_pid_reset();
@@ -2226,6 +2412,8 @@ void drive_by_set_enable(bool enable)
         return;
     }
     g_drive_by_enable = enable;
+    g_stop_at_next_target_armed = false;
+    g_stop_after_current_recognition = false;
     if (!enable && !g_brake_test_enabled) {
         reset_runtime(true);
     }
