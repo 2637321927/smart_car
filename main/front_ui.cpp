@@ -332,6 +332,8 @@ void front_ui_stop()
 {
     physical_start_pending = false;
     stop_car();
+    printf("[车辆] 已停车\n");
+    fflush(stdout);
 }
 
 void front_ui_set_running(bool running)

@@ -487,11 +487,13 @@ void print_target_result_line(int result)
 {
     if (result < 0 || result > 2) {
         printf("[目标板] 类型=未知\n");
+        fflush(stdout);
         return;
     }
     printf("[目标板] 类型=%s（%s）\n",
            result_label_chinese_name(result),
            result_label_name(result));
+    fflush(stdout);
 }
 
 void save_control_once()
