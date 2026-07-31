@@ -301,6 +301,7 @@ async function main() {
     const motorSpeedSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'spd_circle.cpp'), 'utf8');
     const timerSource = fs.readFileSync(path.join(__dirname, '..', '..', 'libraries', 'drv', 'src', 'lq_timer.cpp'), 'utf8');
     const dirPdSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'dir_pd.cpp'), 'utf8');
+    const circleSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'circle.cpp'), 'utf8');
     const driveBySource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'drive_by.cpp'), 'utf8');
     const stableDefaultsSource = profileSource.slice(
       profileSource.indexOf('ControlProfileValues make_stable_defaults()'),
@@ -323,6 +324,9 @@ async function main() {
     assert(mainSource.includes('\\"carProfile\\":%d,\\"profileSpd\\":%.2f'));
     assert(mainSource.includes('#carProfile=%d;'));
     assert(mainSource.includes('#profileSpd=%f;'));
+    assert(mainSource.includes('volatile int vofa_telemetry_enabled = 0;'));
+    assert(mainSource.includes('volatile int camera_performance_enabled = 0;'));
+    assert(mainSource.includes('is_udp_img=0;'));
     assert(hardwareTestSource.includes('constexpr int kHardwareTestMaxPwm = 9900;'));
     assert(hardwareTestSource.includes('motor_speed_force_hardware_test_pwm(requested_pwm);'));
     assert(motorSpeedSource.includes('constexpr int kMaxForwardPwm = 8000;'));
@@ -370,7 +374,7 @@ async function main() {
     assert(mainSource.includes('++zebra_detection_frame_counter >='));
     assert(mainSource.includes('std::chrono::seconds(5)'));
     assert(mainSource.includes('check_is_zebra(&img_raw, x, y, thres)'));
-    assert(mainSource.includes('[斑马线] 检测到斑马线，停车'));
+    assert(!mainSource.includes('[斑马线] 检测到斑马线，停车'));
     assert(mainSource.includes(
       'if (zebra_detected) {\n            if (!drive_by_on_zebra_detected())'));
     assert(mainSource.includes('drive_by_on_zebra_detected()'));
@@ -380,15 +384,25 @@ async function main() {
     assert.strictEqual((driveBySource.match(/g_candidate_brake_active = true;/g) || []).length, 1);
     assert(!speedControlSource.includes('control_profile_is_pro()'));
     assert(frontUiSource.includes('drive_by_on_start();'));
+    assert(!frontUiSource.includes('[识别测试]'));
+    assert(!frontUiSource.includes('std::cout << "run\\n"'));
     assert(driveBySource.includes('g_stop_at_next_target_armed'));
     assert(driveBySource.includes('g_stop_after_current_recognition'));
-    assert(driveBySource.includes('已完整跑完一圈，再次通过起跑线'));
-    assert(driveBySource.includes('已停在完整一圈后的第一个目标板前'));
-    assert(driveBySource.includes('识别未形成多数，最后一帧='));
-    assert(driveBySource.includes('识别失败，最后一帧='));
+    assert(driveBySource.includes('printf("[目标板] 类型=%s（%s）\\n",'));
+    assert(driveBySource.includes('printf("[目标板] 类型=未知\\n");'));
+    assert(!driveBySource.includes('[识别测试]'));
+    assert(!driveBySource.includes('[绕行脚本]'));
+    assert(!driveBySource.includes('[目标板识别]'));
     assert(driveBySource.includes('bool drive_by_has_pending_report()'));
     assert(profileSource.includes('!front_ui_is_running()'));
-    assert.strictEqual((dirPdSource.match(/\[救车\] 触发救车/g) || []).length, 1);
+    assert(!dirPdSource.includes('printf("[救车]'));
+    assert(!dirPdSource.includes('printf("[方向环]'));
+    assert(!circleSource.includes('std::cout << "begin left circle"'));
+    assert(!circleSource.includes('std::cout << "begin right circle"'));
+    assert(!circleSource.includes('std::cout<<"dis_out"'));
+    assert(!circleSource.includes('std::cout<<"cross"'));
+    assert(!circleSource.includes('std::cout<<"in"'));
+    assert(!circleSource.includes('std::cout<<"cross_out"'));
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
     assert.strictEqual(stopResponse.status, 200);

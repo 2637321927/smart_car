@@ -2015,7 +2015,6 @@ img0.step=frame.step;
         }
         if (zebra_detected) {
             if (!drive_by_on_zebra_detected()) {
-                printf("[斑马线] 检测到斑马线，停车\n");
                 front_ui_stop();
             }
         }

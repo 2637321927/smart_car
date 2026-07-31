@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 
 volatile float dir_P = 0.128f;
 volatile float dir_D = 1.55f;
@@ -12,53 +11,6 @@ volatile int spd_slow_ratio = 30;
 namespace
 {
 constexpr float kVisionYGuardMaxDps = 700.0f;
-
-void print_direction_control_status(const char *mode,
-                                    const char *reason,
-                                    float vision_error,
-                                    float base_rps,
-                                    float differential_rps,
-                                    bool rescue_mode)
-{
-    static const char *last_mode = nullptr;
-    static const char *last_reason = nullptr;
-    static bool rescue_log_active = false;
-
-    if (rescue_mode) {
-        if (!rescue_log_active) {
-            printf("[救车] 触发救车\n");
-            rescue_log_active = true;
-        }
-        last_mode = mode;
-        last_reason = reason;
-        return;
-    }
-
-    if (rescue_log_active) {
-        // 救车退出只恢复普通模式缓存，不再额外打印一条退出信息。
-        rescue_log_active = false;
-        last_mode = mode;
-        last_reason = reason;
-        return;
-    }
-
-    if (last_mode == mode && last_reason == reason) {
-        return;
-    }
-
-    printf("[方向环] 模式切换: %s -> %s 原因=%s gyro_request=%d gyro_ready=%d err=%.2f base=%.2f diff=%.2f\n",
-           last_mode ? last_mode : "INIT",
-           mode,
-           reason,
-           gyro_yaw_rate_feedback_enabled ? 1 : 0,
-           gyro_yaw_rate_control_is_ready() ? 1 : 0,
-           vision_error,
-           base_rps,
-           differential_rps);
-
-    last_mode = mode;
-    last_reason = reason;
-}
 } // namespace
 /********************************************************************************
  * @brief   PID 控制测试.
@@ -98,11 +50,6 @@ void PID_control_test(float error)
     if(error>max_error) error=max_error;
     if(error<-max_error) error=-max_error;//restrct
     if((error<dead_error)&&(error>-dead_error)) error=0;
-    // 方向环有三种可打印状态：
-    // 1. VISUAL_PD：#gyro=0，请求使用原来的视觉 PD。
-    // 2. GYRO_RATE：#gyro=1 且 MPU6050 ready，使用角速度反馈。
-    // 3. VISUAL_PD_FALLBACK：#gyro=1 但 MPU6050 没 ready，自动回退旧视觉 PD。
-    //
     // 旧视觉 PD：error 直接变成左右轮速度差。
     // 新角速度环：error 先变成目标角速度，
     //    再用 MPU6050 的 gz 闭环得到左右轮速度差。
@@ -112,12 +59,8 @@ void PID_control_test(float error)
     const bool y_guard_active = vision_y_guard_active != 0 &&
         vision_y_guard_turn_sign != 0 && vision_y_guard_target_dps > 0.0f;
 
-    const char *control_mode = "VISUAL_PD";
-    const char *control_reason = "gyro_off";
     float diffrential = 0.0f;
     if (y_guard_active && use_gyro_yaw_rate_feedback) {
-        control_mode = "Y_GUARD_GYRO";
-        control_reason = "aim_y_behind_car";
         const float rescue_target_dps = std::min(
             kVisionYGuardMaxDps, std::fabs((float)vision_y_guard_target_dps));
         diffrential = gyro_yaw_rate_control_update_target_yaw_rate_with_limits(
@@ -125,21 +68,11 @@ void PID_control_test(float error)
             kVisionYGuardMaxDps,
             vision_y_guard_turn_max_rps);
     } else if (use_gyro_yaw_rate_feedback) {
-        control_mode = "GYRO_RATE";
-        control_reason = "mpu6050_feedback";
         diffrential = gyro_yaw_rate_control_update(error);
     } else {
-        if (gyro_feedback_requested && !gyro_feedback_ready) {
-            control_mode = "VISUAL_PD_FALLBACK";
-            control_reason = "mpu6050_not_ready";
-        }
         const float visual_error = y_guard_active
             ? vision_y_guard_turn_sign * 100.0f
             : error;
-        if (y_guard_active) {
-            control_mode = "Y_GUARD_VISUAL";
-            control_reason = "gyro_not_ready";
-        }
         diffrential = calculate_diffrential(visual_error, 0);
     }
 
@@ -187,8 +120,4 @@ void PID_control_test(float error)
     {
         pwm2_duty_rps = 200.0f;
     };
-
-    print_direction_control_status(
-        control_mode, control_reason, error, set_spd1, diffrential, y_guard_active);
-   
 }

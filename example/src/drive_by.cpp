@@ -471,6 +471,29 @@ TargetStopReport make_target_stop_report(const RecognitionReport& report,
     return target_report;
 }
 
+int last_successful_result(const RecognitionReport& report)
+{
+    for (int index = report.frame_count - 1; index >= 0; --index) {
+        const RecognitionFrameRecord& frame = report.frames[index];
+        if (frame.status == RECOG_FRAME_OK &&
+            frame.mapped_result >= 0 && frame.mapped_result <= 2) {
+            return frame.mapped_result;
+        }
+    }
+    return -1;
+}
+
+void print_target_result_line(int result)
+{
+    if (result < 0 || result > 2) {
+        printf("[目标板] 类型=未知\n");
+        return;
+    }
+    printf("[目标板] 类型=%s（%s）\n",
+           result_label_chinese_name(result),
+           result_label_name(result));
+}
+
 void save_control_once()
 {
     if (g_saved.valid) {
@@ -861,51 +884,11 @@ void print_recognition_report(const RecognitionReport& report,
                               int final_result,
                               DriveByAbortReason abort_reason)
 {
-    printf("[识别测试] 检测到红色：检测耗时=%.2f毫秒，左轮=%.2fRPS，右轮=%.2fRPS\n",
-           report.trigger_detect_ms,
-           report.trigger_left_rps,
-           report.trigger_right_rps);
-
-    for (int index = 0; index < report.frame_count; ++index) {
-        const RecognitionFrameRecord& record = report.frames[index];
-        printf("[识别测试] 第%d/%d帧：%s\n",
-               index + 1,
-               kInferFrames,
-               frame_status_name(record.status));
-        if (!record.label.empty()) {
-            printf("  模型标签=%s（%s），识别结果=%d（%s）\n",
-                   record.label.c_str(),
-                   label_chinese_name(record.label),
-                   record.mapped_result,
-                   result_action_name(record.mapped_result));
-        }
-        printf("  红色检测=%.2f毫秒，图像准备=%.2f毫秒，模型推理=%.2f毫秒，累计=%.2f毫秒\n",
-               record.detect_ms,
-               record.prepare_ms,
-               record.infer_ms,
-               record.since_trigger_ms);
-    }
-
-    const char *decision_mode = report.early_decision
-        ? "前两帧一致，提前结束"
-        : (report.frame_count >= kInferFrames ? "完成三帧投票" : "流程提前退出");
-    printf("[识别测试] 最终结果=%d（%s），投票：左绕=%d，直行=%d，右绕=%d，有效帧=%d/%d，判定=%s\n",
-           final_result,
-           result_action_name(final_result),
-           report.votes[0],
-           report.votes[1],
-           report.votes[2],
-           report.valid_count,
-           report.frame_count,
-           decision_mode);
-    printf("[识别测试] 识别总时间=%.2f毫秒，推理合计=%.2f毫秒，结束轮速=(%.2f, %.2f)RPS\n",
-           report.total_ms,
-           report.infer_sum_ms,
-           report.finish_left_rps,
-           report.finish_right_rps);
-    if (abort_reason != DB_ABORT_NONE) {
-        printf("[绕行脚本] 已退出：原因=%s\n", abort_reason_name(abort_reason));
-    }
+    (void)abort_reason;
+    const int display_result = recognition_result_is_valid(report, final_result)
+        ? final_result
+        : last_successful_result(report);
+    print_target_result_line(display_result);
 }
 
 void print_recognition_report(int final_result)
@@ -950,18 +933,11 @@ void print_brake_test_report()
 
 void print_target_stop_report(const TargetStopReport& report)
 {
-    if (report.result_valid) {
-        printf("[目标板识别] 已停在完整一圈后的第一个目标板前：类型=%s（%s）\n",
-               result_label_chinese_name(report.result),
-               result_label_name(report.result));
-    } else if (report.last_frame_status == RECOG_FRAME_OK) {
-        printf("[目标板识别] 已停在完整一圈后的第一个目标板前：识别未形成多数，最后一帧=%s（%s）\n",
-               result_label_chinese_name(report.last_frame_result),
-               result_label_name(report.last_frame_result));
-    } else {
-        printf("[目标板识别] 已停在完整一圈后的第一个目标板前：识别失败，最后一帧=%s\n",
-               frame_status_name(report.last_frame_status));
-    }
+    const int display_result = report.result_valid
+        ? report.result
+        : (report.last_frame_status == RECOG_FRAME_OK
+            ? report.last_frame_result : -1);
+    print_target_result_line(display_result);
 }
 
 void print_target_stop_report()
@@ -1887,7 +1863,6 @@ void update_busy_state(cv::Mat& frame, LQ_NCNN& ncnn)
             front_ui_stop();
 
             print_target_stop_report(target_report);
-            print_recognition_report(report, final_result, DB_ABORT_NONE);
         } else {
             finish_session(g_abort_reason);
         }
@@ -2027,7 +2002,6 @@ bool drive_by_on_zebra_detected()
     }
     if (!g_stop_at_next_target_armed && !g_stop_after_current_recognition) {
         g_stop_at_next_target_armed = true;
-        printf("[目标板识别] 已完整跑完一圈，再次通过起跑线；下一块目标板将识别后停车\n");
     }
     return true;
 }
@@ -2417,7 +2391,6 @@ void drive_by_set_enable(bool enable)
     if (!enable && !g_brake_test_enabled) {
         reset_runtime(true);
     }
-    printf("[目标板识别] 状态=%s\n", enable ? "开启" : "关闭");
 }
 
 void drive_by_toggle_enable()
