@@ -1362,21 +1362,18 @@ void begin_motion_script(int result)
     }
 
     if (!g_target_geometry_captured) {
-        item_flag = 1;
         g_abort_reason = DB_ABORT_NO_TARGET_GEOMETRY;
         g_debug.abort_reason = (int)g_abort_reason;
         enter_state(DB_FINISH_PENDING);
         return;
     }
     if (!gyro_yaw_rate_control_is_ready()) {
-        item_flag = 1;
         g_abort_reason = DB_ABORT_GYRO_NOT_READY;
         g_debug.abort_reason = (int)g_abort_reason;
         enter_state(DB_FINISH_PENDING);
         return;
     }
     if (gyro_yaw_rate_control_gyro_age_ms() > drive_by_gyro_stale_ms) {
-        item_flag = 1;
         g_abort_reason = DB_ABORT_GYRO_STALE;
         g_debug.abort_reason = (int)g_abort_reason;
         enter_state(DB_FINISH_PENDING);
@@ -1542,17 +1539,14 @@ void complete_motion_handoff()
 void update_motion_state()
 {
     if (!gyro_yaw_rate_control_is_ready()) {
-        item_flag = 1;
         request_motion_stop(DB_ABORT_GYRO_NOT_READY);
         return;
     }
     if (gyro_yaw_rate_control_gyro_age_ms() > drive_by_gyro_stale_ms) {
-        item_flag = 1;
         request_motion_stop(DB_ABORT_GYRO_STALE);
         return;
     }
     if (motion_phase_guard_exceeded()) {
-        item_flag = 1;
         request_motion_stop(DB_ABORT_PHASE_TIMEOUT);
         return;
     }
@@ -1668,7 +1662,6 @@ void update_motion_state()
 void update_visual_motion_state()
 {
     if (motion_phase_guard_exceeded()) {
-        item_flag = 1;
         request_motion_stop(DB_ABORT_PHASE_TIMEOUT);
         return;
     }
@@ -2045,6 +2038,12 @@ bool drive_by_speed_control_update()
         const DriveByAbortReason reason = g_abort_reason;
         const int stopped_brake_elapsed_ms = g_debug.brake_elapsed_ms;
         g_stop_requested = false;
+        // 推理完成后因运动异常（陀螺仪/超时）停车：在清理数据前先输出识别报告。
+        // 否则 front_ui_stop() → drive_by_cancel() → reset_runtime() 会清空 g_report，
+        // 导致 printf 永远输出"未知"。
+        if (g_inference_complete && g_report.valid_count > 0) {
+            print_recognition_report(item_flag);
+        }
         front_ui_stop();
         // front_ui_stop()会取消脚本并清空运行态；把原因写回调试快照，便于事后定位。
         g_abort_reason = reason;
