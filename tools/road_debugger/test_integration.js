@@ -413,6 +413,10 @@ async function main() {
     assert(profileSource.includes('values.speed_slow_ratio = 40;'));
     assert(profileSource.includes('values.rescue_target_dps = 650.0f;'));
     assert(profileSource.includes('values.rescue_turn_max_rps = 30.0f;'));
+    assert(profileSource.includes(
+      'drive_by_post_zebra_guard_ms = mode == CONTROL_PROFILE_PRO ? 5400 : 7000;',
+    ));
+    assert(profileSource.includes('std::printf("[PROFILE] t-delay=%.1fs\\n"'));
     assert(driveBySource.includes('g_candidate_brake_active'));
     assert(driveBySource.includes('g_stable_early_brake_enabled = false'));
     assert(driveBySource.includes('control_profile_is_pro() ||'));

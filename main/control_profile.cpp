@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstdio>
 
 namespace {
 
@@ -153,6 +154,9 @@ bool control_profile_switch(ControlProfileMode mode)
 
     active_mode.store(mode, std::memory_order_release);
     apply_values(active_profile().session());
+    drive_by_post_zebra_guard_ms = mode == CONTROL_PROFILE_PRO ? 5400 : 7000;
+    std::printf("[PROFILE] t-delay=%.1fs\n",
+                drive_by_post_zebra_guard_ms / 1000.0f);
     return true;
 }
 
