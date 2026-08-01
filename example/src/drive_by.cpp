@@ -192,8 +192,7 @@ struct BrakeTestReport {
 struct TargetStopReport {
     bool result_valid = false;
     int result = 1;
-    RecognitionFrameStatus last_frame_status = RECOG_FRAME_NOT_PROCESSED;
-    int last_frame_result = 1;
+    int fallback_result = -1;
 };
 
 struct FarRedCandidate {
@@ -456,18 +455,15 @@ bool recognition_result_is_valid(const RecognitionReport& report, int result)
     return true;
 }
 
+int last_successful_result(const RecognitionReport& report);
+
 TargetStopReport make_target_stop_report(const RecognitionReport& report,
                                          int result)
 {
     TargetStopReport target_report;
     target_report.result = result;
     target_report.result_valid = recognition_result_is_valid(report, result);
-    if (report.frame_count > 0) {
-        const RecognitionFrameRecord& last_frame =
-            report.frames[report.frame_count - 1];
-        target_report.last_frame_status = last_frame.status;
-        target_report.last_frame_result = last_frame.mapped_result;
-    }
+    target_report.fallback_result = last_successful_result(report);
     return target_report;
 }
 
@@ -937,8 +933,7 @@ void print_target_stop_report(const TargetStopReport& report)
 {
     const int display_result = report.result_valid
         ? report.result
-        : (report.last_frame_status == RECOG_FRAME_OK
-            ? report.last_frame_result : -1);
+        : report.fallback_result;
     print_target_result_line(display_result);
 }
 

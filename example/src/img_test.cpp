@@ -60,7 +60,7 @@ uint8_t Last_Left_Down_Point_finish_flag  = 0;  // 本次与上次是同一个�
 sint16 White_Column[LCDW]; 
 // VOFA和道路调试器位于不同电脑，必须分别初始化，不能共用目标IP。
 const std::string VOFA_TARGET_IP       = "192.168.43.146";
-const std::string DEBUGGER_TARGET_IP   = "192.168.43.213";
+const std::string DEBUGGER_TARGET_IP   = "192.168.43.155";
 const uint16_t    VOFA_TARGET_PORT     = 8080;
 const uint16_t    DEBUGGER_TARGET_PORT = 8080;
 const uint16_t    DEBUGGER_IMAGE_PORT  = 8081;

@@ -390,6 +390,8 @@ async function main() {
     assert(driveBySource.includes('g_stop_after_current_recognition'));
     assert(driveBySource.includes('printf("[目标板] 类型=%s（%s）\\n",'));
     assert(driveBySource.includes('printf("[目标板] 类型=未知\\n");'));
+    assert(driveBySource.includes(': last_successful_result(report);'));
+    assert(driveBySource.includes('target_report.fallback_result = last_successful_result(report);'));
     assert(!driveBySource.includes('[识别测试]'));
     assert(!driveBySource.includes('[绕行脚本]'));
     assert(!driveBySource.includes('[目标板识别]'));
