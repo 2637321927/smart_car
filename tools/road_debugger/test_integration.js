@@ -165,15 +165,28 @@ async function main() {
       camera_process_overrun_count: 1,
     })));
     await sendUdp(makeRoadPacket());
+    const targetResultPacket = Buffer.from(JSON.stringify({
+      packet_type: 'target_result',
+      event_id: 17,
+      result: 0,
+      text: '[目标板] 类型=武器（weapon）',
+    }));
+    await sendUdp(targetResultPacket);
+    await sendUdp(targetResultPacket);
+    await sendUdp(targetResultPacket);
     await delay(120);
 
     const statusResponse = await request('GET', '/api/status');
     assert.strictEqual(statusResponse.status, 200);
-    assert.strictEqual(statusResponse.json.jsonPackets, 3);
+    assert.strictEqual(statusResponse.json.jsonPackets, 6);
     assert.strictEqual(statusResponse.json.tuningPackets, 2);
     assert.strictEqual(statusResponse.json.controlPackets, 1);
     assert.strictEqual(statusResponse.json.roadPackets, 1);
     assert.strictEqual(statusResponse.json.invalidPackets, 0);
+    assert.strictEqual(statusResponse.json.latestTargetResult.eventId, 17);
+    assert.strictEqual(statusResponse.json.latestTargetResult.result, 0);
+    assert.strictEqual(statusResponse.json.latestTargetResult.text,
+      '[目标板] 类型=武器（weapon）');
 
     const pageResponse = await request('GET', '/');
     assert.strictEqual(pageResponse.status, 200);
@@ -209,9 +222,22 @@ async function main() {
     assert(pageResponse.text.includes('proProfileCommand'));
     assert(pageResponse.text.includes('profileBadge'));
     assert(pageResponse.text.includes('timeoutBadge'));
+    assert(pageResponse.text.includes('finalTargetResultLine'));
+    assert(pageResponse.text.includes('finalTargetChinese'));
+    assert(pageResponse.text.includes('beijingClock'));
+    assert(pageResponse.text.includes('等待最终停车识别结果'));
     assert(!pageResponse.text.includes('parameterList'));
     assert(!pageResponse.text.includes('detectEveryFrameButton'));
     assert(!pageResponse.text.includes('detectEveryTwoFramesButton'));
+
+    const stylesResponse = await request('GET', '/styles.css');
+    assert.strictEqual(stylesResponse.status, 200);
+    assert(stylesResponse.text.includes('"result result result"'));
+    assert(stylesResponse.text.includes('.final-target-result-line strong'));
+    assert(stylesResponse.text.includes('font-size: clamp(64px, 5.2vw, 96px);'));
+    assert(stylesResponse.text.includes('font-size: clamp(42px, 4.2vw, 72px);'));
+    assert(stylesResponse.text.includes('font-size: clamp(24px, 2vw, 34px);'));
+    assert(stylesResponse.text.includes('font-size: 44px;'));
 
     const appResponse = await request('GET', '/app.js');
     assert.strictEqual(appResponse.status, 200);
@@ -226,7 +252,7 @@ async function main() {
       'gDbg', 'gTar', 'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax', 'yGuardDps',
       'yGuardBase', 'yGuardRMax', 'gSign', 'tSign', 'dbUseTangent', 'dbRecSpd',
       'dbTurnAngle', 'dbPassDist',
-      'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbHKp',
+      'dbReturnBias', 'dbSafeDist', 'dbRpsMps', 'dbViewMax', 'dbViewWait', 'dbZebraDelay', 'dbHKp',
       'dbHKd', 'dbHMax', 'dbHTol', 'dbRecoverDps', 'dbYawSign', 'dbTurnRps', 'dbForwardRps', 'dbExitRps', 'dbBrakePwm',
       'yawHoldRMax',
       'dbBrakeRelease', 'dbBrakeTimeout', 'dbTestDist', 'circle_exit', 'udp', 'vofa',
@@ -265,6 +291,8 @@ async function main() {
     assert(appResponse.text.includes("key: 'dbForwardRps', label: '斜行阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10"));
     assert(appResponse.text.includes("key: 'dbExitRps', label: '转入阶段前进基准速度', min: 0, max: 40, step: 1, unit: 'RPS', defaultValue: 10"));
     assert(appResponse.text.includes("key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 46"));
+    assert(appResponse.text.includes("key: 'dbZebraDelay', label: '斑马线后红砖屏蔽时间', min: 0, max: 15, step: 0.1, unit: 's', defaultValue: 7, hardMax: true"));
+    assert(appResponse.text.includes("const SEND_ONLY_TUNING_KEYS = new Set(['dbZebraDelay'])"));
     assert(appResponse.text.includes("key: 'dbHTol', label: '航向允许误差（退出+1°）', min: 0, max: 10, step: 0.1, unit: 'deg', defaultValue: 4.5"));
     assert(appResponse.text.includes("key: 'dbBrakePwm', label: '主动制动反向PWM', min: 0, max: 9000, step: 50, defaultValue: 9000, hardMax: true"));
     assert(appResponse.text.includes("key: 'dbBrakeRelease', label: '制动释放速度', min: 0, max: 200, step: 0.5, unit: 'RPS', defaultValue: 0"));
@@ -277,11 +305,18 @@ async function main() {
     assert(appResponse.text.includes("#test_brake="));
     assert(appResponse.text.includes('#dbEarlyBrake=${enabled ? 0 : 1};'));
     assert(appResponse.text.includes('PRO首次候选刹车：固定开启'));
-    assert(appResponse.text.includes("#drive=${enabled ? 0 : 1};"));
+    assert(appResponse.text.includes("#drive=${nextMode};"));
+    assert(appResponse.text.includes('function driveRecognitionMode(params)'));
+    assert(appResponse.text.includes("'lap-stop-command', displayedDriveMode === 2"));
+    assert(pageResponse.text.includes('目标板：不识别'));
     assert(appResponse.text.includes("#camStats=${enabled ? 0 : 1};"));
     assert(appResponse.text.includes('camera_process_avg_ms'));
     assert(appResponse.text.includes('renderCameraPerformance'));
     assert(appResponse.text.includes('TIMEOUT_SOURCE_NAMES'));
+    assert(appResponse.text.includes("source.addEventListener('target_result'"));
+    assert(appResponse.text.includes("event.type === 'target_result'"));
+    assert(appResponse.text.includes("timeZone: 'Asia/Shanghai'"));
+    assert(appResponse.text.includes("0: { chinese: '武器', english: 'weapon' }"));
     assert(appResponse.text.includes('telemetryMode'));
     assert(appResponse.text.includes('controlAge <= 100'));
     assert(appResponse.text.includes('controlAge <= 500'));
@@ -294,9 +329,15 @@ async function main() {
     assert(appResponse.text.includes('params.drive_brake_test_enabled'));
     assert(appResponse.text.includes('sendRemoteHeartbeat'));
 
-    const mainSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'main.cpp'), 'utf8');
+    const mainSource = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'main', 'main.cpp'),
+      'utf8',
+    ).replace(/\r\n/g, '\n');
     const hardwareTestSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'hardware_test.cpp'), 'utf8');
-    const frontUiSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'front_ui.cpp'), 'utf8');
+    const frontUiSource = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'main', 'front_ui.cpp'),
+      'utf8',
+    ).replace(/\r\n/g, '\n');
     const profileSource = fs.readFileSync(path.join(__dirname, '..', '..', 'main', 'control_profile.cpp'), 'utf8');
     const motorSpeedSource = fs.readFileSync(path.join(__dirname, '..', '..', 'example', 'src', 'spd_circle.cpp'), 'utf8');
     const timerSource = fs.readFileSync(path.join(__dirname, '..', '..', 'libraries', 'drv', 'src', 'lq_timer.cpp'), 'utf8');
@@ -310,6 +351,17 @@ async function main() {
     const speedControlSource = driveBySource.slice(
       driveBySource.indexOf('bool drive_by_speed_control_update()'),
       driveBySource.indexOf('bool drive_by_start_test('),
+    );
+    const targetResultSenderSource = mainSource.slice(
+      mainSource.indexOf('void target_result_udp_update()'),
+      mainSource.indexOf('struct CameraPerformanceSnapshot'),
+    );
+    const updateBusyStateStart = driveBySource.indexOf('void update_busy_state(');
+    const finalTargetStopStart = driveBySource.indexOf(
+      'case DB_FINISH_PENDING:', updateBusyStateStart);
+    const finalTargetStopSource = driveBySource.slice(
+      finalTargetStopStart,
+      driveBySource.indexOf('default:', finalTargetStopStart),
     );
     assert(mainSource.includes('constexpr int kRoadTelemetryMinIntervalMs = 20;'));
     assert(mainSource.includes('constexpr int kControlTelemetryPacketSize'));
@@ -339,7 +391,9 @@ async function main() {
     assert(frontUiSource.includes('physical_start_deadline = now + kPhysicalStartDelay;'));
     assert(frontUiSource.includes('void front_ui_start()'));
     assert(frontUiSource.includes('physical_start_pending = false;\n    start_car();'));
-    assert(frontUiSource.includes('K0 TARGET K1 PROFILE'));
+    assert(frontUiSource.includes('K0 TARGET MODE'));
+    assert(frontUiSource.includes('drive_by_cycle_recognition_mode();'));
+    assert(frontUiSource.includes('"LAPSTOP" : "OFF"'));
     assert(frontUiSource.includes('control_profile_switch(requested_mode)'));
     assert(frontUiSource.includes('已切换为%s模式'));
     assert(frontUiSource.includes('超载（OVERLOAD）'));
@@ -367,6 +421,12 @@ async function main() {
     assert(driveBySource.includes('if (g_candidate_brake_active && !g_brake_active)'));
     assert(driveBySource.includes('g_drive_by_busy || g_candidate_brake_active'));
     assert(mainSource.includes('#dbEarlyBrake=%d;'));
+    assert(mainSource.includes('#dbZebraDelay=%f;'));
+    assert(mainSource.includes('drive_by_post_zebra_guard_ms = (int)(ftmp * 1000.0f + 0.5f);'));
+    assert(!mainSource.includes('\\"dbZebraDelay\\":'));
+    assert(mainSource.includes('drive_by_set_recognition_mode((DriveByRecognitionMode)itmp)'));
+    assert(mainSource.includes('(static_cast<uint16_t>(drive_by_recognition_mode()) & 0x3u) << 4'));
+    assert(mainSource.includes('\\"drive_mode\\":%d'));
     assert(mainSource.includes('\\\"dbEarlyBrake\\\":%d'));
     assert(mainSource.includes('drive_by_stable_early_brake_set_enable(itmp != 0)'));
     assert(mainSource.includes('const bool zebra_detection_armed = car_running &&'));
@@ -388,13 +448,31 @@ async function main() {
     assert(!frontUiSource.includes('std::cout << "run\\n"'));
     assert(driveBySource.includes('g_stop_at_next_target_armed'));
     assert(driveBySource.includes('g_stop_after_current_recognition'));
-    assert(driveBySource.includes('printf("[目标板] 类型=%s（%s）\\n",'));
-    assert(driveBySource.includes('printf("[目标板] 类型=未知\\n");'));
+    assert(driveBySource.includes('drive_by_post_zebra_guard_ms = 7000'));
+    assert(driveBySource.includes('g_post_zebra_guard_active'));
+    assert(driveBySource.includes('cancel_target_for_post_zebra_guard();'));
+    assert(driveBySource.includes('std::atomic<int> g_recognition_mode'));
+    assert(driveBySource.includes('DRIVE_BY_RECOGNITION_LAP_STOP &&'));
+    assert(driveBySource.includes('((int)load_recognition_mode() + 1) % 3'));
+    assert(driveBySource.includes('等待最终目标，屏蔽时间=%.1f秒'));
+    assert(driveBySource.includes('snprintf(buffer, buffer_size, "[目标板] 类型=%s（%s）"'));
+    assert(driveBySource.includes('snprintf(buffer, buffer_size, "[目标板] 类型=未知")'));
+    assert.strictEqual((driveBySource.match(/queue_final_target_result\(display_result\);/g) || []).length, 1);
+    assert(driveBySource.includes('bool drive_by_take_final_target_result('));
+    assert(mainSource.includes('constexpr int kTargetResultUdpCopyCount = 3;'));
+    assert(mainSource.includes('constexpr int kTargetResultUdpIntervalMs = 20;'));
+    assert(mainSource.includes('drive_by_take_final_target_result(&event)'));
+    assert(mainSource.includes('target_result_udp_update();'));
+    assert(mainSource.includes('"{\\"packet_type\\":\\"target_result\\"'));
+    assert(!targetResultSenderSource.includes('udp_debug_mode'));
+    assert(finalTargetStopSource.indexOf('front_ui_stop();') >= 0);
+    assert(finalTargetStopSource.indexOf('front_ui_stop();') <
+      finalTargetStopSource.indexOf('print_target_stop_report(target_report);'));
     assert(driveBySource.includes(': last_successful_result(report);'));
     assert(driveBySource.includes('target_report.fallback_result = last_successful_result(report);'));
     assert(!driveBySource.includes('[识别测试]'));
     assert(!driveBySource.includes('[绕行脚本]'));
-    assert(!driveBySource.includes('[目标板识别]'));
+    assert.strictEqual((driveBySource.match(/\[目标板识别\]/g) || []).length, 1);
     assert(driveBySource.includes('bool drive_by_has_pending_report()'));
     assert(profileSource.includes('!front_ui_is_running()'));
     assert(!dirPdSource.includes('printf("[救车]'));
@@ -408,7 +486,7 @@ async function main() {
 
     const stopResponse = await request('POST', '/api/recording/stop', {});
     assert.strictEqual(stopResponse.status, 200);
-    assert.strictEqual(stopResponse.json.recording.eventCount, 5);
+    assert.strictEqual(stopResponse.json.recording.eventCount, 6);
 
     const listResponse = await request('GET', '/api/recordings');
     assert.strictEqual(listResponse.status, 200);
@@ -418,6 +496,7 @@ async function main() {
       `/api/recording/file?name=${encodeURIComponent(listResponse.json.recordings[0].name)}`);
     assert.strictEqual(fileResponse.status, 200);
     assert(fileResponse.text.includes('"type":"road"'));
+    assert(fileResponse.text.includes('"type":"target_result"'));
     assert(fileResponse.text.includes('"angleDeg":-7.25'));
 
     const commandResponse = await request('POST', '/api/command', {
@@ -448,6 +527,8 @@ async function main() {
     assert(recordingText.includes('"camStats":1'));
     assert(recordingText.includes('"camera_process_avg_ms":16.8'));
     assert(recordingText.includes('"udp_control_send_fail_total":2'));
+    assert(recordingText.includes('"type":"target_result"'));
+    assert.strictEqual((recordingText.match(/"type":"target_result"/g) || []).length, 1);
     console.log('Road debugger integration test passed');
   } finally {
     services.udpReceiver.close();

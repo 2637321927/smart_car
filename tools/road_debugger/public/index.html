@@ -23,6 +23,24 @@
     </header>
 
     <main id="dashboard" class="dashboard">
+      <section class="panel final-target-panel" aria-labelledby="finalTargetTitle">
+        <div class="final-target-copy">
+          <p class="section-label">FINAL STOP TARGET</p>
+          <h2 id="finalTargetTitle">最终停车识别结果</h2>
+          <div id="finalTargetResultLine" class="final-target-result-line waiting" role="status">
+            <span id="finalTargetPrefix" class="final-target-prefix" hidden>[目标板] 类型=</span>
+            <strong id="finalTargetChinese">等待最终停车识别结果</strong>
+            <span id="finalTargetEnglish" class="final-target-english"></span>
+          </div>
+          <span id="finalTargetReceivedAt" class="final-target-time">结果时间：--</span>
+        </div>
+        <div class="beijing-clock-block">
+          <span class="section-label">BEIJING TIME</span>
+          <strong id="beijingClock">---- -- -- --:--:--</strong>
+          <span>北京时间 / Asia/Shanghai</span>
+        </div>
+      </section>
+
       <section class="visual-column">
         <article class="panel road-panel">
           <div class="panel-heading">
@@ -139,7 +157,7 @@
             <button class="run-command stop-command" type="button" data-command="#run=0;">停车</button>
             <button type="button" data-command="#spd=35;">35RPS</button>
             <button type="button" data-command="#spd=0;">0RPS</button>
-            <button id="driveToggleCommand" class="recognition-command" type="button">识别关闭，点击开启</button>
+            <button id="driveToggleCommand" class="recognition-command" type="button">目标板：不识别</button>
             <button id="earlyBrakeCommand" class="recognition-command" type="button">稳定组首次候选刹车：关闭</button>
             <button id="brakeTestCommand" class="debug-command" type="button">刹车测试关闭</button>
             <button type="button" data-command="#udp=0;">UDP关闭</button>

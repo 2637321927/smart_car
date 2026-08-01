@@ -7,6 +7,7 @@
 #include "lq_all_demo.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -67,6 +68,7 @@ volatile float drive_by_brake_release_rps = 0.0f;
 volatile int drive_by_brake_confirm_count = 2;
 volatile int drive_by_brake_timeout_ms = 511;
 volatile float drive_by_test_target_distance_m = 0.50f;
+volatile int drive_by_post_zebra_guard_ms = 7000;
 
 namespace {
 
@@ -201,7 +203,7 @@ struct FarRedCandidate {
     cv::Rect rect;
 };
 
-volatile bool g_drive_by_enable = false;
+std::atomic<int> g_recognition_mode{DRIVE_BY_RECOGNITION_DISABLED};
 volatile bool g_drive_by_busy = false;
 bool g_seen_lock = false;
 bool g_recognition_triggered = false;
@@ -214,6 +216,7 @@ volatile bool g_candidate_brake_active = false;
 volatile bool g_stable_early_brake_enabled = false;
 volatile bool g_stop_at_next_target_armed = false;
 bool g_stop_after_current_recognition = false;
+volatile bool g_post_zebra_guard_active = false;
 volatile bool g_inference_complete = false;
 volatile bool g_test_mode = false;
 volatile bool g_brake_test_enabled = false;
@@ -236,6 +239,8 @@ DriveByClock::time_point g_last_integration_time = DriveByClock::now();
 DriveByClock::time_point g_cooldown_start = DriveByClock::now();
 DriveByClock::time_point g_candidate_retry_after = DriveByClock::now();
 DriveByClock::time_point g_brake_start = DriveByClock::now();
+DriveByClock::time_point g_post_zebra_guard_start = DriveByClock::now();
+int g_post_zebra_guard_duration_ms = 7000;
 int g_detect_frame_counter = 0;
 int g_far_candidate_count = 0;
 bool g_far_candidate_window[kFarDetectWindowSize] = {};
@@ -256,6 +261,9 @@ SavedControl g_saved;
 RecognitionReport g_report;
 BrakeTestReport g_brake_test_report;
 TargetStopReport g_target_stop_report;
+DriveByTargetResultEvent g_final_target_result_event = {};
+bool g_final_target_result_event_pending = false;
+uint32_t g_final_target_result_event_sequence = 0;
 float g_brake_test_start_left_rps = 0.0f;
 float g_brake_test_start_right_rps = 0.0f;
 float g_brake_test_release_left_rps = 0.0f;
@@ -455,6 +463,30 @@ bool recognition_result_is_valid(const RecognitionReport& report, int result)
     return true;
 }
 
+DriveByRecognitionMode load_recognition_mode()
+{
+    const int mode = g_recognition_mode.load(std::memory_order_acquire);
+    if (mode == DRIVE_BY_RECOGNITION_NORMAL) {
+        return DRIVE_BY_RECOGNITION_NORMAL;
+    }
+    if (mode == DRIVE_BY_RECOGNITION_LAP_STOP) {
+        return DRIVE_BY_RECOGNITION_LAP_STOP;
+    }
+    return DRIVE_BY_RECOGNITION_DISABLED;
+}
+
+const char *recognition_mode_name(DriveByRecognitionMode mode)
+{
+    switch (mode) {
+    case DRIVE_BY_RECOGNITION_NORMAL:
+        return "正常识别";
+    case DRIVE_BY_RECOGNITION_LAP_STOP:
+        return "首圈不识别后停车";
+    default:
+        return "不识别";
+    }
+}
+
 int last_successful_result(const RecognitionReport& report);
 
 TargetStopReport make_target_stop_report(const RecognitionReport& report,
@@ -479,17 +511,37 @@ int last_successful_result(const RecognitionReport& report)
     return -1;
 }
 
-void print_target_result_line(int result)
+void format_target_result_line(int result, char *buffer, size_t buffer_size)
 {
-    if (result < 0 || result > 2) {
-        printf("[目标板] 类型=未知\n");
-        fflush(stdout);
+    if (buffer == nullptr || buffer_size == 0) {
         return;
     }
-    printf("[目标板] 类型=%s（%s）\n",
-           result_label_chinese_name(result),
-           result_label_name(result));
+    if (result < 0 || result > 2) {
+        snprintf(buffer, buffer_size, "[目标板] 类型=未知");
+        return;
+    }
+    snprintf(buffer, buffer_size, "[目标板] 类型=%s（%s）",
+             result_label_chinese_name(result),
+             result_label_name(result));
+}
+
+void print_target_result_line(int result)
+{
+    char line[64] = {};
+    format_target_result_line(result, line, sizeof(line));
+    printf("%s\n", line);
     fflush(stdout);
+}
+
+void queue_final_target_result(int result)
+{
+    g_final_target_result_event.event_id =
+        ++g_final_target_result_event_sequence;
+    g_final_target_result_event.result = result;
+    format_target_result_line(result,
+                              g_final_target_result_event.text,
+                              sizeof(g_final_target_result_event.text));
+    g_final_target_result_event_pending = true;
 }
 
 void save_control_once()
@@ -935,6 +987,7 @@ void print_target_stop_report(const TargetStopReport& report)
         ? report.result
         : report.fallback_result;
     print_target_result_line(display_result);
+    queue_final_target_result(display_result);
 }
 
 void print_target_stop_report()
@@ -1105,6 +1158,7 @@ void reset_runtime(bool restore_outputs)
 {
     g_candidate_brake_active = false;
     g_stop_after_current_recognition = false;
+    g_post_zebra_guard_active = false;
     clear_active_brake(true);
     motor_speed_pid_reset();
     if (restore_outputs) {
@@ -1145,6 +1199,17 @@ void reset_runtime(bool restore_outputs)
     red_block_rect = cv::Rect();
     plate_rect = cv::Rect();
     red_contour_area = 0;
+}
+
+void cancel_target_for_post_zebra_guard()
+{
+    // 斑马线优先级高于本圈尚未结束的真实识别、制动和绕行。
+    // 不恢复触发前保存的旧差速，交还后由普通方向环用最新视觉误差重新计算。
+    g_stop_at_next_target_armed = false;
+    g_saved.valid = false;
+    reset_runtime(false);
+    g_saved.valid = false;
+    command_motion_wheels(control_profile_target_speed_rps(), 0.0f);
 }
 
 void finish_session(DriveByAbortReason reason)
@@ -1920,15 +1985,20 @@ void update_idle_detection(cv::Mat& frame, LQ_NCNN& ncnn)
 
 void drive_by_init()
 {
-    g_drive_by_enable = false;
+    g_recognition_mode.store(DRIVE_BY_RECOGNITION_DISABLED,
+                             std::memory_order_release);
     g_stable_early_brake_enabled = false;
     g_stop_at_next_target_armed = false;
     g_stop_after_current_recognition = false;
+    g_post_zebra_guard_active = false;
     g_brake_test_enabled = false;
     g_brake_test_report = BrakeTestReport{};
     g_brake_test_report_pending = false;
     g_target_stop_report = TargetStopReport{};
     g_target_stop_report_pending = false;
+    g_final_target_result_event = DriveByTargetResultEvent{};
+    g_final_target_result_event_pending = false;
+    g_final_target_result_event_sequence = 0;
     g_heading_hold_enabled = false;
     g_heading_hold_quiet = false;
     g_tangent_debug_enabled = false;
@@ -1958,12 +2028,35 @@ void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn)
 
     // 刹车测试开关可以在停车时预先开启，但只有run=1才启动真实红块检测。
     // 已经触发的测试和TEST绕行不受K0开关变化影响，必须继续完成安全停车。
-    const bool real_detection_enabled = g_drive_by_enable ||
+    const DriveByRecognitionMode recognition_mode = load_recognition_mode();
+    const bool real_detection_enabled =
+        recognition_mode != DRIVE_BY_RECOGNITION_DISABLED ||
         (g_brake_test_enabled && front_ui_is_running());
     if (!real_detection_enabled && !g_test_mode && !g_brake_test_active) {
         if (g_drive_by_busy || g_candidate_brake_active) {
             reset_runtime(true);
         }
+        return;
+    }
+
+    if (g_post_zebra_guard_active) {
+        if (elapsed_ms(g_post_zebra_guard_start) <
+            g_post_zebra_guard_duration_ms) {
+            command_normal_base_speed();
+            return;
+        }
+
+        g_post_zebra_guard_active = false;
+        g_stop_at_next_target_armed = true;
+        g_detect_frame_counter = 0;
+        g_seen_lock = false;
+        reset_far_candidate_window();
+    }
+    if (recognition_mode == DRIVE_BY_RECOGNITION_LAP_STOP &&
+        !g_stop_at_next_target_armed &&
+        !g_stop_after_current_recognition &&
+        !g_drive_by_busy && !g_test_mode &&
+        !g_brake_test_enabled && !g_brake_test_active) {
         return;
     }
     if (frame.empty()) {
@@ -1983,16 +2076,32 @@ void drive_by_on_start()
 {
     g_stop_at_next_target_armed = false;
     g_stop_after_current_recognition = false;
+    g_post_zebra_guard_active = false;
 }
 
 bool drive_by_on_zebra_detected()
 {
-    if (!g_drive_by_enable) {
+    if (load_recognition_mode() == DRIVE_BY_RECOGNITION_DISABLED) {
         return false;
     }
-    if (!g_stop_at_next_target_armed && !g_stop_after_current_recognition) {
-        g_stop_at_next_target_armed = true;
+
+    // TEST绕行和刹车测试不接入比赛的斑马线后屏蔽状态。
+    if (g_test_mode || g_brake_test_enabled || g_brake_test_active) {
+        return true;
     }
+    if (g_post_zebra_guard_active || g_stop_at_next_target_armed ||
+        g_stop_after_current_recognition) {
+        return true;
+    }
+
+    cancel_target_for_post_zebra_guard();
+    g_post_zebra_guard_start = DriveByClock::now();
+    g_post_zebra_guard_duration_ms = std::max(0, std::min(
+        15000, (int)drive_by_post_zebra_guard_ms));
+    g_post_zebra_guard_active = true;
+    printf("[目标板识别] 已通过斑马线，等待最终目标，屏蔽时间=%.1f秒\n",
+           g_post_zebra_guard_duration_ms / 1000.0f);
+    fflush(stdout);
     return true;
 }
 
@@ -2000,6 +2109,17 @@ bool drive_by_has_pending_report()
 {
     return g_report_pending || g_brake_test_report_pending ||
         g_target_stop_report_pending;
+}
+
+bool drive_by_take_final_target_result(DriveByTargetResultEvent *event)
+{
+    if (event == nullptr || !g_final_target_result_event_pending) {
+        return false;
+    }
+
+    *event = g_final_target_result_event;
+    g_final_target_result_event_pending = false;
+    return true;
 }
 
 void drive_by_control_update()
@@ -2373,26 +2493,64 @@ bool drive_by_should_suspend_track_features()
 
 bool drive_by_is_enabled()
 {
-    return g_drive_by_enable;
+    return load_recognition_mode() != DRIVE_BY_RECOGNITION_DISABLED;
+}
+
+DriveByRecognitionMode drive_by_recognition_mode()
+{
+    return load_recognition_mode();
+}
+
+const char *drive_by_recognition_mode_name()
+{
+    return recognition_mode_name(load_recognition_mode());
+}
+
+bool drive_by_set_recognition_mode(DriveByRecognitionMode mode)
+{
+    if (mode != DRIVE_BY_RECOGNITION_DISABLED &&
+        mode != DRIVE_BY_RECOGNITION_NORMAL &&
+        mode != DRIVE_BY_RECOGNITION_LAP_STOP) {
+        printf("[目标板模式] 无效模式值=%d\n", (int)mode);
+        return false;
+    }
+    if (front_ui_is_running()) {
+        printf("[目标板模式] 行驶中禁止切换，请先停车\n");
+        return false;
+    }
+    if (load_recognition_mode() == mode) {
+        printf("[目标板模式] 当前已是%s\n", recognition_mode_name(mode));
+        return true;
+    }
+
+    g_stop_at_next_target_armed = false;
+    g_stop_after_current_recognition = false;
+    g_post_zebra_guard_active = false;
+    g_saved.valid = false;
+    reset_runtime(false);
+    g_saved.valid = false;
+    g_recognition_mode.store((int)mode, std::memory_order_release);
+    printf("[目标板模式] 已切换为%s\n", recognition_mode_name(mode));
+    return true;
+}
+
+bool drive_by_cycle_recognition_mode()
+{
+    const int next_mode = ((int)load_recognition_mode() + 1) % 3;
+    return drive_by_set_recognition_mode(
+        (DriveByRecognitionMode)next_mode);
 }
 
 void drive_by_set_enable(bool enable)
 {
-    if (g_drive_by_enable == enable) {
-        return;
-    }
-    g_drive_by_enable = enable;
-    g_stop_at_next_target_armed = false;
-    g_stop_after_current_recognition = false;
-    if (!enable && !g_brake_test_enabled) {
-        reset_runtime(true);
-    }
-    printf("[目标板识别] 状态=%s\n", enable ? "开启" : "关闭");
+    drive_by_set_recognition_mode(enable
+        ? DRIVE_BY_RECOGNITION_NORMAL
+        : DRIVE_BY_RECOGNITION_DISABLED);
 }
 
 void drive_by_toggle_enable()
 {
-    drive_by_set_enable(!g_drive_by_enable);
+    drive_by_set_enable(!drive_by_is_enabled());
 }
 
 bool drive_by_brake_test_set_enable(bool enable)

@@ -9,6 +9,12 @@ const elements = {
   profileBadge: $('profileBadge'),
   packetAge: $('packetAge'),
   timeoutBadge: $('timeoutBadge'),
+  finalTargetResultLine: $('finalTargetResultLine'),
+  finalTargetPrefix: $('finalTargetPrefix'),
+  finalTargetChinese: $('finalTargetChinese'),
+  finalTargetEnglish: $('finalTargetEnglish'),
+  finalTargetReceivedAt: $('finalTargetReceivedAt'),
+  beijingClock: $('beijingClock'),
   leftCount: $('leftCount'),
   centerCount: $('centerCount'),
   rightCount: $('rightCount'),
@@ -70,6 +76,23 @@ const elements = {
   toast: $('toast'),
 };
 
+const TARGET_RESULT_LABELS = Object.freeze({
+  0: { chinese: '武器', english: 'weapon' },
+  1: { chinese: '车辆', english: 'vehicle' },
+  2: { chinese: '物资', english: 'supplies' },
+});
+
+const BEIJING_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+});
+
 const PARAMETER_LABELS = {
   seq: '参数包序号',
   uptime_ms: '小车运行时间',
@@ -115,6 +138,7 @@ const PARAMETER_LABELS = {
   track_tangent_deg: '中线切线角度',
   selected_speed: '速度档位',
   drive_enabled: '识别模式开关',
+  drive_mode: '目标板识别模式',
   drive_busy: '识别流程忙',
   drive_state: '识别状态',
   drive_abort_reason: '绕行退出原因',
@@ -245,6 +269,7 @@ const TUNING_GROUPS = [
       { key: 'dbRpsMps', label: '轮速-车速换算系数', min: 0.01, max: 0.1, step: 0.001, unit: 'm/(s·RPS)', defaultValue: 0.047 },
       { key: 'dbViewMax', label: '最大观察夹角', min: 0, max: 90, step: 1, unit: 'deg', defaultValue: 46 },
       { key: 'dbViewWait', label: '观察等待上限', min: 0, max: 2000, step: 10, unit: 'ms', defaultValue: 120 },
+      { key: 'dbZebraDelay', label: '斑马线后红砖屏蔽时间', min: 0, max: 15, step: 0.1, unit: 's', defaultValue: 7, hardMax: true },
       { key: 'dbHKp', label: '航向外环P', min: 0, max: 60, step: 0.1, defaultValue: 31 },
       { key: 'dbHKd', label: '航向外环D', min: 0, max: 5, step: 0.05, defaultValue: 0.2 },
       { key: 'dbHMax', label: '绕行最大角速度', min: 0, max: 720, step: 5, unit: 'dps', defaultValue: 505 },
@@ -325,6 +350,7 @@ const TUNING_DESCRIPTIONS = Object.freeze({
   dbRpsMps: '把编码器平均轮速换算成车速的系数，公式为速度m/s=平均RPS×该值。调大后软件累计距离更快、距离阶段更早结束；应按实测标定，不能用来直接提速。',
   dbViewMax: '目标板允许开始推理的最大观察夹角，单位deg。调大更容易触发但斜视识别风险上升；调小图像更正但可能等待过久。只影响真实红块识别，不影响TEST绕行。',
   dbViewWait: '红块候选成立后，等待观察夹角和ROI满足推理条件的最长时间，单位ms。超时会放弃本次左右绕行并按安全流程退出；调大等待更久也更靠近目标。',
+  dbZebraDelay: '开启目标板识别时，再次通过斑马线后暂时屏蔽红块检测、NCNN和主动制动，用于避开起跑线附近红砖；到时后自动等待下一块真实目标板并停车。仅发送到小车，本值不通过UDP回读，也不进入录像快照。',
   dbHKp: '三阶段绕行和航向保持的航向角外环P：把航向误差deg换成目标角速度dps。调大起转和回正更积极，过大时更容易顶到dbHMax并冲过目标角。',
   dbHKd: '三阶段绕行和航向保持的航向阻尼：按实测角速度从目标角速度中扣除。调大能更早刹住旋转、减少过冲；过大则转向发软或到角度很慢。',
   dbHMax: '三阶段航向外环允许给出的最大目标角速度，单位dps。调大允许车身转得更快，但实际响应仍受gIP、gII、gRMax、轮速基准和电机能力限制。',
@@ -351,6 +377,7 @@ const TUNING_DEFAULTS = {
   dbEarlyBrake: 0,
   ...Object.fromEntries(TUNING_CONFIGS.map((config) => [config.key, config.defaultValue])),
 };
+const SEND_ONLY_TUNING_KEYS = new Set(['dbZebraDelay']);
 const PROFILE_SCOPED_KEYS = new Set([
   'profileSpd', 'P', 'I', 'D', 'dirP', 'dirD', 'AIM', 'spd_slow_ratio',
   'gOP', 'gOD', 'gIP', 'gII', 'gTMax', 'gRMax',
@@ -375,6 +402,12 @@ function displayedProfileMode() {
     ? state.displayTuning?.carProfile
     : (state.displayTuning?.carProfile ?? state.liveTuning?.carProfile);
   return Number(value ?? 0) === 1 ? 1 : 0;
+}
+
+function driveRecognitionMode(params) {
+  const mode = Math.trunc(Number(params?.drive_mode));
+  if (mode === 0 || mode === 1 || mode === 2) return mode;
+  return Boolean(Number(params?.drive_enabled ?? 0)) ? 1 : 0;
 }
 
 function tuningSliderMinimum(config) {
@@ -435,9 +468,11 @@ const state = {
   liveParams: null,
   liveRoad: null,
   liveTuning: null,
+  liveTargetResult: null,
   displayParams: null,
   displayRoad: null,
   displayTuning: null,
+  displayTargetResult: null,
   displayParamTime: null,
   displayRoadTime: null,
   displayTuningTime: null,
@@ -459,6 +494,7 @@ const state = {
     paramEvents: [],
     roadEvents: [],
     tuningEvents: [],
+    targetResultEvents: [],
     duration: 0,
     currentTime: 0,
     playing: false,
@@ -1264,8 +1300,8 @@ function updateSummary() {
   const displayedTuning = state.displayTuning || liveTuning;
   const liveRunning = Boolean(Number(liveParams.run ?? 0));
   const driveBusy = Boolean(Number(liveParams.drive_busy ?? 0));
-  const driveEnabled = Boolean(Number(liveParams.drive_enabled ?? 0));
-  const displayedDriveEnabled = Boolean(Number(params.drive_enabled ?? driveEnabled));
+  const liveDriveMode = driveRecognitionMode(liveParams);
+  const displayedDriveMode = driveRecognitionMode(params);
   const brakeTestEnabled = Boolean(Number(liveParams.drive_brake_test_enabled ?? 0));
   const displayedBrakeTestEnabled = Boolean(Number(
     params.drive_brake_test_enabled ?? liveParams.drive_brake_test_enabled ?? 0));
@@ -1280,11 +1316,20 @@ function updateSummary() {
     ? '车辆停车时不可启动绕行测试'
     : (brakeTestEnabled ? '请先关闭持续刹车测试' :
       (driveBusy ? '绕行脚本正在执行' : '启动绕行脚本测试'));
-  elements.driveToggleCommand.classList.toggle('selected-command', displayedDriveEnabled);
-  elements.driveToggleCommand.textContent = displayedDriveEnabled
-    ? '识别已开启，点击关闭'
-    : '识别已关闭，点击开启';
-  elements.driveToggleCommand.disabled = state.mode !== 'live' || !state.liveParams;
+  elements.driveToggleCommand.classList.toggle(
+    'selected-command', displayedDriveMode === 1);
+  elements.driveToggleCommand.classList.toggle(
+    'lap-stop-command', displayedDriveMode === 2);
+  elements.driveToggleCommand.textContent = displayedDriveMode === 1
+    ? '目标板：正常识别（点击切换首圈巡线）'
+    : (displayedDriveMode === 2
+      ? '目标板：首圈不识别后停车（点击关闭）'
+      : '目标板：不识别（点击开启正常识别）');
+  elements.driveToggleCommand.disabled = state.mode !== 'live' ||
+    !state.liveParams || liveRunning || driveBusy;
+  elements.driveToggleCommand.title = liveRunning || driveBusy
+    ? '仅停车且识别流程空闲时可以切换目标板模式'
+    : '依次切换：不识别 → 正常识别 → 首圈不识别后停车';
   const proMode = displayedProfileMode() === 1;
   const stableEarlyBrakeEnabled = Boolean(Number(displayedTuning.dbEarlyBrake ?? 0));
   elements.earlyBrakeCommand.classList.toggle(
@@ -1373,8 +1418,39 @@ async function toggleHeadingHold() {
 }
 
 async function toggleDriveRecognition() {
-  const enabled = Boolean(Number(state.liveParams?.drive_enabled ?? 0));
-  await sendCommand(`#drive=${enabled ? 0 : 1};`);
+  const nextMode = (driveRecognitionMode(state.liveParams) + 1) % 3;
+  await sendCommand(`#drive=${nextMode};`);
+}
+
+function formatBeijingDateTime(timestamp) {
+  const date = new Date(Number(timestamp));
+  if (!Number.isFinite(date.getTime())) return '--';
+  const parts = Object.fromEntries(BEIJING_DATE_TIME_FORMATTER
+    .formatToParts(date)
+    .filter((part) => part.type !== 'literal')
+    .map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
+function updateBeijingClock() {
+  elements.beijingClock.textContent = formatBeijingDateTime(Date.now());
+}
+
+function renderFinalTargetResult() {
+  const targetResult = state.displayTargetResult;
+  const hasResult = Boolean(targetResult);
+  const label = hasResult ? TARGET_RESULT_LABELS[targetResult.result] : null;
+  elements.finalTargetResultLine.classList.toggle('waiting', !hasResult);
+  elements.finalTargetResultLine.classList.toggle('unknown', hasResult && !label);
+  elements.finalTargetPrefix.hidden = !hasResult;
+  elements.finalTargetChinese.textContent = hasResult
+    ? (label?.chinese || '未知')
+    : '等待最终停车识别结果';
+  elements.finalTargetEnglish.textContent = label ? `（${label.english}）` : '';
+  elements.finalTargetReceivedAt.textContent = hasResult
+    ? `结果时间：${formatBeijingDateTime(targetResult.receivedAt)}`
+    : '结果时间：--';
+  elements.finalTargetResultLine.title = targetResult?.text || '';
 }
 
 async function toggleStableEarlyBrake() {
@@ -1470,6 +1546,7 @@ function updateScopeModeText() {
 }
 
 function renderDisplaySnapshot() {
+  renderFinalTargetResult();
   updateScopeOptions(state.displayParams || {});
   renderTuningControls();
   updateScopeModeText();
@@ -1517,9 +1594,28 @@ function applyRoad(receivedAt, road) {
   }
 }
 
+function applyTargetResult(receivedAt, targetResult) {
+  const normalized = {
+    ...targetResult,
+    result: Number(targetResult?.result),
+    receivedAt: Number(receivedAt),
+  };
+  state.liveTargetResult = normalized;
+  if (state.mode === 'live') {
+    state.displayTargetResult = normalized;
+    renderFinalTargetResult();
+  }
+}
+
 function applyTuning(receivedAt, tuning) {
   const merged = { ...TUNING_DEFAULTS, ...tuning };
   const now = Date.now();
+
+  for (const key of SEND_ONLY_TUNING_KEYS) {
+    if (state.liveTuning && key in state.liveTuning) {
+      merged[key] = state.liveTuning[key];
+    }
+  }
 
   // 指令发出到下一份250ms快照之间保留前端预期值。快照确认一致后清除，
   // 若1.5秒仍未确认则以小车实际回传为准，避免界面长期显示假状态。
@@ -1550,6 +1646,10 @@ function applyTuning(receivedAt, tuning) {
 function applyStatus(status) {
   state.serverStatus = status;
   updateRecordingState(status.recording || { active: false });
+  if (status.latestTargetResult) {
+    applyTargetResult(status.latestTargetResult.receivedAt,
+                      status.latestTargetResult);
+  }
 }
 
 function updateRecordingState(recording) {
@@ -1572,6 +1672,7 @@ function setMode(mode) {
     state.displayParams = state.liveParams;
     state.displayRoad = state.liveRoad;
     state.displayTuning = state.liveTuning;
+    state.displayTargetResult = state.liveTargetResult;
     state.displayParamTime = state.lastPacketAt || null;
     state.displayRoadTime = state.lastRoadAt || null;
     state.displayTuningTime = state.liveTuning ? state.lastTuningAt : null;
@@ -1600,15 +1701,22 @@ function applyReplayTime(time) {
   const paramIndex = eventIndexAtTime(clamped, state.replay.paramEvents);
   const roadIndex = eventIndexAtTime(clamped, state.replay.roadEvents);
   const tuningIndex = eventIndexAtTime(clamped, state.replay.tuningEvents);
+  const targetResultIndex = eventIndexAtTime(clamped, state.replay.targetResultEvents);
   const paramEvent = paramIndex >= 0 ? state.replay.paramEvents[paramIndex] : null;
   const roadEvent = roadIndex >= 0 ? state.replay.roadEvents[roadIndex] : null;
   const tuningEvent = tuningIndex >= 0 ? state.replay.tuningEvents[tuningIndex] : null;
+  const targetResultEvent = targetResultIndex >= 0
+    ? state.replay.targetResultEvents[targetResultIndex]
+    : null;
   const roadDisabled = telemetryMode(tuningEvent?.data, paramEvent?.data) < 2;
 
   state.replay.currentTime = clamped;
   state.displayParams = paramEvent?.data || null;
   state.displayRoad = roadDisabled ? null : (roadEvent?.data || null);
   state.displayTuning = tuningEvent?.data || null;
+  state.displayTargetResult = targetResultEvent
+    ? { ...targetResultEvent.data, receivedAt: targetResultEvent.receivedAt }
+    : null;
   state.displayParamTime = paramEvent?.t ?? null;
   state.displayRoadTime = roadEvent?.t ?? null;
   state.displayTuningTime = tuningEvent?.t ?? null;
@@ -1684,13 +1792,15 @@ async function loadSelectedRecording() {
   const events = text.split(/\r?\n/)
     .filter(Boolean)
     .map((line) => JSON.parse(line))
-    .filter((event) => event.type === 'params' || event.type === 'road' || event.type === 'tuning')
+    .filter((event) => event.type === 'params' || event.type === 'road' ||
+      event.type === 'tuning' || event.type === 'target_result')
     .sort((left, right) => left.t - right.t);
   if (!events.length) throw new Error('录像中没有有效遥测事件');
   state.replay.events = events;
   state.replay.paramEvents = events.filter((event) => event.type === 'params');
   state.replay.roadEvents = events.filter((event) => event.type === 'road');
   state.replay.tuningEvents = events.filter((event) => event.type === 'tuning');
+  state.replay.targetResultEvents = events.filter((event) => event.type === 'target_result');
   state.replay.duration = events[events.length - 1].t;
   state.replay.currentTime = 0;
   elements.timeline.max = String(Math.max(1, Math.ceil(state.replay.duration)));
@@ -1873,6 +1983,10 @@ function connectEvents() {
     const payload = JSON.parse(event.data);
     applyRoad(payload.receivedAt, payload.road);
   });
+  source.addEventListener('target_result', (event) => {
+    const payload = JSON.parse(event.data);
+    applyTargetResult(payload.receivedAt, payload.targetResult);
+  });
 }
 
 function updateConnectionAge() {
@@ -1921,9 +2035,12 @@ async function initialize() {
   drawRoad();
   drawDetection();
   drawTrend();
+  renderFinalTargetResult();
+  updateBeijingClock();
   connectEvents();
   await loadRecordings().catch(() => null);
   setInterval(updateConnectionAge, 100);
+  setInterval(updateBeijingClock, 1000);
 }
 
 initialize();

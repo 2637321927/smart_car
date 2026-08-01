@@ -11,6 +11,7 @@ const UDP_PORT = Number(process.env.ROAD_DEBUG_UDP_PORT || 8080);
 const HTTP_PORT = Number(process.env.ROAD_DEBUG_HTTP_PORT || 8765);
 const CAR_IP = process.env.ROAD_DEBUG_CAR_IP || '192.168.43.93';
 const CAR_COMMAND_PORT = Number(process.env.ROAD_DEBUG_CAR_PORT || 8082);
+const TARGET_RESULT_DEDUPE_MS = 2000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const RECORDINGS_DIR = process.env.ROAD_DEBUG_RECORDINGS_DIR
   ? path.resolve(process.env.ROAD_DEBUG_RECORDINGS_DIR)
@@ -29,6 +30,9 @@ const runtime = {
   latestParams: null,
   latestTuning: null,
   latestRoad: null,
+  latestTargetResult: null,
+  lastTargetResultKey: '',
+  lastTargetResultAt: 0,
   udpPackets: 0,
   jsonPackets: 0,
   tuningPackets: 0,
@@ -71,6 +75,19 @@ const CONTROL_FLOAT_FIELDS = [
   'drive_target_yaw_rate_dps', 'drive_turn_rps', 'circle_exit_m', 'odom_m', 'AIM',
   'drive_test_target_distance_m',
 ];
+
+function parseTargetResultPacket(value) {
+  const eventId = Number(value?.event_id);
+  const result = Number(value?.result);
+  const text = typeof value?.text === 'string' ? value.text.trim() : '';
+  if (value?.packet_type !== 'target_result' ||
+      !Number.isSafeInteger(eventId) || eventId < 0 || eventId > 0xffffffff ||
+      !Number.isInteger(result) || result < -1 || result > 2 ||
+      !text || Buffer.byteLength(text, 'utf8') >= 128) {
+    return null;
+  }
+  return { eventId, result, text };
+}
 
 function parseControlPacket(buffer) {
   if (buffer.length < 16 || buffer.toString('ascii', 0, 4) !== 'CTL1') {
@@ -122,6 +139,10 @@ function parseControlPacket(buffer) {
   params.hwTest = Number(Boolean(flags1 & (1 << 1)));
   params.camStats = Number(Boolean(flags1 & (1 << 2)));
   params.remote_active = Number(Boolean(flags1 & (1 << 3)));
+  const encodedDriveMode = (flags1 >> 4) & 0x3;
+  params.drive_mode = encodedDriveMode === 1 || encodedDriveMode === 2
+    ? encodedDriveMode
+    : (params.drive_enabled ? 1 : 0);
 
   const stateCode = params.drive_state_code;
   params.drive_state = params.yaw_hold_enabled
@@ -344,6 +365,7 @@ function statusPayload() {
     lastTuningAt: runtime.lastTuningAt,
     lastRoadAt: runtime.lastRoadAt,
     lastRemote: runtime.lastRemote,
+    latestTargetResult: runtime.latestTargetResult,
     recording: recordingState(),
   };
 }
@@ -422,6 +444,25 @@ function start() {
       try {
         const params = JSON.parse(message.toString('utf8'));
         runtime.jsonPackets += 1;
+        if (params.packet_type === 'target_result') {
+          const targetResult = parseTargetResultPacket(params);
+          if (!targetResult) {
+            runtime.invalidPackets += 1;
+            return;
+          }
+          const dedupeKey = `${remote.address}:${targetResult.eventId}:${targetResult.text}`;
+          if (runtime.lastTargetResultKey === dedupeKey &&
+              receivedAt - runtime.lastTargetResultAt <= TARGET_RESULT_DEDUPE_MS) {
+            return;
+          }
+          runtime.lastTargetResultKey = dedupeKey;
+          runtime.lastTargetResultAt = receivedAt;
+          runtime.latestTargetResult = { ...targetResult, receivedAt };
+          const event = { receivedAt, targetResult };
+          broadcast('target_result', event);
+          recordingEvent('target_result', receivedAt, targetResult);
+          return;
+        }
         if (params.packet_type === 'tuning' || params.packet_type === 'camera') {
           const packetType = params.packet_type;
           const tuning = { ...params };
@@ -617,4 +658,4 @@ if (require.main === module) {
   start();
 }
 
-module.exports = { parseControlPacket, parseRoadPacket, start };
+module.exports = { parseControlPacket, parseRoadPacket, parseTargetResultPacket, start };

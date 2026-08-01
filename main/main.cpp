@@ -540,7 +540,7 @@ if (sscanf(buf, "#vofa=%d;", &itmp) == 1)
 
 if (sscanf(buf, "#drive=%d;", &itmp) == 1)
 {
-    drive_by_set_enable(itmp != 0);
+    drive_by_set_recognition_mode((DriveByRecognitionMode)itmp);
 }
 
 if (sscanf(buf, "#hwTest=%d;", &itmp) == 1)
@@ -740,6 +740,15 @@ if (sscanf(buf, "#dbBrakeTimeout=%d;", &itmp) == 1)
     if (itmp > 2000) itmp = 2000;
     drive_by_brake_timeout_ms = itmp;
     printf("[VOFA] dbBrakeTimeout = %d ms\n", drive_by_brake_timeout_ms);
+}
+
+if (sscanf(buf, "#dbZebraDelay=%f;", &ftmp) == 1)
+{
+    if (ftmp < 0.0f) ftmp = 0.0f;
+    if (ftmp > 15.0f) ftmp = 15.0f;
+    drive_by_post_zebra_guard_ms = (int)(ftmp * 1000.0f + 0.5f);
+    printf("[VOFA] 斑马线后识别屏蔽时间=%.1f秒\n",
+           drive_by_post_zebra_guard_ms / 1000.0f);
 }
 
 if (sscanf(buf, "#dbEarlyBrake=%d;", &itmp) == 1)
@@ -1028,6 +1037,8 @@ constexpr int kRoadTelemetryMaxPoints = 64;
 // RDL1 v1原头部为52字节。新增的4字节切线锚点位于尾部，服务端仍接受旧52字节包。
 constexpr uint16_t kRoadTelemetryHeaderSize = 56;
 constexpr int kRoadTelemetryMinIntervalMs = 20;
+constexpr int kTargetResultUdpCopyCount = 3;
+constexpr int kTargetResultUdpIntervalMs = 20;
 constexpr uint8_t kControlTelemetryVersion = 1;
 constexpr uint8_t kControlTelemetryHeaderSize = 16;
 constexpr int kControlTelemetryIntCount = 16;
@@ -1039,6 +1050,57 @@ constexpr int kControlTelemetryPacketSize = kControlTelemetryHeaderSize +
 constexpr int kTuningTelemetryIntervalMs = 250;
 constexpr float kCameraProcessOverrunMs = 25.0f;
 constexpr int kCameraPerformanceWindowMs = 1000;
+
+struct TargetResultUdpState
+{
+    bool active = false;
+    int sent_count = 0;
+    DriveByTargetResultEvent event = {};
+    steady_clock::time_point next_send_at = steady_clock::now();
+};
+
+TargetResultUdpState g_target_result_udp_state;
+
+void target_result_udp_update()
+{
+    const steady_clock::time_point now = steady_clock::now();
+    if (!g_target_result_udp_state.active) {
+        DriveByTargetResultEvent event;
+        if (!drive_by_take_final_target_result(&event)) {
+            return;
+        }
+        g_target_result_udp_state.active = true;
+        g_target_result_udp_state.sent_count = 0;
+        g_target_result_udp_state.event = event;
+        g_target_result_udp_state.next_send_at = now;
+    }
+
+    if (now < g_target_result_udp_state.next_send_at) {
+        return;
+    }
+
+    char packet[192] = {};
+    const int packet_length = snprintf(
+        packet,
+        sizeof(packet),
+        "{\"packet_type\":\"target_result\",\"event_id\":%u,"
+        "\"result\":%d,\"text\":\"%s\"}",
+        static_cast<unsigned int>(g_target_result_udp_state.event.event_id),
+        g_target_result_udp_state.event.result,
+        g_target_result_udp_state.event.text);
+    if (packet_length > 0 &&
+        packet_length < static_cast<int>(sizeof(packet))) {
+        udp_client_debugger.udp_send(packet, static_cast<size_t>(packet_length));
+    }
+
+    ++g_target_result_udp_state.sent_count;
+    if (g_target_result_udp_state.sent_count >= kTargetResultUdpCopyCount) {
+        g_target_result_udp_state.active = false;
+        return;
+    }
+    g_target_result_udp_state.next_send_at =
+        now + milliseconds(kTargetResultUdpIntervalMs);
+}
 
 struct CameraPerformanceSnapshot
 {
@@ -1430,6 +1492,7 @@ void control_telemetry_send()
     if (hardware_test_is_enabled()) flags1 |= 1u << 1;
     if (camera_performance_enabled != 0) flags1 |= 1u << 2;
     if (front_ui_remote_is_active()) flags1 |= 1u << 3;
+    flags1 |= (static_cast<uint16_t>(drive_by_recognition_mode()) & 0x3u) << 4;
 
     uint8_t packet[kControlTelemetryPacketSize] = {};
     uint8_t *cursor = packet;
@@ -1577,6 +1640,7 @@ void udp_send(void){
              "\"track_tangent_deg\":%.2f,"
              "\"selected_speed\":%d,"
              "\"drive_enabled\":%d,"
+             "\"drive_mode\":%d,"
              "\"drive_busy\":%d,"
              "\"drive_state\":\"%s\","
              "\"drive_abort_reason\":\"%s\","
@@ -1655,6 +1719,7 @@ void udp_send(void){
              safe_float(tangent_debug.angle_deg),
              front_ui_selected_speed(),
              drive_by_is_enabled() ? 1 : 0,
+             (int)drive_by_recognition_mode(),
              drive_by_is_busy() ? 1 : 0,
              heading_hold_enabled ? "HEADING_HOLD" : drive_by_state_name(),
              drive_by_abort_reason(),
@@ -1977,6 +2042,7 @@ while (1)
      drive_by_has_pending_report()) {
     drive_by_update(frame, ncnn);
  }
+ target_result_udp_update();
  cv::cvtColor(frame, frame,cv::COLOR_BGR2GRAY);
         if (frame.empty()) {
             printf("ERROR: Failed to read frame\r\n");

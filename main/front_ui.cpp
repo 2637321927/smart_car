@@ -231,10 +231,20 @@ void draw_ui()
              set_speed_of_motor1_rps, set_speed_of_motor2_rps);
     draw_line(4, line, U16WHITE);
 
-    snprintf(line, sizeof(line), "TARGET:%s", drive_by_is_enabled() ? "ON" : "OFF");
-    draw_line(5, line, drive_by_is_enabled() ? U16GREEN : U16RED);
+    const DriveByRecognitionMode recognition_mode = drive_by_recognition_mode();
+    const char *target_mode = recognition_mode == DRIVE_BY_RECOGNITION_NORMAL
+        ? "RECOG"
+        : (recognition_mode == DRIVE_BY_RECOGNITION_LAP_STOP
+            ? "LAPSTOP" : "OFF");
+    const lq_display_color_t target_color =
+        recognition_mode == DRIVE_BY_RECOGNITION_NORMAL
+            ? U16GREEN
+            : (recognition_mode == DRIVE_BY_RECOGNITION_LAP_STOP
+                ? U16YELLOW : U16RED);
+    snprintf(line, sizeof(line), "TARGET:%s", target_mode);
+    draw_line(5, line, target_color);
 
-    draw_line(6, "K0 TARGET K1 PROFILE", U16WHITE);
+    draw_line(6, "K0 TARGET MODE", U16WHITE);
     draw_line(7, "K2 START/STOP", U16WHITE);
 }
 
@@ -266,9 +276,9 @@ void front_ui_poll()
     bool dirty = false;
     const auto now = std::chrono::steady_clock::now();
 
-    // K0：目标板识别与绕行开关。关闭时完全不检测红色，不影响普通巡线。
+    // K0：停车时循环不识别、正常识别、首圈不识别后停车三种模式。
     if (pressed_edge(key_prev, prev_state)) {
-        drive_by_toggle_enable();
+        drive_by_cycle_recognition_mode();
         dirty = true;
     }
 

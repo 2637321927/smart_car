@@ -1,7 +1,11 @@
 'use strict';
 
 const assert = require('assert');
-const { parseControlPacket, parseRoadPacket } = require('./server');
+const {
+  parseControlPacket,
+  parseRoadPacket,
+  parseTargetResultPacket,
+} = require('./server');
 
 function makeControlPacket() {
   const packet = Buffer.alloc(212);
@@ -11,7 +15,7 @@ function makeControlPacket() {
   packet.writeUInt16LE(packet.length, 6);
   packet.writeUInt32LE(4321, 8);
   packet.writeUInt16LE(0xffff & ~(1 << 2), 12);
-  packet.writeUInt16LE(0b1111, 14);
+  packet.writeUInt16LE(0b10_1111, 14);
 
   const integers = [8, 5, 13, 35, 6, 5, -7000, 42, 2, 2, 123, 4, 1, 2, 3, 2];
   const floats = Array.from({ length: 33 }, (_, index) => index + 0.25);
@@ -87,6 +91,23 @@ assert.deepStrictEqual(legacy.tangent, {
 });
 assert.strictEqual(parseRoadPacket(Buffer.from('bad')), null);
 
+assert.deepStrictEqual(parseTargetResultPacket({
+  packet_type: 'target_result',
+  event_id: 17,
+  result: 0,
+  text: '[目标板] 类型=武器（weapon）',
+}), {
+  eventId: 17,
+  result: 0,
+  text: '[目标板] 类型=武器（weapon）',
+});
+assert.strictEqual(parseTargetResultPacket({
+  packet_type: 'target_result',
+  event_id: 17,
+  result: 4,
+  text: 'bad',
+}), null);
+
 const control = parseControlPacket(makeControlPacket());
 assert(control);
 assert.strictEqual(control.uptime_ms, 4321);
@@ -103,9 +124,13 @@ assert.strictEqual(control.gyro_target_dps, 11.25);
 assert.strictEqual(control.drive_test_target_distance_m, 32.25);
 assert.strictEqual(control.run, 1);
 assert.strictEqual(control.drive_enabled, 1);
+assert.strictEqual(control.drive_mode, 2);
 assert.strictEqual(control.have_target, 1);
 assert.strictEqual(control.camStats, 1);
 assert.strictEqual(control.remote_active, 1);
+const legacyControlPacket = makeControlPacket();
+legacyControlPacket.writeUInt16LE(0b1111, 14);
+assert.strictEqual(parseControlPacket(legacyControlPacket).drive_mode, 1);
 assert.strictEqual(parseControlPacket(Buffer.from('bad')), null);
 const invalidControl = makeControlPacket();
 invalidControl.writeUInt16LE(211, 6);

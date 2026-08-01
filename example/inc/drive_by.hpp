@@ -3,6 +3,8 @@
 
 #include "lq_ncnn.hpp"
 
+#include <cstdint>
+
 #include <opencv2/core.hpp>
 
 // 普通巡线、识别阶段和绕行阶段的速度参数。
@@ -56,6 +58,14 @@ extern volatile float drive_by_brake_release_rps;
 extern volatile int drive_by_brake_confirm_count;
 extern volatile int drive_by_brake_timeout_ms;
 extern volatile float drive_by_test_target_distance_m;
+// 再次通过斑马线后，暂时屏蔽目标板检测，避开起跑线附近红砖；单位ms。
+extern volatile int drive_by_post_zebra_guard_ms;
+
+enum DriveByRecognitionMode {
+    DRIVE_BY_RECOGNITION_DISABLED = 0,
+    DRIVE_BY_RECOGNITION_NORMAL = 1,
+    DRIVE_BY_RECOGNITION_LAP_STOP = 2,
+};
 
 typedef struct
 {
@@ -107,6 +117,13 @@ typedef struct
     int anchor_y;
 } DriveByTangentDebug;
 
+typedef struct
+{
+    uint32_t event_id;
+    int result;
+    char text[64];
+} DriveByTargetResultEvent;
+
 void drive_by_init();
 // 每次发车时重置“完整跑完一圈后停首个目标板”的单次运行状态。
 void drive_by_on_start();
@@ -114,6 +131,8 @@ void drive_by_on_start();
 bool drive_by_on_zebra_detected();
 // 速度线程只提交停车报告，主循环据此保证停车后仍会执行一次低优先级打印。
 bool drive_by_has_pending_report();
+// 只返回斑马线后最终停车目标的识别结果；普通第一圈识别不会产生该事件。
+bool drive_by_take_final_target_result(DriveByTargetResultEvent *event);
 void drive_by_update(cv::Mat& frame, LQ_NCNN& ncnn);
 // 由8ms方向定时器调用：只读取缓存并更新绕行闭环，不做图像、推理、打印或硬件I/O。
 void drive_by_control_update();
@@ -145,6 +164,10 @@ float drive_by_adjust_visual_error(float computed_error,
                                    bool aim_line_valid);
 // 远距离候选出现后，目标板脚本需要暂时独占道路类型，避免环岛/十字改写中线。
 bool drive_by_should_suspend_track_features();
+DriveByRecognitionMode drive_by_recognition_mode();
+const char *drive_by_recognition_mode_name();
+bool drive_by_set_recognition_mode(DriveByRecognitionMode mode);
+bool drive_by_cycle_recognition_mode();
 bool drive_by_is_enabled();
 void drive_by_set_enable(bool enable);
 void drive_by_toggle_enable();
